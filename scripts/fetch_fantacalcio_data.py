@@ -1,4 +1,7 @@
-""" Scarica i dati di quotazioni e statistiche da fantacalcio.it usando il parsing della tabella HTML reale del sito. """
+"""
+Scarica i dati di quotazioni e statistiche da fantacalcio.it
+usando il parsing della tabella HTML reale del sito.
+"""
 import os
 import sys
 import re
@@ -22,11 +25,26 @@ URLS = {
 }
 
 
+BLOCK_MARKERS = [
+    "captcha", "cloudflare", "attention required", "access denied",
+    "just a moment", "checking your browser", "cookie", "consenso",
+    "are you human",
+]
+
+
 def fetch_page(url):
-    """Scarica una pagina HTML."""
+    """Scarica una pagina HTML, con diagnostica su blocchi/bot-detection."""
     try:
         resp = requests.get(url, headers=HEADERS, timeout=30)
+        print(f"   -> {url}: status={resp.status_code}, bytes={len(resp.content)}", file=sys.stderr)
         resp.raise_for_status()
+
+        text_lower = resp.text.lower()
+        hits = [m for m in BLOCK_MARKERS if m in text_lower]
+        if hits or len(resp.text) < 20000:
+            print(f"   SOSPETTO BLOCCO/CHALLENGE su {url}: "
+                  f"lunghezza={len(resp.text)} caratteri, marker trovati={hits}", file=sys.stderr)
+
         return resp.text
     except requests.RequestException as e:
         print(f"ERRORE scaricando {url}: {e}", file=sys.stderr)
@@ -67,7 +85,17 @@ def extract_from_table(html, required_keywords):
 
 
 def extract_ruolo(row):
-    """ Estrae il ruolo (P/D/C/A) da una riga della tabella quotazioni. Il ruolo su fantacalcio.it è quasi sempre un'icona, non testo semplice, quindi si cerca in ordine: classe CSS -> alt/title immagine -> testo cella. Se questa funzione restituisce sempre 'C' (fallback), apri data/debug_quotazioni.html, individua la riga di un giocatore e guarda come è marcato il ruolo (classe tipo "ruolo-p", un'icona <img alt="Portiere">, o uno <svg><use href="#icon-p">), poi adatta i pattern qui sotto di conseguenza. """
+    """
+    Estrae il ruolo (P/D/C/A) da una riga della tabella quotazioni.
+    Il ruolo su fantacalcio.it è quasi sempre un'icona, non testo semplice,
+    quindi si cerca in ordine: classe CSS -> alt/title immagine -> testo cella.
+
+    Se questa funzione restituisce sempre 'C' (fallback), apri
+    data/debug_quotazioni.html, individua la riga di un giocatore
+    e guarda come è marcato il ruolo (classe tipo "ruolo-p", un'icona
+    <img alt="Portiere">, o uno <svg><use href="#icon-p">), poi adatta
+    i pattern qui sotto di conseguenza.
+    """
     valid = {'P', 'D', 'C', 'A'}
 
     # 1. Classi CSS tipo "ruolo-p", "role-p", "r-p"
@@ -282,14 +310,14 @@ def main():
                 print(f"OK: data/quotazioni.csv ({len(players)} giocatori)")
                 n_unknown = sum(1 for p in players if p['ruolo'] == '?')
                 if n_unknown:
-                    print(f" ATTENZIONE: ruolo non riconosciuto per {n_unknown} giocatori "
+                    print(f"   ATTENZIONE: ruolo non riconosciuto per {n_unknown} giocatori "
                           f"(vedi commento in extract_ruolo per sistemare il parsing)", file=sys.stderr)
             else:
                 print("ERRORE: impossibile salvare quotazioni.csv", file=sys.stderr)
                 ok = False
         else:
             print("ERRORE: nessun giocatore estratto dalle quotazioni", file=sys.stderr)
-            print(" HTML salvato in data/debug_quotazioni.html per analisi", file=sys.stderr)
+            print("   HTML salvato in data/debug_quotazioni.html per analisi", file=sys.stderr)
             ok = False
     else:
         ok = False
@@ -309,7 +337,7 @@ def main():
                 ok = False
         else:
             print("ERRORE: nessuna statistica estratta", file=sys.stderr)
-            print(" HTML salvato in data/debug_statistiche.html per analisi", file=sys.stderr)
+            print("   HTML salvato in data/debug_statistiche.html per analisi", file=sys.stderr)
             ok = False
     else:
         ok = False
