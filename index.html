@@ -854,9 +854,6 @@ function ownerOf(playerId){
 }
 
 /* ================= SUGGESTED PRICE ================= */
-/* FVM (FantaValore di Mercato) e' calibrato ufficialmente su una lega da 1000 crediti.
-   Qt.A (quotazione) e' invece calibrata sullo standard da 500 crediti.
-   Riscaliamo il valore piu' affidabile (FVM) sul budget reale della lega. */
 function avgTeamBudget(){
   if(!state.teams.length) return 500;
   return state.teams.reduce((s,t)=>s+t.budget,0) / state.teams.length;
@@ -938,13 +935,13 @@ function workbookToRows(wb){
 /* ---- normalizzazione nomi per abbinare listone <-> statistiche ---- */
 function normName(s){
   return String(s||'')
-    .normalize('NFD').replace(/[\u0300-\u036f]/g,'') // rimuove accenti
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
     .toUpperCase()
     .replace(/[^A-Z0-9]+/g,' ')
     .trim();
 }
 
-/* ---- parsing file statistiche (formati fantacalcio.it: Nome, Squadra, Pv, Mv, Fm, Gf, Gs, Ass, Amm, Esp, Rp, Rc, Au...) ---- */
+/* ---- parsing file statistiche ---- */
 const STATS_FIELD_ALIASES = {
   nome: ['NOME','CALCIATORE','GIOCATORE'],
   squadra: ['SQUADRA','SQ'],
@@ -1021,24 +1018,8 @@ function mergeStatsIntoPlayers(statsRows, seasonKey){
   return {matched, total: statsRows.length};
 }
 
-/* ---- stima automatica titolare/ballottaggio/panchinaro ----
-   Confronta le presenze (Pv) di ogni giocatore con il massimo della sua squadra (che approssima
-   le partite giocate finora dalla squadra): chi ne ha di piu' e' presumibilmente titolare fisso.
-   Le "ultime partite fatte" in stagione corrente sono il segnale principale, ma:
-   - si concede una "tolleranza" di una partita saltata (rotazione, acciacco, squalifica, arrivo
-     a mercato gia' aperto) cosi' da non retrocedere subito un titolare che ha solo mancato un turno;
-   - finche' la stagione corrente e' ancora troppo corta (poche partite di squadra giocate) ci si
-     affida piuttosto alla stagione passata, quando disponibile, invece di fidarsi di un campione
-     troppo piccolo;
-   - quando non c'e' ne' un numero sufficiente di partite quest'anno ne' un dato della stagione
-     passata (tipicamente un nuovo arrivo, magari dall'estero) non si puo' stimare dalle presenze:
-     si guarda allora la quotazione/FVM rispetto ai compagni dello stesso ruolo nella stessa squadra,
-     che riflette gia' le attese del mercato su chi giochera' titolare. Per i portieri questo vale
-     anche a stagione avanzata, perche' il secondo portiere puo' restare a 0 presenze per un anno
-     intero pur essendo chiaramente il vice del titolare.
-   Non sovrascrive mai una scelta impostata a mano dall'utente (p.titolaritaManual). */
+/* ---- stima automatica titolarita ---- */
 function computeAutoTitolarita(){
-  // partite giocate finora dalla squadra, stagione corrente e passata (approssimate dal max Pv)
   const maxPvCurrBySquadra = {};
   const maxPvPrevBySquadra = {};
   state.players.forEach(p=>{
@@ -1049,16 +1030,15 @@ function computeAutoTitolarita(){
     if(pvP!==undefined && pvP!==null && (!(key in maxPvPrevBySquadra) || pvP > maxPvPrevBySquadra[key])) maxPvPrevBySquadra[key] = pvP;
   });
 
-  const FULL_TRUST_GAMES = 8;      // da qui in poi ci si fida solo della stagione corrente
-  const MIN_GAMES_FOR_SIGNAL = 3;  // sotto, le presenze di quest'anno da sole dicono troppo poco
-  const GRACE = 1;                 // una partita di tolleranza sulle presenze di quest'anno
+  const FULL_TRUST_GAMES = 8;
+  const MIN_GAMES_FOR_SIGNAL = 3;
+  const GRACE = 1;
 
   function statusFromRatio(ratio, hiThr, loThr){
     if(ratio >= hiThr) return 'titolare';
     if(ratio >= loThr) return 'secondo';
     return 'panchinaro';
   }
-  // stima dalla quotazione/FVM rispetto ai compagni dello stesso ruolo nella stessa squadra
   function valueBasedStatus(p, mates){
     const valOf = x => (x.qta || x.fvm || 0);
     const topVal = Math.max(0, ...mates.map(valOf)) || 1;
@@ -1086,10 +1066,8 @@ function computeAutoTitolarita(){
     } else if(currReliable){
       ratio = ratioCurr;
     } else if(ratioPrev!==null){
-      ratio = ratioPrev; // stagione corrente troppo corta: ci si fida di quella passata
+      ratio = ratioPrev;
     }
-    // se ratio resta null (nessun dato quest'anno con partite a sufficienza, e nessun dato passato)
-    // si passera' alla stima da valore qui sotto
 
     if(p.ruolo === 'P'){
       const teamKeepers = state.players.filter(x=> x.ruolo==='P' && (x.squadra||'')===key);
@@ -1102,13 +1080,11 @@ function computeAutoTitolarita(){
         p.titolarita = statusFromRatio(ratio, 0.65, 0.20);
         p.titolaritaAuto = true;
       } else if(teamKeepers.length){
-        // nessuna presenza utile tra i portieri della squadra: si guarda il valore (Qt./FVM)
         const valOf = x => (x.qta || x.fvm || 0);
         const sorted = teamKeepers.slice().sort((a,b)=> valOf(b)-valOf(a));
-        const rank = sorted.findIndex(x=> x.id===p.id);
         const topVal = valOf(sorted[0]) || 1;
-        if(rank===0) p.titolarita = 'titolare';
-        else if(rank===1 && valOf(p) >= topVal*0.15) p.titolarita = 'secondo';
+        if(sorted.length===1 || valOf(p) >= topVal*0.15 && sorted[0] && sorted[0].id===p.id) p.titolarita = 'titolare';
+        else if(sorted.length>1 && sorted[1] && sorted[1].id===p.id && valOf(p) >= topVal*0.10) p.titolarita = 'secondo';
         else p.titolarita = 'panchinaro';
         p.titolaritaAuto = true;
       }
@@ -1117,8 +1093,6 @@ function computeAutoTitolarita(){
         p.titolarita = statusFromRatio(ratio, 0.65, 0.35);
         p.titolaritaAuto = true;
       } else {
-        // nuovo arrivo o comunque senza presenze utilizzabili: si guarda il valore rispetto
-        // ai compagni dello stesso ruolo, che riflette gia' le attese sul titolare
         const mates = state.players.filter(x=> x.ruolo===p.ruolo && (x.squadra||'')===key);
         if(mates.length){
           p.titolarita = valueBasedStatus(p, mates);
@@ -1138,7 +1112,6 @@ function applyImportedPlayers(players){
     el('importStatus').textContent = 'Non sono riuscito a leggere il file. Controlla che contenga le colonne R, Nome, Squadra, Qt.A, FVM.';
     return;
   }
-  // preserve stato fisico e statistiche gia' inserite, abbinando per id o per nome normalizzato
   const oldById = {}, oldByName = {};
   (state.players||[]).forEach(p=>{
     oldById[p.id] = p;
@@ -1195,7 +1168,7 @@ el('importPasteBtn').addEventListener('click', function(){
   }
 });
 
-/* ---- import statistiche (corrente / precedente) ---- */
+/* ---- import statistiche ---- */
 function handleStatsImport(rows, seasonKey, seasonLabel){
   if(!state.players.length){
     el('statsImportStatus').innerHTML = '<b style="color:var(--red);">Importa prima il listone quotazioni</b>, poi le statistiche: senza i giocatori del listone non c\'è nulla a cui abbinarle.';
@@ -1259,47 +1232,85 @@ el('statsPastePrevBtn').addEventListener('click', function(){
   catch(err){ console.error(err); el('statsImportStatus').textContent = 'Errore nella lettura del testo incollato.'; }
 });
 
-/* ---- aggiornamento automatico da data/ (aggiornati da GitHub Actions) ---- */
-async function fetchWorkbook(path){
-  const res = await fetch(path + '?_=' + Date.now(), {cache:'no-store'});
-  if(!res.ok) throw new Error('HTTP ' + res.status);
-  const buf = await res.arrayBuffer();
-  return XLSX.read(new Uint8Array(buf), {type:'array'});
+/* ---- funzioni per leggere i CSV generati da GitHub Actions ---- */
+async function fetchCSV(path){
+    const res = await fetch(path + '?_=' + Date.now(), {cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    const lines = text.split('\n').filter(l => l.trim());
+    if(lines.length < 2) throw new Error('CSV vuoto');
+    
+    // Parse CSV manuale (semplice)
+    const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+    const rows = [];
+    for(let i = 1; i < lines.length; i++){
+        const line = lines[i];
+        if(!line.trim()) continue;
+        // Split semplice, attenzione: se ci sono virgole dentro i campi potrebbe rompersi
+        const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+        const obj = {};
+        headers.forEach((h, idx) => { 
+            obj[h] = values[idx] !== undefined ? values[idx] : ''; 
+        });
+        rows.push(obj);
+    }
+    return rows;
 }
 
 async function autoFetchAndImport(opts){
-  opts = opts || {};
-  const silent = !!opts.silent;
-  const setStatus = (msg)=>{ const s = el('autoFetchStatus'); if(s) s.textContent = msg; };
-  if(!silent) setStatus('Controllo in corso...');
-  let quotazioniOk = false, statsOk = false;
+    opts = opts || {};
+    const silent = !!opts.silent;
+    const setStatus = (msg)=>{ const s = el('autoFetchStatus'); if(s) s.textContent = msg; };
+    if(!silent) setStatus('Controllo in corso...');
+    let quotazioniOk = false, statsOk = false;
 
-  try{
-    const wb = await fetchWorkbook('data/quotazioni.xlsx');
-    const players = importFromWorkbook(wb);
-    if(players && players.length){
-      applyImportedPlayers(players);
-      quotazioniOk = true;
+    try{
+        const rows = await fetchCSV('data/quotazioni.csv');
+        if(rows && rows.length){
+            const players = rows.map(row => ({
+                id: row.id || ('p_' + row.nome.toLowerCase().replace(/[^a-z0-9]/g,'')),
+                ruolo: row.ruolo || 'C',
+                nome: row.nome || '',
+                squadra: row.squadra || '',
+                qta: parseFloat(String(row.qta).replace(',', '.')) || 0,
+                fvm: parseFloat(String(row.fvm).replace(',', '.')) || 0
+            }));
+            applyImportedPlayers(players);
+            quotazioniOk = true;
+        }
+    }catch(err){
+        console.warn('Auto-fetch quotazioni non riuscito:', err);
+        if(!silent) setStatus('Quotazioni non trovate: ' + err.message);
     }
-  }catch(err){
-    console.warn('Auto-fetch quotazioni non riuscito:', err);
-  }
 
-  try{
-    const wb2 = await fetchWorkbook('data/stats_curr.xlsx');
-    const rows = workbookToRows(wb2);
-    handleStatsImport(rows, 'curr', 'stagione corrente');
-    statsOk = true;
-  }catch(err){
-    console.warn('Auto-fetch statistiche non riuscito:', err);
-  }
+    try{
+        const statsRows = await fetchCSV('data/stats_curr.csv');
+        if(statsRows && statsRows.length){
+            // Converte i dati CSV nel formato atteso da handleStatsImport
+            const formattedStats = statsRows.map(row => {
+                const entry = { nome: row.nome || '', squadra: row.squadra || '' };
+                ['pv', 'mv', 'fm', 'gf', 'gs', 'ass', 'amm', 'esp'].forEach(f => {
+                    if(row[f] !== undefined && row[f] !== '') {
+                        entry[f] = parseFloat(String(row[f]).replace(',', '.')) || 0;
+                    }
+                });
+                return entry;
+            });
+            // handleStatsImport si aspetta un array di righe con header
+            handleStatsImport(formattedStats, 'curr', 'stagione corrente');
+            statsOk = true;
+        }
+    }catch(err){
+        console.warn('Auto-fetch statistiche non riuscito:', err);
+        if(!silent) setStatus('Statistiche non trovate: ' + err.message);
+    }
 
-  if(quotazioniOk || statsOk){
-    const when = new Date().toLocaleString('it-IT');
-    setStatus(`Aggiornato automaticamente alle ${when}${quotazioniOk?'':' (solo statistiche)'}${statsOk?'':' (solo quotazioni)'}.`);
-  }else if(!silent){
-    setStatus('Nessun dato automatico trovato ancora: aspetta che GitHub Actions giri la prima volta, oppure importa a mano qui sotto.');
-  }
+    if(quotazioniOk || statsOk){
+        const when = new Date().toLocaleString('it-IT');
+        setStatus(`Aggiornato automaticamente alle ${when}${quotazioniOk?'':' (solo statistiche)'}${statsOk?'':' (solo quotazioni)'}.`);
+    }else if(!silent){
+        setStatus('Nessun dato automatico trovato ancora: aspetta che GitHub Actions giri la prima volta, oppure importa a mano qui sotto.');
+    }
 }
 
 const autoFetchBtnEl = el('autoFetchBtn');
@@ -1307,8 +1318,6 @@ if(autoFetchBtnEl){
   autoFetchBtnEl.addEventListener('click', function(){ autoFetchAndImport({silent:false}); });
 }
 // Al caricamento della pagina, prova a leggere i dati aggiornati da GitHub Actions
-// in automatico, senza bisogno di alcun intervento. Se i file non esistono ancora
-// (prima esecuzione del workflow non ancora avvenuta) fallisce in silenzio.
 autoFetchAndImport({silent:true});
 
 /* ---- rilevamento automatico infortunati da testo incollato ---- */
@@ -1325,8 +1334,6 @@ el('detectInjuriesBtn').addEventListener('click', function(){
   const haystack = ' ' + normTextForMatch(raw) + ' ';
   const matched = [];
   state.players.forEach(p=>{
-    // usa l'ultima "parola" significativa del nome (di solito il cognome) per il match,
-    // richiedendo che sia lunga almeno 4 caratteri per ridurre i falsi positivi.
     const parts = normName(p.nome).split(' ').filter(w=>w.length>=4);
     const key = parts.length ? parts[0] : normName(p.nome);
     if(!key) return;
@@ -1688,7 +1695,6 @@ function drawListoneTable(){
     </tr>`;
   }).join('');
 
-  // imposta il valore corrente dello stato fisico (evita di ricostruire le option con "selected" dinamico)
   list.slice(0,300).forEach(p=>{
     const sel = document.querySelector(`[data-status-for="${p.id}"]`);
     if(sel) sel.value = p.status || 'ok';
@@ -2055,7 +2061,6 @@ function drawConsigli(){
   }
   html += `</div>`;
 
-  // Top value alternatives per role (best FVM per credito tra i liberi)
   html += `<div class="panel"><div class="panel-title">Migliori occasioni disponibili (per reparto)</div>`;
   ['P','D','C','A'].forEach(r=>{
     const list = byRole[r].slice().sort((a,b)=> (b.fvm||0)-(a.fvm||0)).slice(0,5);
@@ -2222,8 +2227,6 @@ function getAlternatives(p, n){
   return free.slice(0, n);
 }
 
-/* Massimo spendibile: budget rimanente della squadra meno almeno 1 credito
-   da lasciare per ciascuno degli altri slot ancora da riempire in rosa. */
 function maxBidForTeam(team, role){
   if(!team) return null;
   const totalNeeded = ['P','D','C','A'].reduce((s,r)=> s + clamp0(state.slots[r]-countInRole(team,r)), 0);
