@@ -1,6 +1,5 @@
 """
-Scarica i dati di quotazioni e statistiche da fantacalcio.it
-usando il parsing della tabella HTML reale del sito.
+Scarica quotazioni, statistiche e indisponibili da fantacalcio.it.
 """
 import os
 import sys
@@ -24,16 +23,14 @@ URLS = {
     "indisponibili": "https://www.fantacalcio.it/indisponibili-serie-a",
 }
 
-
 BLOCK_MARKERS = [
-    "captcha", "cloudflare", "attention required", "access denied",
-    "just a moment", "checking your browser", "cookie", "consenso",
-    "are you human",
+    "captcha", "attention required", "access denied",
+    "just a moment", "checking your browser", "are you human",
 ]
 
 
 def fetch_page(url):
-    """Scarica una pagina HTML, con diagnostica su blocchi/bot-detection."""
+    """Scarica una pagina HTML, con diagnostica su status/dimensione/blocchi."""
     try:
         resp = requests.get(url, headers=HEADERS, timeout=30)
         print(f"   -> {url}: status={resp.status_code}, bytes={len(resp.content)}", file=sys.stderr)
@@ -41,9 +38,8 @@ def fetch_page(url):
 
         text_lower = resp.text.lower()
         hits = [m for m in BLOCK_MARKERS if m in text_lower]
-        if hits or len(resp.text) < 20000:
-            print(f"   SOSPETTO BLOCCO/CHALLENGE su {url}: "
-                  f"lunghezza={len(resp.text)} caratteri, marker trovati={hits}", file=sys.stderr)
+        if hits:
+            print(f"   SOSPETTO BLOCCO/CHALLENGE su {url}: marker trovati={hits}", file=sys.stderr)
 
         return resp.text
     except requests.RequestException as e:
@@ -56,7 +52,6 @@ def clean_number(val):
     if not val:
         return 0
     clean = re.sub(r'[^\d,.\-]', '', str(val))
-    # Se ci sono sia punto che virgola, il punto è separatore delle migliaia
     if ',' in clean and '.' in clean:
         clean = clean.replace('.', '').replace(',', '.')
     else:
@@ -67,8 +62,29 @@ def clean_number(val):
         return 0
 
 
+def build_header_labels(header_row):
+    """
+    Espande gli header rispettando gli attributi colspan.
+
+    Su fantacalcio.it la cella header 'Calciatore' copre con colspan le
+    colonne icona (checkbox/preferiti/ruolo) + la colonna nome. Se non
+    espandiamo il colspan, l'indice degli header non corrisponde più
+    all'indice delle celle nelle righe dati (che invece sono tutte celle
+    singole), e ogni colonna dopo 'Calciatore' risulta disallineata.
+    """
+    labels = []
+    for cell in header_row.find_all(['th', 'td']):
+        try:
+            colspan = int(cell.get('colspan', 1))
+        except (TypeError, ValueError):
+            colspan = 1
+        text = cell.get_text(strip=True)
+        labels.extend([text] * max(colspan, 1))
+    return labels
+
+
 def extract_from_table(html, required_keywords):
-    """Trova la tabella giusta cercando keyword negli header."""
+    """Trova la tabella giusta cercando keyword negli header (espansi per colspan)."""
     soup = BeautifulSoup(html, 'html.parser')
     tables = soup.find_all('table')
 
@@ -76,7 +92,7 @@ def extract_from_table(html, required_keywords):
         header_row = table.find('tr')
         if not header_row:
             continue
-        headers = [c.get_text(strip=True) for c in header_row.find_all(['th', 'td'])]
+        headers = build_header_labels(header_row)
         header_text = ' '.join(headers).upper()
         if any(k in header_text for k in required_keywords):
             return table, headers
@@ -87,18 +103,16 @@ def extract_from_table(html, required_keywords):
 def extract_ruolo(row):
     """
     Estrae il ruolo (P/D/C/A) da una riga della tabella quotazioni.
-    Il ruolo su fantacalcio.it è quasi sempre un'icona, non testo semplice,
-    quindi si cerca in ordine: classe CSS -> alt/title immagine -> testo cella.
+    Il ruolo è quasi certamente un'icona (non testo semplice): si cerca
+    in ordine classe CSS -> alt/title immagine -> testo cella.
 
-    Se questa funzione restituisce sempre 'C' (fallback), apri
-    data/debug_quotazioni.html, individua la riga di un giocatore
-    e guarda come è marcato il ruolo (classe tipo "ruolo-p", un'icona
-    <img alt="Portiere">, o uno <svg><use href="#icon-p">), poi adatta
-    i pattern qui sotto di conseguenza.
+    Se ritorna sempre '?', apri data/debug_quotazioni.html, guarda come
+    è marcato il ruolo in una riga giocatore (classe tipo "ruolo-p",
+    <img alt="Portiere">, <svg><use href="#icon-p">...) e adatta i
+    pattern sotto di conseguenza.
     """
     valid = {'P', 'D', 'C', 'A'}
 
-    # 1. Classi CSS tipo "ruolo-p", "role-p", "r-p"
     for tag in row.find_all(attrs={"class": True}):
         classes = ' '.join(tag.get('class', [])).lower()
         m = re.search(r'(?:ruolo|role|^r)[-_]?([pdca])\b', classes)
@@ -107,7 +121,6 @@ def extract_ruolo(row):
             if letter in valid:
                 return letter
 
-    # 2. Attributi alt/title di immagini o span con testo del ruolo
     for tag in row.find_all(['img', 'span', 'div']):
         for attr in ('alt', 'title'):
             val = (tag.get(attr) or '').strip().upper()
@@ -122,14 +135,12 @@ def extract_ruolo(row):
             if val.startswith('ATTACCANTE'):
                 return 'A'
 
-    # 3. Testo semplice in una delle prime celle (fallback raro)
-    cells = row.find_all(['td', 'th'])[:3]
+    cells = row.find_all(['td', 'th'])[:4]
     for cell in cells:
         text = cell.get_text(strip=True).upper()
         if text in valid:
             return text
 
-    # Nessun ruolo trovato: fallback esplicito, NON nascondere l'errore
     return '?'
 
 
@@ -137,20 +148,20 @@ def parse_quotazioni(html):
     """Estrae le quotazioni dalla tabella reale di fantacalcio.it."""
     table, headers = extract_from_table(html, ['CALCIATORE', 'FVM', 'QUOTAZ'])
     if not table:
+        print("ATTENZIONE: tabella quotazioni non trovata, struttura pagina cambiata", file=sys.stderr)
         return []
 
-    # Header reali: [.., .., ..], Calciatore, Sq, QI, QA, FVM/1000 (Classic),
-    # QI, QA, FVM/1000 (Mantra), ..
-    # QI/QA/FVM sono duplicati (Classic + Mantra): prendiamo solo la prima
-    # occorrenza di ciascuno, che corrisponde alla modalità Classic.
+    # QI/QA/FVM compaiono due volte (Classic + Mantra): prendiamo la prima
+    # occorrenza di ciascuno = Classic. Il nome giocatore non si trova per
+    # testo header (la cella 'Calciatore' ha colspan su più colonne): è
+    # sempre la colonna immediatamente prima di 'Sq'.
     col_map = {}
     seen = {'qi': False, 'qta': False, 'fvm': False}
+    squadra_idx = None
     for i, h in enumerate(headers):
         h_clean = h.upper().replace(' ', '').replace('.', '').replace('/', '')
-        if h_clean in ('CALCIATORE', 'NOME', 'GIOCATORE') and 'nome' not in col_map:
-            col_map['nome'] = i
-        elif h_clean in ('SQ', 'SQUADRA', 'TEAM') and 'squadra' not in col_map:
-            col_map['squadra'] = i
+        if h_clean in ('SQ', 'SQUADRA', 'TEAM') and squadra_idx is None:
+            squadra_idx = i
         elif h_clean == 'QI' and not seen['qi']:
             col_map['qi'] = i
             seen['qi'] = True
@@ -161,9 +172,12 @@ def parse_quotazioni(html):
             col_map['fvm'] = i
             seen['fvm'] = True
 
-    if 'nome' not in col_map:
-        print("ATTENZIONE: header 'Calciatore' non trovato, struttura pagina cambiata", file=sys.stderr)
+    if squadra_idx is None or squadra_idx == 0:
+        print("ATTENZIONE: colonna 'Sq' non trovata nella tabella quotazioni", file=sys.stderr)
         return []
+
+    col_map['squadra'] = squadra_idx
+    col_map['nome'] = squadra_idx - 1
 
     players = []
     rows = table.find_all('tr')[1:]
@@ -178,8 +192,7 @@ def parse_quotazioni(html):
         if not nome or len(nome) < 2:
             continue
 
-        squadra_idx = col_map.get('squadra')
-        squadra = row_data[squadra_idx] if squadra_idx is not None and squadra_idx < len(row_data) else ''
+        squadra = row_data[col_map['squadra']] if col_map['squadra'] < len(row_data) else ''
 
         qta_idx = col_map.get('qta')
         qta = clean_number(row_data[qta_idx]) if qta_idx is not None and qta_idx < len(row_data) else 0
@@ -205,15 +218,15 @@ def parse_statistiche(html):
     """Estrae le statistiche dalla tabella di fantacalcio.it."""
     table, headers = extract_from_table(html, ['PV', 'MV', 'FANTAMEDIA', 'PRESENZE'])
     if not table:
+        print("ATTENZIONE: tabella statistiche non trovata, struttura pagina cambiata", file=sys.stderr)
         return []
 
     col_map = {}
+    squadra_idx = None
     for i, h in enumerate(headers):
         h_clean = h.upper().replace(' ', '').replace('.', '')
-        if ('NOME' in h_clean or 'CALCIATORE' in h_clean) and 'nome' not in col_map:
-            col_map['nome'] = i
-        elif ('SQUADRA' in h_clean or h_clean == 'SQ') and 'squadra' not in col_map:
-            col_map['squadra'] = i
+        if h_clean in ('SQ', 'SQUADRA', 'TEAM') and squadra_idx is None:
+            squadra_idx = i
         elif h_clean == 'PV' and 'pv' not in col_map:
             col_map['pv'] = i
         elif h_clean == 'MV' and 'mv' not in col_map:
@@ -221,9 +234,12 @@ def parse_statistiche(html):
         elif h_clean == 'FM' and 'fm' not in col_map:
             col_map['fm'] = i
 
-    if 'nome' not in col_map:
-        print("ATTENZIONE: header 'Nome' non trovato nella tabella statistiche", file=sys.stderr)
+    if squadra_idx is None or squadra_idx == 0:
+        print("ATTENZIONE: colonna 'Sq' non trovata nella tabella statistiche", file=sys.stderr)
         return []
+
+    col_map['squadra'] = squadra_idx
+    col_map['nome'] = squadra_idx - 1
 
     stats = []
     rows = table.find_all('tr')[1:]
@@ -240,7 +256,7 @@ def parse_statistiche(html):
 
         entry = {
             'nome': nome,
-            'squadra': row_data[col_map['squadra']] if col_map.get('squadra') is not None and col_map['squadra'] < len(row_data) else '',
+            'squadra': row_data[col_map['squadra']] if col_map['squadra'] < len(row_data) else '',
         }
         for field in ('pv', 'mv', 'fm'):
             idx = col_map.get(field)
@@ -252,33 +268,49 @@ def parse_statistiche(html):
 
 
 def parse_indisponibili(html):
-    """Estrae i nomi degli indisponibili dalla pagina."""
+    """
+    Estrae i nomi dei calciatori indisponibili (infortunati + squalificati).
+
+    ATTENZIONE: questa pagina NON è una tabella. È organizzata per squadra:
+    icona/nome squadra -> sezione "Infortunati" (nomi in grassetto con
+    descrizione) -> sezione "Squalificati" -> sezione "Diffidati".
+    I diffidati non vengono inclusi: sono ancora disponibili, solo a
+    rischio squalifica alla prossima ammonizione.
+    """
     soup = BeautifulSoup(html, 'html.parser')
     injured = []
+    current_category = None
+    category_labels = {'infortunati', 'squalificati', 'diffidati'}
 
-    table, headers = extract_from_table(html, ['CALCIATORE', 'MOTIVO', 'INFORTUNIO', 'RIENTRO'])
-    if table:
-        nome_idx = 0
-        for i, h in enumerate(headers):
-            if 'CALCIATORE' in h.upper() or 'NOME' in h.upper():
-                nome_idx = i
-                break
-        rows = table.find_all('tr')[1:]
-        for row in rows:
-            cols = row.find_all(['td', 'th'])
-            row_data = [c.get_text(strip=True) for c in cols]
-            if nome_idx < len(row_data) and len(row_data[nome_idx]) > 2:
-                injured.append(row_data[nome_idx])
-        return sorted(set(injured))
+    for tag in soup.find_all(['img', 'a', 'strong', 'b']):
+        if tag.name == 'img':
+            alt = (tag.get('alt') or '').strip().lower()
+            if alt.startswith('stemma'):
+                current_category = 'infortunati'  # ogni squadra riparte da qui
+            continue
 
-    # Fallback: se la struttura cambia, segnala invece di indovinare col regex
-    print("ATTENZIONE: tabella indisponibili non trovata, controlla data/debug_indisponibili.html", file=sys.stderr)
-    save_debug_html(html, "data/debug_indisponibili.html")
-    return []
+        text = tag.get_text(strip=True)
+        text_lower = text.lower().strip('- ')
+
+        if tag.name == 'a' and 'infortunati' in text_lower:
+            current_category = 'infortunati'
+            continue
+
+        if text_lower in category_labels:
+            current_category = text_lower
+            continue
+
+        if tag.name in ('strong', 'b') and current_category in ('infortunati', 'squalificati'):
+            if text and text != 'Nessuno' and len(text) > 1:
+                injured.append(text)
+
+    if not injured:
+        print("ATTENZIONE: nessun indisponibile estratto, struttura pagina cambiata", file=sys.stderr)
+
+    return sorted(set(injured))
 
 
 def save_csv(data, path, headers):
-    """Salva i dati in CSV."""
     if not data:
         return False
     with open(path, 'w', newline='', encoding='utf-8') as f:
@@ -289,7 +321,6 @@ def save_csv(data, path, headers):
 
 
 def save_debug_html(html, path):
-    """Salva HTML per debug."""
     with open(path, 'w', encoding='utf-8') as f:
         f.write(html)
 
@@ -298,7 +329,6 @@ def main():
     os.makedirs("data", exist_ok=True)
     ok = True
 
-    # 1. Quotazioni
     print("Scarico quotazioni...")
     html = fetch_page(URLS["quotazioni"])
     if html:
@@ -311,7 +341,7 @@ def main():
                 n_unknown = sum(1 for p in players if p['ruolo'] == '?')
                 if n_unknown:
                     print(f"   ATTENZIONE: ruolo non riconosciuto per {n_unknown} giocatori "
-                          f"(vedi commento in extract_ruolo per sistemare il parsing)", file=sys.stderr)
+                          f"(vedi commento in extract_ruolo)", file=sys.stderr)
             else:
                 print("ERRORE: impossibile salvare quotazioni.csv", file=sys.stderr)
                 ok = False
@@ -322,7 +352,6 @@ def main():
     else:
         ok = False
 
-    # 2. Statistiche
     print("Scarico statistiche...")
     html = fetch_page(URLS["statistiche"])
     if html:
@@ -342,10 +371,10 @@ def main():
     else:
         ok = False
 
-    # 3. Indisponibili
     print("Scarico indisponibili...")
     html = fetch_page(URLS["indisponibili"])
     if html:
+        save_debug_html(html, "data/debug_indisponibili.html")
         injured = parse_indisponibili(html)
         if injured:
             with open("data/indisponibili.txt", "w", encoding="utf-8") as f:
