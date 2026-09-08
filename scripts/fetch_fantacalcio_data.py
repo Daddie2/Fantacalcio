@@ -1,14 +1,14 @@
 """
 Scarica i dati di quotazioni e statistiche da fantacalcio.it
-direttamente dalle tabelle HTML pubbliche, senza bisogno di login.
-Salva i dati in formato CSV nella cartella data/.
+usando requests-html per eseguire JavaScript e caricare le tabelle.
 """
 import os
 import sys
 import re
 import csv
-import requests
-from datetime import datetime
+import json
+import time
+from requests_html import HTMLSession
 from bs4 import BeautifulSoup
 
 HEADERS = {
@@ -28,6 +28,27 @@ URLS = {
 }
 
 
+def fetch_with_js(url):
+    """Scarica una pagina eseguendo JavaScript."""
+    session = HTMLSession()
+    try:
+        response = session.get(url, headers=HEADERS, timeout=30)
+        # Aspetta che il JavaScript carichi le tabelle
+        response.html.render(timeout=20, sleep=2)
+        return response.html.html
+    except Exception as e:
+        print(f"ERRORE con requests-html per {url}: {e}", file=sys.stderr)
+        # Fallback: prova senza JS
+        try:
+            response = session.get(url, headers=HEADERS, timeout=30)
+            return response.text
+        except Exception as e2:
+            print(f"ERRORE anche senza JS: {e2}", file=sys.stderr)
+            return None
+    finally:
+        session.close()
+
+
 def parse_quotazioni(html):
     """Estrae la tabella delle quotazioni dalla pagina."""
     soup = BeautifulSoup(html, 'html.parser')
@@ -35,16 +56,45 @@ def parse_quotazioni(html):
     
     # Cerca la tabella delle quotazioni - vari selettori possibili
     table = None
-    tables = soup.find_all('table')
-    for t in tables:
-        # Cerca intestazioni tipiche delle quotazioni
-        header_text = ' '.join([th.get_text(strip=True) for th in t.find_all('th')])
-        if any(k in header_text.upper() for k in ['NOME', 'CALCIATORE', 'GIOCATORE', 'QTA', 'FVM', 'QUOTAZ']):
-            table = t
-            break
+    
+    # Prova diversi selettori
+    selectors = [
+        'table.table-condensed',
+        'table.table-striped',
+        'table.table-bordered',
+        'table.quotazioni-table',
+        'table[class*="quota"]',
+        'table[class*="price"]',
+        'table[class*="table"]',
+        'div.table-responsive table',
+        '.listone table',
+        '#listone table'
+    ]
+    
+    for selector in selectors:
+        try:
+            found = soup.select(selector)
+            if found:
+                table = found[0]
+                break
+        except:
+            continue
+    
+    # Se ancora non troviamo, cerca qualsiasi tabella con dati
+    if not table:
+        tables = soup.find_all('table')
+        for t in tables:
+            # Controlla se ha intestazioni di quotazioni
+            header_text = ' '.join([th.get_text(strip=True) for th in t.find_all('th')])
+            if any(k in header_text.upper() for k in ['NOME', 'CALCIATORE', 'GIOCATORE', 'QTA', 'FVM', 'QUOTAZ']):
+                table = t
+                break
     
     if not table:
-        print("ERRORE: Tabella quotazioni non trovata", file=sys.stderr)
+        # Salva l'HTML per debug
+        with open('data/debug_quotazioni.html', 'w', encoding='utf-8') as f:
+            f.write(html)
+        print("ERRORE: Tabella quotazioni non trovata. HTML salvato in data/debug_quotazioni.html", file=sys.stderr)
         return None
     
     # Estrai header
@@ -72,12 +122,9 @@ def parse_quotazioni(html):
             col_map['qta'] = i
         elif 'FVM' in h_clean or 'VALORE' in h_clean:
             col_map['fvm'] = i
-        elif 'ID' in h_clean:
-            col_map['id'] = i
     
     # Se mancano colonne essenziali, usa indici standard
     if 'nome' not in col_map:
-        # Prova a indovinare dagli header
         for i, h in enumerate(headers):
             if any(k in h.upper() for k in ['NOME', 'CALCIATORE', 'GIOCATORE']):
                 col_map['nome'] = i
@@ -86,25 +133,23 @@ def parse_quotazioni(html):
             elif any(k in h.upper() for k in ['RUOLO', 'R', 'POS']):
                 col_map['ruolo'] = i
     
-    # Fallback: se non troviamo niente, usa la struttura standard
+    # Fallback estremo
     if 'nome' not in col_map:
         col_map = {'ruolo': 0, 'nome': 1, 'squadra': 2, 'qta': 3, 'fvm': 4}
     
     # Estrai righe
-    rows = table.find_all('tr')[1:]  # Salta header
+    rows = table.find_all('tr')[1:]
     for row in rows:
         cols = row.find_all(['td', 'th'])
         if not cols:
             continue
         
-        # Prendi il testo pulito
         row_data = [c.get_text(strip=True) for c in cols]
         
         # Salta righe vuote o di intestazione
         if not row_data or len(row_data) < 3:
             continue
         
-        # Estrai i dati
         nome = row_data[col_map['nome']] if col_map['nome'] < len(row_data) else ''
         if not nome or len(nome) < 2:
             continue
@@ -114,11 +159,9 @@ def parse_quotazioni(html):
         
         squadra = row_data[col_map['squadra']] if col_map['squadra'] < len(row_data) else ''
         
-        # Estrai valori numerici (rimuovi eventuali simboli)
         def parse_num(val):
             if not val:
                 return 0
-            # Rimuovi tutto tranne numeri, punto e virgola
             clean = re.sub(r'[^\d,.]', '', str(val))
             clean = clean.replace(',', '.')
             try:
@@ -129,7 +172,6 @@ def parse_quotazioni(html):
         qta = parse_num(row_data[col_map['qta']]) if col_map.get('qta') is not None and col_map['qta'] < len(row_data) else 0
         fvm = parse_num(row_data[col_map['fvm']]) if col_map.get('fvm') is not None and col_map['fvm'] < len(row_data) else 0
         
-        # ID univoco basato su nome + squadra + ruolo
         player_id = f"p_{nome.lower().replace(' ', '_')}_{squadra.lower().replace(' ', '_')}"
         
         players.append({
@@ -151,15 +193,38 @@ def parse_statistiche(html):
     
     # Cerca la tabella delle statistiche
     table = None
-    tables = soup.find_all('table')
-    for t in tables:
-        header_text = ' '.join([th.get_text(strip=True) for th in t.find_all('th')])
-        if any(k in header_text.upper() for k in ['PRESENZE', 'PV', 'MEDIA', 'FANTAMEDIA']):
-            table = t
-            break
+    
+    # Prova diversi selettori
+    selectors = [
+        'table.table-striped',
+        'table.table-bordered',
+        'table[class*="stat"]',
+        'div.table-responsive table',
+        '.statistiche-table',
+        '#statistiche table'
+    ]
+    
+    for selector in selectors:
+        try:
+            found = soup.select(selector)
+            if found:
+                table = found[0]
+                break
+        except:
+            continue
     
     if not table:
-        print("ERRORE: Tabella statistiche non trovata", file=sys.stderr)
+        tables = soup.find_all('table')
+        for t in tables:
+            header_text = ' '.join([th.get_text(strip=True) for th in t.find_all('th')])
+            if any(k in header_text.upper() for k in ['PRESENZE', 'PV', 'MEDIA', 'FANTAMEDIA']):
+                table = t
+                break
+    
+    if not table:
+        with open('data/debug_statistiche.html', 'w', encoding='utf-8') as f:
+            f.write(html)
+        print("ERRORE: Tabella statistiche non trovata. HTML salvato in data/debug_statistiche.html", file=sys.stderr)
         return None
     
     # Estrai header
@@ -197,7 +262,6 @@ def parse_statistiche(html):
         elif 'ESP' in h_clean or 'ESPULSIONI' in h_clean:
             col_map['esp'] = i
     
-    # Fallback
     if 'nome' not in col_map:
         col_map = {'nome': 0, 'squadra': 1, 'pv': 2, 'mv': 3, 'fm': 4}
     
@@ -243,27 +307,17 @@ def parse_indisponibili(html):
     soup = BeautifulSoup(html, 'html.parser')
     injured = []
     
-    # Cerca nella pagina tutti i nomi associati a infortuni
-    # Cerca pattern comuni: "infortunato", "stop", "out"
     text = soup.get_text()
     
     # Cerca sezioni specifiche
     for section in soup.find_all(['div', 'section', 'article', 'table']):
         section_text = section.get_text()
         if any(k in section_text.lower() for k in ['infortun', 'stop', 'out', 'indispon', 'squalif']):
-            # Cerca nomi nella sezione (parole con almeno una maiuscola)
             names = re.findall(r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)', section_text)
             injured.extend(names)
     
-    # Cerca anche nella pagina intera, ma con più attenzione
     all_names = re.findall(r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)', text)
-    # Filtra per contesto di infortunio
-    for name in all_names:
-        if len(name) > 3:
-            injured.append(name)
-    
-    # Rimuovi duplicati e parole comuni non nomi
-    common_words = {'Dopo', 'Sarà', 'Senza', 'Dalla', 'Delle', 'Degli', 'Altre', 'Prima', 'Oggi', 'Martedi'}
+    common_words = {'Dopo', 'Sarà', 'Senza', 'Dalla', 'Delle', 'Degli', 'Altre', 'Prima', 'Oggi', 'Martedi', 'Giovedi', 'Venerdi', 'Sabato', 'Domenica', 'Lunedì', 'Martedì'}
     injured = [n for n in set(injured) if n not in common_words and len(n) > 3]
     
     return injured
@@ -280,24 +334,13 @@ def save_csv(data, path, headers):
     return True
 
 
-def fetch_page(url):
-    """Scarica una pagina HTML."""
-    try:
-        resp = requests.get(url, headers=HEADERS, timeout=30)
-        resp.raise_for_status()
-        return resp.text
-    except requests.RequestException as e:
-        print(f"ERRORE scaricando {url}: {e}", file=sys.stderr)
-        return None
-
-
 def main():
     os.makedirs("data", exist_ok=True)
     ok = True
     
     # 1. Quotazioni
     print("Scarico quotazioni...")
-    html = fetch_page(URLS["quotazioni"])
+    html = fetch_with_js(URLS["quotazioni"])
     if html:
         players = parse_quotazioni(html)
         if players:
@@ -315,7 +358,7 @@ def main():
     
     # 2. Statistiche
     print("Scarico statistiche...")
-    html = fetch_page(URLS["statistiche"])
+    html = fetch_with_js(URLS["statistiche"])
     if html:
         stats = parse_statistiche(html)
         if stats:
@@ -331,9 +374,9 @@ def main():
     else:
         ok = False
     
-    # 3. Indisponibili (opzionale, per arricchire i dati)
+    # 3. Indisponibili
     print("Scarico indisponibili...")
-    html = fetch_page(URLS["indisponibili"])
+    html = fetch_with_js(URLS["indisponibili"])
     if html:
         injured = parse_indisponibili(html)
         if injured:
