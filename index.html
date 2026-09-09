@@ -453,7 +453,6 @@ th.stat-col, td.stat-col{color:var(--text-dim);}
               <option value="">Tutti</option>
               <option value="ok">OK</option>
               <option value="infortunato">Infortunato ora</option>
-              <option value="rotto">Rotto in passato</option>
             </select>
           </div>
           <div class="col">
@@ -612,7 +611,6 @@ th.stat-col, td.stat-col{color:var(--text-dim);}
               <option value="">Tutti</option>
               <option value="ok">OK</option>
               <option value="infortunato">Infortunato ora</option>
-              <option value="rotto">Rotto in passato</option>
             </select>
           </div>
           <div class="col">
@@ -768,7 +766,7 @@ th.stat-col, td.stat-col{color:var(--text-dim);}
 const STORAGE_KEY = 'fwr_state_v1';
 const ROLE_WEIGHTS = {P:0.05, D:0.20, C:0.30, A:0.45};
 const ROLE_LABELS = {P:'Portiere', D:'Difensore', C:'Centrocampista', A:'Attaccante'};
-const STATUS_LABELS = {ok:'OK', infortunato:'Infortunato ora', rotto:'Rotto in passato'};
+const STATUS_LABELS = {ok:'OK', infortunato:'Infortunato ora'};
 const STARTER_LABELS = {titolare:'Titolare', secondo:'Ballottaggio / Secondo', panchinaro:'Panchinaro'};
 let showStatCols = false;
 
@@ -891,7 +889,7 @@ function parseSheetRows(rows){
     if(normed.includes('NOME')){
       headerIdx = i;
       normed.forEach((h,idx)=>{
-        if(h==='R' || h==='RUOLO') colMap.ruolo = idx;
+        if(h==='R') colMap.ruolo = idx;
         else if(h==='NOME') colMap.nome = idx;
         else if(h==='SQUADRA') colMap.squadra = idx;
         else if(h==='QTA' && colMap.qta===undefined) colMap.qta = idx;
@@ -1263,8 +1261,8 @@ el('statsPastePrevBtn').addEventListener('click', function(){
 async function fetchWorkbook(path){
   const res = await fetch(path + '?_=' + Date.now(), {cache:'no-store'});
   if(!res.ok) throw new Error('HTTP ' + res.status);
-  const text = await res.text();
-  return XLSX.read(text, {type:'string'});
+  const buf = await res.arrayBuffer();
+  return XLSX.read(new Uint8Array(buf), {type:'array'});
 }
 
 async function autoFetchAndImport(opts){
@@ -1272,10 +1270,10 @@ async function autoFetchAndImport(opts){
   const silent = !!opts.silent;
   const setStatus = (msg)=>{ const s = el('autoFetchStatus'); if(s) s.textContent = msg; };
   if(!silent) setStatus('Controllo in corso...');
-  let quotazioniOk = false, statsOk = false, prevOk = false, indispOk = false;
+  let quotazioniOk = false, statsOk = false;
 
   try{
-    const wb = await fetchWorkbook('data/quotazioni.csv');
+    const wb = await fetchWorkbook('data/quotazioni.xlsx');
     const players = importFromWorkbook(wb);
     if(players && players.length){
       applyImportedPlayers(players);
@@ -1286,7 +1284,7 @@ async function autoFetchAndImport(opts){
   }
 
   try{
-    const wb2 = await fetchWorkbook('data/stats_curr.csv');
+    const wb2 = await fetchWorkbook('data/stats_curr.xlsx');
     const rows = workbookToRows(wb2);
     handleStatsImport(rows, 'curr', 'stagione corrente');
     statsOk = true;
@@ -1294,31 +1292,9 @@ async function autoFetchAndImport(opts){
     console.warn('Auto-fetch statistiche non riuscito:', err);
   }
 
-  try{
-    const wb3 = await fetchWorkbook('data/stats_prev.csv');
-    const rows = workbookToRows(wb3);
-    handleStatsImport(rows, 'prev', 'stagione precedente');
-    prevOk = true;
-  }catch(err){
-    console.warn('Auto-fetch statistiche stagione precedente non riuscito:', err);
-  }
-
-  try{
-    const wb4 = await fetchWorkbook('data/indisponibili.csv');
-    const rows = workbookToRows(wb4);
-    const parsed = parseIndisponibiliRows(rows);
-    if(parsed){
-      mergeIndisponibiliIntoPlayers(parsed);
-      indispOk = true;
-    }
-  }catch(err){
-    console.warn('Auto-fetch indisponibili non riuscito:', err);
-  }
-
-  if(quotazioniOk || statsOk || prevOk || indispOk){
+  if(quotazioniOk || statsOk){
     const when = new Date().toLocaleString('it-IT');
-    setStatus(`Aggiornato automaticamente alle ${when}.`);
-    renderAll();
+    setStatus(`Aggiornato automaticamente alle ${when}${quotazioniOk?'':' (solo statistiche)'}${statsOk?'':' (solo quotazioni)'}.`);
   }else if(!silent){
     setStatus('Nessun dato automatico trovato ancora: aspetta che GitHub Actions giri la prima volta, oppure importa a mano qui sotto.');
   }
@@ -1333,110 +1309,12 @@ if(autoFetchBtnEl){
 // (prima esecuzione del workflow non ancora avvenuta) fallisce in silenzio.
 autoFetchAndImport({silent:true});
 
-/* ---- import automatico indisponibili (infortunati/squalificati) da data/indisponibili.csv ---- */
-function parseIndisponibiliRows(rows){
-  let headerIdx = -1, colMap = {};
-  for(let i=0;i<Math.min(rows.length,10);i++){
-    const row = rows[i] || [];
-    const normed = row.map(normHeader);
-    if(normed.includes('NOME')){
-      headerIdx = i;
-      normed.forEach((h,idx)=>{
-        if(h==='NOME') colMap.nome = idx;
-        else if(h==='SQUADRA') colMap.squadra = idx;
-        else if(h==='CATEGORIA') colMap.categoria = idx;
-        else if(h==='DETTAGLIO') colMap.dettaglio = idx;
-      });
-      break;
-    }
-  }
-  if(headerIdx===-1 || colMap.nome===undefined) return null;
-
-  const out = [];
-  for(let i=headerIdx+1;i<rows.length;i++){
-    const row = rows[i] || [];
-    const nome = String(row[colMap.nome]||'').trim();
-    const squadra = colMap.squadra!==undefined ? String(row[colMap.squadra]||'').trim() : '';
-    // le righe senza squadra sono testo introduttivo della pagina, non giocatori: si scartano
-    if(!nome || !squadra) continue;
-    out.push({
-      nome, squadra,
-      categoria: colMap.categoria!==undefined ? String(row[colMap.categoria]||'').trim().toLowerCase() : '',
-      dettaglio: colMap.dettaglio!==undefined ? String(row[colMap.dettaglio]||'').trim() : ''
-    });
-  }
-  return out;
-}
-
-function mergeIndisponibiliIntoPlayers(rows){
-  if(!rows) return {matched:0, total:0};
-  // azzera prima chi era stato segnato in automatico l'ultima volta: se un giocatore
-  // e' rientrato disponibile, nel nuovo CSV non compare piu' e va "sbloccato".
-  // Gli stati impostati a mano dall'utente (statusAuto non true) non vengono toccati.
-  state.players.forEach(p=>{
-    if(p.statusAuto){ p.status = 'ok'; p.statusNote = ''; p.statusAuto = false; }
-  });
-
-  const byName = {};
-  state.players.forEach(p=>{
-    const key = normName(p.nome);
-    if(!byName[key]) byName[key] = [];
-    byName[key].push(p);
-  });
-
-  let matched = 0;
-  rows.forEach(row=>{
-    const key = normName(row.nome);
-    const candidates = byName[key];
-    if(!candidates || !candidates.length) return;
-    const target = candidates.length===1 ? candidates[0]
-      : (candidates.find(p=> row.squadra && normName(p.squadra)===normName(row.squadra)) || candidates[0]);
-    // non sovrascrive uno stato impostato a mano dall'utente
-    if(target.status && target.status!=='ok' && !target.statusAuto) return;
-    target.status = 'infortunato';
-    target.statusNote = (row.categoria==='squalificati' ? 'Squalificato. ' : '') + (row.dettaglio||'');
-    target.statusAuto = true;
-    matched++;
-  });
-  saveState();
-  return {matched, total: rows.length};
-}
-
 /* ---- rilevamento automatico infortunati da testo incollato ---- */
 function normTextForMatch(s){
   return String(s||'')
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
     .toUpperCase()
     .replace(/[^A-Z0-9]+/g,' ');
-}
-// Estrae un estratto di testo leggibile intorno alla prima occorrenza di
-// "key" dentro il testo grezzo incollato (case-insensitive, senza toccare
-// gli accenti così le posizioni restano allineate al testo originale).
-// Si ferma a una riga vuota / doppio a-capo, oppure dopo un tot di
-// caratteri, per non "sconfinare" nel giocatore successivo della lista.
-function extractInjurySnippet(rawText, key){
-  if(!key) return '';
-  let re;
-  try{
-    re = new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi');
-  }catch(e){ return ''; }
-  let best = '';
-  let m;
-  while((m = re.exec(rawText))){
-    const rest = rawText.slice(m.index + m[0].length);
-    const stopMatch = rest.match(/\n\s*\n/);
-    const maxLen = 500;
-    let end = stopMatch ? stopMatch.index : rest.length;
-    if(end > maxLen) end = maxLen;
-    // pulizia: righe/spazi multipli -> singolo spazio
-    const snippet = rest.slice(0, end).replace(/\s+/g,' ').trim();
-    // tra tutte le occorrenze del nome nel testo (es. un riepilogo breve
-    // più in alto nella pagina e il paragrafo completo più sotto), teniamo
-    // quella più lunga: di solito è quella con i dettagli veri.
-    if(snippet.length > best.length) best = snippet;
-    if(re.lastIndex === m.index) re.lastIndex++;
-  }
-  return best;
 }
 el('detectInjuriesBtn').addEventListener('click', function(){
   const raw = el('injuryPasteInput').value;
@@ -1453,7 +1331,6 @@ el('detectInjuriesBtn').addEventListener('click', function(){
     const re = new RegExp('(^|\\s)'+key.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(\\s|$)');
     if(re.test(haystack)){
       p.status = 'infortunato';
-      p.statusNote = extractInjurySnippet(raw, key);
       matched.push(p.nome);
     }
   });
@@ -1547,8 +1424,6 @@ function renderAstaResults(){
   if(sort==='fvm_desc') list = list.slice().sort((a,b)=> (b.fvm||0)-(a.fvm||0));
   else if(sort==='nome_asc') list = list.slice().sort((a,b)=> a.nome.localeCompare(b.nome));
   else list = list.slice().sort((a,b)=> (b.qta||0)-(a.qta||0));
-
-  list = list.slice(0, 40);
 
   if(!list.length){
     container.innerHTML = '<div class="sr-row"><span class="sr-meta">Nessun giocatore trovato con questi filtri.</span></div>';
@@ -1725,8 +1600,7 @@ function statCellPrev(p){
 function statusBadge(p){
   const status = p.status || 'ok';
   const cls = status==='infortunato' ? 'badge-infortunato' : status==='rotto' ? 'badge-rotto' : 'badge-ok';
-  const title = p.statusNote ? ` title="${escapeHtml(p.statusNote)}"` : '';
-  return `<span class="badge ${cls}"${title}>${STATUS_LABELS[status]}</span>`;
+  return `<span class="badge ${cls}">${STATUS_LABELS[status] || 'OK'}</span>`;
 }
 function titolaritaBadge(p, compact){
   if(!p.titolarita) return compact ? '' : '<span class="hint" style="margin:0;">&mdash;</span>';
@@ -2366,11 +2240,8 @@ function drawPlayerDetail(){
   const titVal = p.titolarita || 'titolare';
 
   let warning = '';
-  if(statoVal === 'infortunato'){
-    warning = `<div class="pd-warning"><b>Segnato come infortunato ora.</b>${p.statusNote ? `<br><br>${escapeHtml(p.statusNote)}` : ''}<br><br>Valuta le alternative qui sotto prima di puntarlo in asta.</div>`;
-  }else if(statoVal === 'rotto'){
-    warning = `<div class="pd-warning"><b>Segnato come rotto in passato.</b>${p.statusNote ? `<br><br>${escapeHtml(p.statusNote)}` : ''}<br><br>Controlla costo e alternative prima di puntarlo in asta.</div>`;
-  }
+  if(statoVal === 'infortunato') warning = `<div class="pd-warning">Segnato come infortunato ora. Valuta le alternative qui sotto prima di puntarlo in asta.</div>`;
+  else if(statoVal === 'rotto') warning = `<div class="pd-warning">Segnato come rotto in passato. Controlla costo e alternative prima di puntarlo in asta.</div>`;
 
   if(!myTeamId || !teamById(myTeamId)) myTeamId = state.teams[0] && state.teams[0].id;
   const teamSelectOptions = state.teams.map(t=>`<option value="${t.id}" ${t.id===myTeamId?'selected':''}>${escapeHtml(t.name)}</option>`).join('');
@@ -2457,7 +2328,6 @@ function drawPlayerDetail(){
   el('pdCloseBtn').addEventListener('click', closePlayerDetail);
   el('pdStatus').addEventListener('change', function(){
     p.status = this.value;
-    if(this.value === 'ok') p.statusNote = '';
     saveState();
     drawPlayerDetail();
     renderAll();
