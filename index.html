@@ -1263,8 +1263,8 @@ el('statsPastePrevBtn').addEventListener('click', function(){
 async function fetchWorkbook(path){
   const res = await fetch(path + '?_=' + Date.now(), {cache:'no-store'});
   if(!res.ok) throw new Error('HTTP ' + res.status);
-  const buf = await res.arrayBuffer();
-  return XLSX.read(new Uint8Array(buf), {type:'array'});
+  const text = await res.text();
+  return XLSX.read(text, {type:'string'});
 }
 
 async function autoFetchAndImport(opts){
@@ -1275,7 +1275,7 @@ async function autoFetchAndImport(opts){
   let quotazioniOk = false, statsOk = false;
 
   try{
-    const wb = await fetchWorkbook('data/quotazioni.xlsx');
+    const wb = await fetchWorkbook('data/quotazioni.csv');
     const players = importFromWorkbook(wb);
     if(players && players.length){
       applyImportedPlayers(players);
@@ -1286,7 +1286,7 @@ async function autoFetchAndImport(opts){
   }
 
   try{
-    const wb2 = await fetchWorkbook('data/stats_curr.xlsx');
+    const wb2 = await fetchWorkbook('data/stats_curr.csv');
     const rows = workbookToRows(wb2);
     handleStatsImport(rows, 'curr', 'stagione corrente');
     statsOk = true;
