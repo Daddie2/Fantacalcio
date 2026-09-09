@@ -1546,8 +1546,6 @@ function renderAstaResults(){
   else if(sort==='nome_asc') list = list.slice().sort((a,b)=> a.nome.localeCompare(b.nome));
   else list = list.slice().sort((a,b)=> (b.qta||0)-(a.qta||0));
 
-  list = list.slice(0, 40);
-
   if(!list.length){
     container.innerHTML = '<div class="sr-row"><span class="sr-meta">Nessun giocatore trovato con questi filtri.</span></div>';
     return;
