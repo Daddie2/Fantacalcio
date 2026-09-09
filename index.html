@@ -453,7 +453,6 @@ th.stat-col, td.stat-col{color:var(--text-dim);}
               <option value="">Tutti</option>
               <option value="ok">OK</option>
               <option value="infortunato">Infortunato ora</option>
-              <option value="rotto">Rotto in passato</option>
             </select>
           </div>
           <div class="col">
@@ -612,7 +611,6 @@ th.stat-col, td.stat-col{color:var(--text-dim);}
               <option value="">Tutti</option>
               <option value="ok">OK</option>
               <option value="infortunato">Infortunato ora</option>
-              <option value="rotto">Rotto in passato</option>
             </select>
           </div>
           <div class="col">
@@ -630,7 +628,7 @@ th.stat-col, td.stat-col{color:var(--text-dim);}
           <input type="checkbox" id="toggleStatCols">
           <label for="toggleStatCols" style="margin:0;">Mostra colonne statistiche (Pv/Mv/Fm stagione corrente e precedente)</label>
         </div>
-        <p class="hint" style="margin-top:-8px;">Qt. = quotazione ufficiale (base 500 crediti). FVM = valore ufficiale (base 1000 crediti). "FVM a tuo budget" riscala l'FVM sui crediti impostati sopra. Lo "Stato" è manuale: segna infortunato o rotto in passato per tenerlo sott'occhio durante l'asta. La "Titolarità" è stimata in automatico dalle ultime partite fatte (con un turno di tolleranza per rotazioni/squalifiche), integrate con la stagione passata quando quella corrente ha ancora troppe poche partite; senza presenze utilizzabili (nuovi arrivi, o portieri di riserva che restano a zero presenze) si guarda invece la quotazione rispetto ai compagni di ruolo. Puoi sempre correggerla a mano dalla scheda del giocatore. La colonna giocatore resta visibile scorrendo la tabella. Clicca su un'intestazione di colonna per ordinare per quel valore (clicca di nuovo per invertire l'ordine).</p>
+        <p class="hint" style="margin-top:-8px;">Qt. = quotazione ufficiale (base 500 crediti). FVM = valore ufficiale (base 1000 crediti). "FVM a tuo budget" riscala l'FVM sui crediti impostati sopra. Lo "Stato" è manuale: segna infortunato per tenerlo sott'occhio durante l'asta. La "Titolarità" è stimata in automatico dalle ultime partite fatte (con un turno di tolleranza per rotazioni/squalifiche), integrate con la stagione passata quando quella corrente ha ancora troppe poche partite; senza presenze utilizzabili (nuovi arrivi, o portieri di riserva che restano a zero presenze) si guarda invece la quotazione rispetto ai compagni di ruolo. Puoi sempre correggerla a mano dalla scheda del giocatore. La colonna giocatore resta visibile scorrendo la tabella. Clicca su un'intestazione di colonna per ordinare per quel valore (clicca di nuovo per invertire l'ordine).</p>
         <div style="overflow-x:auto;">
         <table>
           <thead>
@@ -768,7 +766,7 @@ th.stat-col, td.stat-col{color:var(--text-dim);}
 const STORAGE_KEY = 'fwr_state_v1';
 const ROLE_WEIGHTS = {P:0.05, D:0.20, C:0.30, A:0.45};
 const ROLE_LABELS = {P:'Portiere', D:'Difensore', C:'Centrocampista', A:'Attaccante'};
-const STATUS_LABELS = {ok:'OK', infortunato:'Infortunato ora', rotto:'Rotto in passato'};
+const STATUS_LABELS = {ok:'OK', infortunato:'Infortunato ora'};
 const STARTER_LABELS = {titolare:'Titolare', secondo:'Ballottaggio / Secondo', panchinaro:'Panchinaro'};
 let showStatCols = false;
 
@@ -2368,8 +2366,6 @@ function drawPlayerDetail(){
   let warning = '';
   if(statoVal === 'infortunato'){
     warning = `<div class="pd-warning"><b>Segnato come infortunato ora.</b>${p.statusNote ? `<br><br>${escapeHtml(p.statusNote)}` : ''}<br><br>Valuta le alternative qui sotto prima di puntarlo in asta.</div>`;
-  }else if(statoVal === 'rotto'){
-    warning = `<div class="pd-warning"><b>Segnato come rotto in passato.</b>${p.statusNote ? `<br><br>${escapeHtml(p.statusNote)}` : ''}<br><br>Controlla costo e alternative prima di puntarlo in asta.</div>`;
   }
 
   if(!myTeamId || !teamById(myTeamId)) myTeamId = state.teams[0] && state.teams[0].id;
