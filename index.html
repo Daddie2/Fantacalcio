@@ -461,6 +461,7 @@ th.stat-col, td.stat-col{color:var(--text-dim);}
               <option value="qta_desc">Quotazione (alta-bassa)</option>
               <option value="fvm_desc">FVM (alto-basso)</option>
               <option value="nome_asc">Nome (A-Z)</option>
+              <option value="ruolo_asc">Ruolo (P-D-C-A)</option>
             </select>
           </div>
         </div>
@@ -621,6 +622,7 @@ th.stat-col, td.stat-col{color:var(--text-dim);}
               <option value="fm_curr_desc">Fantamedia stagione corrente</option>
               <option value="fm_prev_desc">Fantamedia stagione precedente</option>
               <option value="nome_asc">Nome (A-Z)</option>
+              <option value="ruolo_asc">Ruolo (P-D-C-A)</option>
             </select>
           </div>
         </div>
@@ -766,6 +768,7 @@ th.stat-col, td.stat-col{color:var(--text-dim);}
 const STORAGE_KEY = 'fwr_state_v1';
 const ROLE_WEIGHTS = {P:0.05, D:0.20, C:0.30, A:0.45};
 const ROLE_LABELS = {P:'Portiere', D:'Difensore', C:'Centrocampista', A:'Attaccante'};
+const ROLE_ORDER = {P:0, D:1, C:2, A:3};
 const STATUS_LABELS = {ok:'OK', infortunato:'Infortunato ora'};
 const STARTER_LABELS = {titolare:'Titolare', secondo:'Ballottaggio / Secondo', panchinaro:'Panchinaro'};
 let showStatCols = false;
@@ -1544,6 +1547,7 @@ function renderAstaResults(){
 
   if(sort==='fvm_desc') list = list.slice().sort((a,b)=> (b.fvm||0)-(a.fvm||0));
   else if(sort==='nome_asc') list = list.slice().sort((a,b)=> a.nome.localeCompare(b.nome));
+  else if(sort==='ruolo_asc') list = list.slice().sort((a,b)=> (ROLE_ORDER[a.ruolo]-ROLE_ORDER[b.ruolo]) || a.nome.localeCompare(b.nome));
   else list = list.slice().sort((a,b)=> (b.qta||0)-(a.qta||0));
 
   if(!list.length){
@@ -1773,6 +1777,7 @@ function drawListoneTable(){
   else if(sort==='fm_curr_desc') list.sort((a,b)=> ((b.stats&&b.stats.curr&&b.stats.curr.fm)||0)-((a.stats&&a.stats.curr&&a.stats.curr.fm)||0));
   else if(sort==='fm_prev_desc') list.sort((a,b)=> ((b.stats&&b.stats.prev&&b.stats.prev.fm)||0)-((a.stats&&a.stats.prev&&a.stats.prev.fm)||0));
   else if(sort==='nome_asc') list.sort((a,b)=> a.nome.localeCompare(b.nome));
+  else if(sort==='ruolo_asc') list.sort((a,b)=> (ROLE_ORDER[a.ruolo]-ROLE_ORDER[b.ruolo]) || a.nome.localeCompare(b.nome));
 
   document.querySelectorAll('#view-listone thead [data-sort-arrow]').forEach(span=>{
     span.textContent = span.dataset.sortArrow===listoneSort.key ? (listoneSort.dir===1?'▲':'▼') : '';
