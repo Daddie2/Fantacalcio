@@ -102,44 +102,28 @@ def extract_from_table(html, required_keywords):
 
 def extract_ruolo(row):
     """
-    Estrae il ruolo (P/D/C/A) da una riga della tabella quotazioni.
-    Il ruolo è quasi certamente un'icona (non testo semplice): si cerca
-    in ordine classe CSS -> alt/title immagine -> testo cella.
+    Estrae il ruolo Classic (P/D/C/A) da una riga della tabella quotazioni.
 
-    Se ritorna sempre '?', apri data/debug_quotazioni.html, guarda come
-    è marcato il ruolo in una riga giocatore (classe tipo "ruolo-p",
-    <img alt="Portiere">, <svg><use href="#icon-p">...) e adatta i
-    pattern sotto di conseguenza.
+    Fonte esatta, verificata sull'HTML reale del sito: l'attributo
+    data-filter-role-classic sul <tr> stesso, es.
+    <tr ... data-filter-role-classic="c" ...>. Non serve interpretare
+    icone o classi CSS.
     """
     valid = {'P', 'D', 'C', 'A'}
 
-    for tag in row.find_all(attrs={"class": True}):
-        classes = ' '.join(tag.get('class', [])).lower()
-        m = re.search(r'(?:ruolo|role|^r)[-_]?([pdca])\b', classes)
-        if m:
-            letter = m.group(1).upper()
-            if letter in valid:
-                return letter
+    val = (row.get('data-filter-role-classic') or '').strip().upper()
+    if val in valid:
+        return val
 
-    for tag in row.find_all(['img', 'span', 'div']):
-        for attr in ('alt', 'title'):
-            val = (tag.get(attr) or '').strip().upper()
-            if val in valid:
-                return val
-            if val.startswith('PORTIERE'):
-                return 'P'
-            if val.startswith('DIFENSORE'):
-                return 'D'
-            if val.startswith('CENTROCAMPISTA'):
-                return 'C'
-            if val.startswith('ATTACCANTE'):
-                return 'A'
-
-    cells = row.find_all(['td', 'th'])[:4]
-    for cell in cells:
-        text = cell.get_text(strip=True).upper()
-        if text in valid:
-            return text
+    # Fallback se l'attributo sparisse: data-value dello span dentro
+    # <th class="player-role-classic">
+    classic_th = row.find(class_='player-role-classic')
+    if classic_th:
+        span = classic_th.find('span', class_='role')
+        if span:
+            val2 = (span.get('data-value') or '').strip().upper()
+            if val2 in valid:
+                return val2
 
     return '?'
 
@@ -181,8 +165,6 @@ def parse_quotazioni(html):
 
     players = []
     rows = table.find_all('tr')[1:]
-    debug_row_ok = None
-    debug_row_unknown = None
     for row in rows:
         cols = row.find_all(['td', 'th'])
         row_data = [c.get_text(strip=True) for c in cols]
@@ -204,11 +186,6 @@ def parse_quotazioni(html):
 
         ruolo = extract_ruolo(row)
 
-        if ruolo != '?' and debug_row_ok is None:
-            debug_row_ok = (nome, row)
-        if ruolo == '?' and debug_row_unknown is None:
-            debug_row_unknown = (nome, row)
-
         players.append({
             'id': f"p_{nome.lower().replace(' ', '_').replace('.', '')}",
             'ruolo': ruolo,
@@ -217,15 +194,6 @@ def parse_quotazioni(html):
             'qta': qta,
             'fvm': fvm
         })
-
-    if debug_row_ok and debug_row_unknown:
-        print("\n--- DEBUG RUOLO: riga con ruolo RICONOSCIUTO "
-              f"({debug_row_ok[0]}) ---", file=sys.stderr)
-        print(debug_row_ok[1].prettify(), file=sys.stderr)
-        print("\n--- DEBUG RUOLO: riga con ruolo NON RICONOSCIUTO "
-              f"({debug_row_unknown[0]}) ---", file=sys.stderr)
-        print(debug_row_unknown[1].prettify(), file=sys.stderr)
-        print("--- FINE DEBUG RUOLO ---\n", file=sys.stderr)
 
     return players
 
