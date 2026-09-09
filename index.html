@@ -1172,6 +1172,9 @@ el('importPasteBtn').addEventListener('click', function(){
 
 /* ---- import statistiche ---- */
 function handleStatsImport(rows, seasonKey, seasonLabel){
+  // rows qui sono righe "grezze" in stile foglio Excel (array di array),
+  // come arrivano da un file XLSX/CSV caricato a mano o incollato: vanno
+  // prima interpretate con parseStatsRows (che individua l'header e le colonne).
   if(!state.players.length){
     el('statsImportStatus').innerHTML = '<b style="color:var(--red);">Importa prima il listone quotazioni</b>, poi le statistiche: senza i giocatori del listone non c\'è nulla a cui abbinarle.';
     return;
@@ -1180,6 +1183,25 @@ function handleStatsImport(rows, seasonKey, seasonLabel){
   if(!statsRows || !statsRows.length){
     el('statsImportStatus').innerHTML = '<b style="color:var(--red);">Non sono riuscito a leggere il file.</b> Servono almeno le colonne Nome/Calciatore (e idealmente Pv, Mv, Fm) in una delle prime 10 righe.';
     return;
+  }
+  applyParsedStats(statsRows, seasonKey, seasonLabel);
+}
+
+/*
+ * Qui invece statsRows sono già oggetti pronti {nome, squadra, pv, mv, fm, ...}
+ * — usata sia da handleStatsImport (dopo il parsing) sia direttamente
+ * dall'auto-fetch (che ha già i dati in questo formato e non deve
+ * ripassare da parseStatsRows, che si aspetta array-di-array e altrimenti
+ * va in errore su row.map).
+ */
+function applyParsedStats(statsRows, seasonKey, seasonLabel){
+  if(!state.players.length){
+    el('statsImportStatus').innerHTML = '<b style="color:var(--red);">Importa prima il listone quotazioni</b>, poi le statistiche: senza i giocatori del listone non c\'è nulla a cui abbinarle.';
+    return {matched:0, total:0};
+  }
+  if(!statsRows || !statsRows.length){
+    el('statsImportStatus').innerHTML = '<b style="color:var(--red);">Non sono riuscito a leggere i dati.</b>';
+    return {matched:0, total:0};
   }
   const {matched, total} = mergeStatsIntoPlayers(statsRows, seasonKey);
   let titolaritaMsg = '';
@@ -1195,6 +1217,7 @@ function handleStatsImport(rows, seasonKey, seasonLabel){
   applyStatColsVisibility();
   const table = document.querySelector('#listoneContent table');
   if(table) table.scrollIntoView({behavior:'smooth', block:'start'});
+  return {matched, total};
 }
 
 el('statsFileCurr').addEventListener('change', function(e){
@@ -1298,7 +1321,7 @@ async function autoFetchAndImport(opts){
     try{
         const statsRows = await fetchCSV('data/stats_curr.csv');
         if(statsRows && statsRows.length){
-            handleStatsImport(statsRows.map(toStatsEntry), 'curr', 'stagione corrente');
+            applyParsedStats(statsRows.map(toStatsEntry), 'curr', 'stagione corrente');
             statsCurrOk = true;
         }
     }catch(err){
@@ -1309,7 +1332,7 @@ async function autoFetchAndImport(opts){
     try{
         const statsPrevRows = await fetchCSV('data/stats_prev.csv');
         if(statsPrevRows && statsPrevRows.length){
-            handleStatsImport(statsPrevRows.map(toStatsEntry), 'prev', 'stagione precedente');
+            applyParsedStats(statsPrevRows.map(toStatsEntry), 'prev', 'stagione precedente');
             statsPrevOk = true;
         }
     }catch(err){
