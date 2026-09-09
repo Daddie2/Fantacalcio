@@ -6,6 +6,7 @@ import sys
 import re
 import csv
 import requests
+from datetime import date
 from bs4 import BeautifulSoup
 
 HEADERS = {
@@ -23,10 +24,37 @@ URLS = {
     "indisponibili": "https://www.fantacalcio.it/indisponibili-serie-a",
 }
 
+# Template per le pagine di statistiche di una stagione specifica (storiche).
+# La pagina statistiche-serie-a "semplice" (in URLS sopra) punta invece
+# sempre da sola alla stagione IN CORSO, senza bisogno di specificarla.
+STATS_SEASON_URL_TEMPLATE = "https://www.fantacalcio.it/statistiche-serie-a/{season}/italia"
+
 BLOCK_MARKERS = [
     "captcha", "attention required", "access denied",
     "just a moment", "checking your browser", "are you human",
 ]
+
+
+def current_season_label():
+    """
+    Calcola l'etichetta stagione corrente nel formato usato dal sito
+    (es. '2026-27'). La Serie A parte convenzionalmente ad agosto: se
+    siamo tra luglio e dicembre la stagione è annoCorrente-annoProssimo,
+    altrimenti annoScorso-annoCorrente.
+    """
+    today = date.today()
+    start_year = today.year if today.month >= 7 else today.year - 1
+    end_short = (start_year + 1) % 100
+    return f"{start_year}-{end_short:02d}"
+
+
+def previous_season_label():
+    """Etichetta della stagione precedente a quella corrente, stesso formato."""
+    today = date.today()
+    start_year = (today.year if today.month >= 7 else today.year - 1) - 1
+    end_short = (start_year + 1) % 100
+    return f"{start_year}-{end_short:02d}"
+
 
 
 def fetch_page(url):
@@ -253,23 +281,32 @@ def parse_statistiche(html):
 
 def parse_indisponibili(html):
     """
-    Estrae i nomi dei calciatori indisponibili (infortunati + squalificati).
+    Estrae i calciatori indisponibili (infortunati + squalificati), con
+    squadra e dettaglio (causa e tempi di rientro, testo libero così come
+    pubblicato dal sito - non lo spezzo in campi separati "causa"/"data"
+    perché il sito scrive tutto in prosa libera con formulazioni non
+    standardizzate, es. "da metà novembre", "recuperabile da inizio
+    ottobre": una regex sarebbe troppo fragile).
 
-    ATTENZIONE: questa pagina NON è una tabella. È organizzata per squadra:
-    icona/nome squadra -> sezione "Infortunati" (nomi in grassetto con
-    descrizione) -> sezione "Squalificati" -> sezione "Diffidati".
+    ATTENZIONE: questa pagina mostra solo la situazione ATTUALE. Non
+    esiste un archivio storico degli indisponibili per stagioni passate
+    su fantacalcio.it (a differenza delle statistiche), quindi non c'è
+    parametro stagione da gestire qui.
+
     I diffidati non vengono inclusi: sono ancora disponibili, solo a
     rischio squalifica alla prossima ammonizione.
     """
     soup = BeautifulSoup(html, 'html.parser')
-    injured = []
+    records = []
+    current_team = None
     current_category = None
     category_labels = {'infortunati', 'squalificati', 'diffidati'}
 
     for tag in soup.find_all(['img', 'a', 'strong', 'b']):
         if tag.name == 'img':
-            alt = (tag.get('alt') or '').strip().lower()
-            if alt.startswith('stemma'):
+            alt = (tag.get('alt') or '').strip()
+            if alt.lower().startswith('stemma'):
+                current_team = alt[len('Stemma'):].strip() or alt
                 current_category = 'infortunati'  # ogni squadra riparte da qui
             continue
 
@@ -285,13 +322,35 @@ def parse_indisponibili(html):
             continue
 
         if tag.name in ('strong', 'b') and current_category in ('infortunati', 'squalificati'):
-            if text and text != 'Nessuno' and len(text) > 1:
-                injured.append(text)
+            if not text or text == 'Nessuno' or len(text) <= 1:
+                continue
 
-    if not injured:
+            dettaglio = ''
+            parent = tag.find_parent(['li', 'p', 'div'])
+            if parent:
+                full_text = parent.get_text(' ', strip=True)
+                dettaglio = full_text[len(text):].strip(' :-') if full_text.startswith(text) else full_text
+
+            records.append({
+                'nome': text,
+                'squadra': current_team or '',
+                'categoria': current_category,
+                'dettaglio': dettaglio,
+            })
+
+    if not records:
         print("ATTENZIONE: nessun indisponibile estratto, struttura pagina cambiata", file=sys.stderr)
 
-    return sorted(set(injured))
+    # Rimuove eventuali duplicati esatti mantenendo l'ordine di apparizione
+    seen = set()
+    unique_records = []
+    for r in records:
+        key = (r['nome'], r['squadra'], r['categoria'])
+        if key not in seen:
+            seen.add(key)
+            unique_records.append(r)
+
+    return unique_records
 
 
 def save_csv(data, path, headers):
@@ -355,16 +414,42 @@ def main():
     else:
         ok = False
 
+    # 2b. Statistiche stagione precedente: dati storici, non cambiano più,
+    # quindi si scaricano una sola volta e poi si salta se già presenti.
+    prev_path = "data/stats_prev.csv"
+    if os.path.exists(prev_path):
+        print(f"Statistiche stagione precedente già presenti in {prev_path}, salto il download.")
+    else:
+        prev_season = previous_season_label()
+        print(f"Statistiche stagione precedente mancanti, scarico {prev_season}...")
+        prev_url = STATS_SEASON_URL_TEMPLATE.format(season=prev_season)
+        html_prev = fetch_page(prev_url)
+        if html_prev:
+            save_debug_html(html_prev, "data/debug_statistiche_prev.html")
+            stats_prev = parse_statistiche(html_prev)
+            if stats_prev:
+                headers = ['nome', 'squadra', 'pv', 'mv', 'fm']
+                if save_csv(stats_prev, prev_path, headers):
+                    print(f"OK: {prev_path} ({len(stats_prev)} giocatori, stagione {prev_season})")
+                else:
+                    print(f"ERRORE: impossibile salvare {prev_path}", file=sys.stderr)
+            else:
+                print(f"ERRORE: nessuna statistica estratta per la stagione {prev_season} "
+                      f"(controlla che l'URL/formato stagione sia corretto: {prev_url})", file=sys.stderr)
+        # Non blocchiamo l'intero run per un fallimento sul backfill storico:
+        # è un'informazione "nice to have", non i dati live dell'asta.
+
     print("Scarico indisponibili...")
     html = fetch_page(URLS["indisponibili"])
     if html:
         save_debug_html(html, "data/debug_indisponibili.html")
         injured = parse_indisponibili(html)
         if injured:
-            with open("data/indisponibili.txt", "w", encoding="utf-8") as f:
-                for name in injured:
-                    f.write(f"{name}\n")
-            print(f"OK: data/indisponibili.txt ({len(injured)} nomi)")
+            headers = ['nome', 'squadra', 'categoria', 'dettaglio']
+            if save_csv(injured, "data/indisponibili.csv", headers):
+                print(f"OK: data/indisponibili.csv ({len(injured)} giocatori)")
+            else:
+                print("ERRORE: impossibile salvare indisponibili.csv", file=sys.stderr)
 
     if not ok:
         print("ERRORE: alcuni file non sono stati scaricati/estratti correttamente", file=sys.stderr)
