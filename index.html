@@ -1122,6 +1122,8 @@ function applyImportedPlayers(players){
     if(old){
       if(old.status) p.status = old.status;
       if(old.statusNote) p.statusNote = old.statusNote;
+      if(old.statusManual) p.statusManual = old.statusManual;
+      if(old.statusAuto) p.statusAuto = old.statusAuto;
       if(old.stats) p.stats = old.stats;
       if(old.titolarita) p.titolarita = old.titolarita;
       if(old.titolaritaManual) p.titolaritaManual = old.titolaritaManual;
@@ -1262,7 +1264,7 @@ async function autoFetchAndImport(opts){
     const silent = !!opts.silent;
     const setStatus = (msg)=>{ const s = el('autoFetchStatus'); if(s) s.textContent = msg; };
     if(!silent) setStatus('Controllo in corso...');
-    let quotazioniOk = false, statsOk = false;
+    let quotazioniOk = false, statsCurrOk = false, statsPrevOk = false, injuriesOk = false;
 
     try{
         const rows = await fetchCSV('data/quotazioni.csv');
@@ -1283,31 +1285,59 @@ async function autoFetchAndImport(opts){
         if(!silent) setStatus('Quotazioni non trovate: ' + err.message);
     }
 
+    function toStatsEntry(row){
+        const entry = { nome: row.nome || '', squadra: row.squadra || '' };
+        ['pv', 'mv', 'fm', 'gf', 'gs', 'ass', 'amm', 'esp'].forEach(f => {
+            if(row[f] !== undefined && row[f] !== '') {
+                entry[f] = parseFloat(String(row[f]).replace(',', '.')) || 0;
+            }
+        });
+        return entry;
+    }
+
     try{
         const statsRows = await fetchCSV('data/stats_curr.csv');
         if(statsRows && statsRows.length){
-            // Converte i dati CSV nel formato atteso da handleStatsImport
-            const formattedStats = statsRows.map(row => {
-                const entry = { nome: row.nome || '', squadra: row.squadra || '' };
-                ['pv', 'mv', 'fm', 'gf', 'gs', 'ass', 'amm', 'esp'].forEach(f => {
-                    if(row[f] !== undefined && row[f] !== '') {
-                        entry[f] = parseFloat(String(row[f]).replace(',', '.')) || 0;
-                    }
-                });
-                return entry;
-            });
-            // handleStatsImport si aspetta un array di righe con header
-            handleStatsImport(formattedStats, 'curr', 'stagione corrente');
-            statsOk = true;
+            handleStatsImport(statsRows.map(toStatsEntry), 'curr', 'stagione corrente');
+            statsCurrOk = true;
         }
     }catch(err){
-        console.warn('Auto-fetch statistiche non riuscito:', err);
-        if(!silent) setStatus('Statistiche non trovate: ' + err.message);
+        console.warn('Auto-fetch statistiche stagione corrente non riuscito:', err);
+        if(!silent) setStatus('Statistiche stagione corrente non trovate: ' + err.message);
     }
 
-    if(quotazioniOk || statsOk){
+    try{
+        const statsPrevRows = await fetchCSV('data/stats_prev.csv');
+        if(statsPrevRows && statsPrevRows.length){
+            handleStatsImport(statsPrevRows.map(toStatsEntry), 'prev', 'stagione precedente');
+            statsPrevOk = true;
+        }
+    }catch(err){
+        console.warn('Auto-fetch statistiche stagione precedente non riuscito:', err);
+        // Non è un errore da mostrare come gli altri: la stagione precedente può
+        // legittimamente non essere ancora stata generata dal workflow.
+    }
+
+    try{
+        const injuryRows = await fetchCSV('data/indisponibili.csv');
+        if(injuryRows && injuryRows.length){
+            const {matched} = applyAutoInjuries(injuryRows);
+            injuriesOk = true;
+            if(!silent) console.log(`Indisponibili aggiornati automaticamente: ${matched} giocatori`);
+        }
+    }catch(err){
+        console.warn('Auto-fetch indisponibili non riuscito:', err);
+        if(!silent) setStatus('Elenco indisponibili non trovato: ' + err.message);
+    }
+
+    if(quotazioniOk || statsCurrOk || injuriesOk){
         const when = new Date().toLocaleString('it-IT');
-        setStatus(`Aggiornato automaticamente alle ${when}${quotazioniOk?'':' (solo statistiche)'}${statsOk?'':' (solo quotazioni)'}.`);
+        const parts = [];
+        if(!quotazioniOk) parts.push('quotazioni mancanti');
+        if(!statsCurrOk) parts.push('statistiche correnti mancanti');
+        if(!injuriesOk) parts.push('indisponibili mancanti');
+        setStatus(`Aggiornato automaticamente alle ${when}${parts.length? ' ('+parts.join(', ')+')' : ''}.`);
+        renderAll();
     }else if(!silent){
         setStatus('Nessun dato automatico trovato ancora: aspetta che GitHub Actions giri la prima volta, oppure importa a mano qui sotto.');
     }
@@ -1319,6 +1349,42 @@ if(autoFetchBtnEl){
 }
 // Al caricamento della pagina, prova a leggere i dati aggiornati da GitHub Actions
 autoFetchAndImport({silent:true});
+
+/* ---- infortunati/squalificati da data/indisponibili.csv (automatico) ---- */
+function applyAutoInjuries(rows){
+  if(!state.players.length || !rows || !rows.length) return {matched:0, total: rows?rows.length:0};
+  const byName = {};
+  state.players.forEach(p=>{
+    const key = normName(p.nome);
+    if(!byName[key]) byName[key] = [];
+    byName[key].push(p);
+  });
+  const matchedIds = new Set();
+  rows.forEach(row=>{
+    const key = normName(row.nome);
+    const candidates = byName[key];
+    if(!candidates || !candidates.length) return;
+    const target = candidates.length===1 ? candidates[0]
+      : (candidates.find(p=> row.squadra && normName(p.squadra)===normName(row.squadra)) || candidates[0]);
+    matchedIds.add(target.id);
+    if(!target.statusManual){
+      target.status = 'infortunato';
+      target.statusAuto = true;
+      const cat = (row.categoria||'').toLowerCase()==='squalificati' ? 'Squalificato' : 'Infortunato';
+      target.statusNote = [cat, row.dettaglio||''].filter(Boolean).join(': ');
+    }
+  });
+  // Chi era segnato automaticamente ma non è più nell'elenco è recuperato: torna OK
+  state.players.forEach(p=>{
+    if(p.statusAuto && !matchedIds.has(p.id)){
+      p.status = 'ok';
+      p.statusAuto = false;
+      p.statusNote = '';
+    }
+  });
+  saveState();
+  return {matched: matchedIds.size, total: rows.length};
+}
 
 /* ---- rilevamento automatico infortunati da testo incollato ---- */
 function normTextForMatch(s){
@@ -1340,6 +1406,8 @@ el('detectInjuriesBtn').addEventListener('click', function(){
     const re = new RegExp('(^|\\s)'+key.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(\\s|$)');
     if(re.test(haystack)){
       p.status = 'infortunato';
+      p.statusManual = true;
+      p.statusAuto = false;
       matched.push(p.nome);
     }
   });
@@ -1354,7 +1422,7 @@ el('detectInjuriesBtn').addEventListener('click', function(){
 });
 el('clearInjuriesBtn').addEventListener('click', function(){
   if(!confirm('Azzerare lo stato fisico (OK/Infortunato/Rotto) di tutti i giocatori?')) return;
-  state.players.forEach(p=>{ p.status = 'ok'; p.statusNote = ''; });
+  state.players.forEach(p=>{ p.status = 'ok'; p.statusNote = ''; p.statusManual = false; p.statusAuto = false; });
   saveState();
   el('injuryDetectStatus').textContent = 'Stati fisici azzerati.';
   renderAll();
@@ -1611,7 +1679,8 @@ function statCellPrev(p){
 function statusBadge(p){
   const status = p.status || 'ok';
   const cls = status==='infortunato' ? 'badge-infortunato' : status==='rotto' ? 'badge-rotto' : 'badge-ok';
-  return `<span class="badge ${cls}">${STATUS_LABELS[status]}</span>`;
+  const titleAttr = p.statusNote ? ` title="${escapeAttr(p.statusNote)}"` : '';
+  return `<span class="badge ${cls}"${titleAttr}>${STATUS_LABELS[status]}</span>`;
 }
 function titolaritaBadge(p, compact){
   if(!p.titolarita) return compact ? '' : '<span class="hint" style="margin:0;">&mdash;</span>';
@@ -1688,7 +1757,7 @@ function drawListoneTable(){
       <td class="stat-col num" data-stat-col style="display:${showStatCols?'':'none'}">${statCellPrev(p)}</td>
       <td class="stat-col" data-stat-col style="display:${showStatCols?'':'none'}">${titolaritaBadge(p)}</td>
       <td>
-        <select class="status-select" data-status-for="${p.id}">${statusOptions}</select>
+        <select class="status-select" data-status-for="${p.id}" ${p.statusNote?`title="${escapeAttr(p.statusNote)}"`:''}>${statusOptions}</select>
       </td>
       <td>${dispoHtml}</td>
       <td>${assignHtml}</td>
@@ -1705,6 +1774,8 @@ function drawListoneTable(){
       const p = playerById(this.dataset.statusFor);
       if(!p) return;
       p.status = this.value;
+      p.statusManual = true;
+      p.statusAuto = false;
       saveState();
       renderAsta();
     });
@@ -2247,8 +2318,8 @@ function drawPlayerDetail(){
   const titVal = p.titolarita || 'titolare';
 
   let warning = '';
-  if(statoVal === 'infortunato') warning = `<div class="pd-warning">Segnato come infortunato ora. Valuta le alternative qui sotto prima di puntarlo in asta.</div>`;
-  else if(statoVal === 'rotto') warning = `<div class="pd-warning">Segnato come rotto in passato. Controlla costo e alternative prima di puntarlo in asta.</div>`;
+  if(statoVal === 'infortunato') warning = `<div class="pd-warning">Segnato come infortunato ora${p.statusNote? ': '+escapeHtml(p.statusNote) : ''}. Valuta le alternative qui sotto prima di puntarlo in asta.</div>`;
+  else if(statoVal === 'rotto') warning = `<div class="pd-warning">Segnato come rotto in passato${p.statusNote? ': '+escapeHtml(p.statusNote) : ''}. Controlla costo e alternative prima di puntarlo in asta.</div>`;
 
   if(!myTeamId || !teamById(myTeamId)) myTeamId = state.teams[0] && state.teams[0].id;
   const teamSelectOptions = state.teams.map(t=>`<option value="${t.id}" ${t.id===myTeamId?'selected':''}>${escapeHtml(t.name)}</option>`).join('');
@@ -2280,6 +2351,10 @@ function drawPlayerDetail(){
         <select id="pdStatus" class="status-select" style="width:100%;">
           ${Object.keys(STATUS_LABELS).map(k=>`<option value="${k}" ${k===statoVal?'selected':''}>${STATUS_LABELS[k]}</option>`).join('')}
         </select>
+        <p class="hint" style="margin:4px 0 0 0;">
+          ${p.statusManual ? 'Impostato a mano da te.' : (p.statusAuto ? 'Rilevato automaticamente dall\'elenco indisponibili del sito.' : '')}
+          ${p.statusNote ? ' &middot; ' + escapeHtml(p.statusNote) : ''}
+        </p>
       </div>
       <div class="col">
         <label>Titolarità</label>
@@ -2335,6 +2410,8 @@ function drawPlayerDetail(){
   el('pdCloseBtn').addEventListener('click', closePlayerDetail);
   el('pdStatus').addEventListener('change', function(){
     p.status = this.value;
+    p.statusManual = true;
+    p.statusAuto = false;
     saveState();
     drawPlayerDetail();
     renderAll();
