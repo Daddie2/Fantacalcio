@@ -1327,20 +1327,25 @@ function extractInjurySnippet(rawText, key){
   if(!key) return '';
   let re;
   try{
-    re = new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i');
+    re = new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi');
   }catch(e){ return ''; }
-  const m = re.exec(rawText);
-  if(!m) return '';
-  const start = m.index;
-  const rest = rawText.slice(start);
-  const stopMatch = rest.match(/\n\s*\n/);
-  const maxLen = 500;
-  let end = stopMatch ? stopMatch.index : rest.length;
-  if(end > maxLen) end = maxLen;
-  let snippet = rest.slice(0, end);
-  // pulizia: righe/spazi multipli -> singolo spazio
-  snippet = snippet.replace(/\s+/g,' ').trim();
-  return snippet;
+  let best = '';
+  let m;
+  while((m = re.exec(rawText))){
+    const rest = rawText.slice(m.index + m[0].length);
+    const stopMatch = rest.match(/\n\s*\n/);
+    const maxLen = 500;
+    let end = stopMatch ? stopMatch.index : rest.length;
+    if(end > maxLen) end = maxLen;
+    // pulizia: righe/spazi multipli -> singolo spazio
+    const snippet = rest.slice(0, end).replace(/\s+/g,' ').trim();
+    // tra tutte le occorrenze del nome nel testo (es. un riepilogo breve
+    // più in alto nella pagina e il paragrafo completo più sotto), teniamo
+    // quella più lunga: di solito è quella con i dettagli veri.
+    if(snippet.length > best.length) best = snippet;
+    if(re.lastIndex === m.index) re.lastIndex++;
+  }
+  return best;
 }
 el('detectInjuriesBtn').addEventListener('click', function(){
   const raw = el('injuryPasteInput').value;
