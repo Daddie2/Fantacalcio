@@ -1272,7 +1272,7 @@ async function autoFetchAndImport(opts){
   const silent = !!opts.silent;
   const setStatus = (msg)=>{ const s = el('autoFetchStatus'); if(s) s.textContent = msg; };
   if(!silent) setStatus('Controllo in corso...');
-  let quotazioniOk = false, statsOk = false;
+  let quotazioniOk = false, statsOk = false, prevOk = false, indispOk = false;
 
   try{
     const wb = await fetchWorkbook('data/quotazioni.csv');
@@ -1294,9 +1294,31 @@ async function autoFetchAndImport(opts){
     console.warn('Auto-fetch statistiche non riuscito:', err);
   }
 
-  if(quotazioniOk || statsOk){
+  try{
+    const wb3 = await fetchWorkbook('data/stats_prev.csv');
+    const rows = workbookToRows(wb3);
+    handleStatsImport(rows, 'prev', 'stagione precedente');
+    prevOk = true;
+  }catch(err){
+    console.warn('Auto-fetch statistiche stagione precedente non riuscito:', err);
+  }
+
+  try{
+    const wb4 = await fetchWorkbook('data/indisponibili.csv');
+    const rows = workbookToRows(wb4);
+    const parsed = parseIndisponibiliRows(rows);
+    if(parsed){
+      mergeIndisponibiliIntoPlayers(parsed);
+      indispOk = true;
+    }
+  }catch(err){
+    console.warn('Auto-fetch indisponibili non riuscito:', err);
+  }
+
+  if(quotazioniOk || statsOk || prevOk || indispOk){
     const when = new Date().toLocaleString('it-IT');
-    setStatus(`Aggiornato automaticamente alle ${when}${quotazioniOk?'':' (solo statistiche)'}${statsOk?'':' (solo quotazioni)'}.`);
+    setStatus(`Aggiornato automaticamente alle ${when}.`);
+    renderAll();
   }else if(!silent){
     setStatus('Nessun dato automatico trovato ancora: aspetta che GitHub Actions giri la prima volta, oppure importa a mano qui sotto.');
   }
@@ -1310,6 +1332,75 @@ if(autoFetchBtnEl){
 // in automatico, senza bisogno di alcun intervento. Se i file non esistono ancora
 // (prima esecuzione del workflow non ancora avvenuta) fallisce in silenzio.
 autoFetchAndImport({silent:true});
+
+/* ---- import automatico indisponibili (infortunati/squalificati) da data/indisponibili.csv ---- */
+function parseIndisponibiliRows(rows){
+  let headerIdx = -1, colMap = {};
+  for(let i=0;i<Math.min(rows.length,10);i++){
+    const row = rows[i] || [];
+    const normed = row.map(normHeader);
+    if(normed.includes('NOME')){
+      headerIdx = i;
+      normed.forEach((h,idx)=>{
+        if(h==='NOME') colMap.nome = idx;
+        else if(h==='SQUADRA') colMap.squadra = idx;
+        else if(h==='CATEGORIA') colMap.categoria = idx;
+        else if(h==='DETTAGLIO') colMap.dettaglio = idx;
+      });
+      break;
+    }
+  }
+  if(headerIdx===-1 || colMap.nome===undefined) return null;
+
+  const out = [];
+  for(let i=headerIdx+1;i<rows.length;i++){
+    const row = rows[i] || [];
+    const nome = String(row[colMap.nome]||'').trim();
+    const squadra = colMap.squadra!==undefined ? String(row[colMap.squadra]||'').trim() : '';
+    // le righe senza squadra sono testo introduttivo della pagina, non giocatori: si scartano
+    if(!nome || !squadra) continue;
+    out.push({
+      nome, squadra,
+      categoria: colMap.categoria!==undefined ? String(row[colMap.categoria]||'').trim().toLowerCase() : '',
+      dettaglio: colMap.dettaglio!==undefined ? String(row[colMap.dettaglio]||'').trim() : ''
+    });
+  }
+  return out;
+}
+
+function mergeIndisponibiliIntoPlayers(rows){
+  if(!rows) return {matched:0, total:0};
+  // azzera prima chi era stato segnato in automatico l'ultima volta: se un giocatore
+  // e' rientrato disponibile, nel nuovo CSV non compare piu' e va "sbloccato".
+  // Gli stati impostati a mano dall'utente (statusAuto non true) non vengono toccati.
+  state.players.forEach(p=>{
+    if(p.statusAuto){ p.status = 'ok'; p.statusNote = ''; p.statusAuto = false; }
+  });
+
+  const byName = {};
+  state.players.forEach(p=>{
+    const key = normName(p.nome);
+    if(!byName[key]) byName[key] = [];
+    byName[key].push(p);
+  });
+
+  let matched = 0;
+  rows.forEach(row=>{
+    const key = normName(row.nome);
+    const candidates = byName[key];
+    if(!candidates || !candidates.length) return;
+    const target = candidates.length===1 ? candidates[0]
+      : (candidates.find(p=> row.squadra && normName(p.squadra)===normName(row.squadra)) || candidates[0]);
+    // non sovrascrive uno stato impostato a mano dall'utente
+    if(target.status && target.status!=='ok' && !target.statusAuto) return;
+    target.status = 'infortunato';
+    target.statusNote = (row.categoria==='squalificati' ? 'Squalificato. ' : '') + (row.dettaglio||'');
+    target.statusAuto = true;
+    matched++;
+  });
+  saveState();
+  return {matched, total: rows.length};
+}
 
 /* ---- rilevamento automatico infortunati da testo incollato ---- */
 function normTextForMatch(s){
