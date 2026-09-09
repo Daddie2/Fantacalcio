@@ -22,15 +22,15 @@ jobs:
           python-version: '3.12'
 
       - name: Installa dipendenze
-        run: pip install -r requirements.txt
+        run: pip install requests beautifulsoup4
 
-      - name: Scarica i dati da fantacalcio.it
-        run: python scripts/fetch_fantacalcio_data.py
+      - name: Scarica i file da fantacalcio.it
+        run: python scripts/scrape_fantacalcio.py
 
       - name: Committa se qualcosa è cambiato
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/quotazioni.csv data/stats_curr.csv data/stats_prev.csv data/indisponibili.csv
+          git add data/quotazioni.csv data/stats_curr.csv
           git diff --cached --quiet || git commit -m "Aggiorna dati fantacalcio.it [skip ci]"
           git push
