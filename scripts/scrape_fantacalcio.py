@@ -321,7 +321,7 @@ def parse_indisponibili(html):
             current_category = text_lower
             continue
 
-        if tag.name in ('strong', 'b') and current_category in ('infortunati', 'squalificati'):
+        if tag.name in ('strong', 'b') and current_team and current_category in ('infortunati', 'squalificati'):
             if not text or text == 'Nessuno' or len(text) <= 1:
                 continue
 
