@@ -891,7 +891,7 @@ function parseSheetRows(rows){
     if(normed.includes('NOME')){
       headerIdx = i;
       normed.forEach((h,idx)=>{
-        if(h==='R') colMap.ruolo = idx;
+        if(h==='R' || h==='RUOLO') colMap.ruolo = idx;
         else if(h==='NOME') colMap.nome = idx;
         else if(h==='SQUADRA') colMap.squadra = idx;
         else if(h==='QTA' && colMap.qta===undefined) colMap.qta = idx;
