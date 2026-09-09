@@ -181,6 +181,8 @@ def parse_quotazioni(html):
 
     players = []
     rows = table.find_all('tr')[1:]
+    debug_row_ok = None
+    debug_row_unknown = None
     for row in rows:
         cols = row.find_all(['td', 'th'])
         row_data = [c.get_text(strip=True) for c in cols]
@@ -202,6 +204,11 @@ def parse_quotazioni(html):
 
         ruolo = extract_ruolo(row)
 
+        if ruolo != '?' and debug_row_ok is None:
+            debug_row_ok = (nome, row)
+        if ruolo == '?' and debug_row_unknown is None:
+            debug_row_unknown = (nome, row)
+
         players.append({
             'id': f"p_{nome.lower().replace(' ', '_').replace('.', '')}",
             'ruolo': ruolo,
@@ -210,6 +217,15 @@ def parse_quotazioni(html):
             'qta': qta,
             'fvm': fvm
         })
+
+    if debug_row_ok and debug_row_unknown:
+        print("\n--- DEBUG RUOLO: riga con ruolo RICONOSCIUTO "
+              f"({debug_row_ok[0]}) ---", file=sys.stderr)
+        print(debug_row_ok[1].prettify(), file=sys.stderr)
+        print("\n--- DEBUG RUOLO: riga con ruolo NON RICONOSCIUTO "
+              f"({debug_row_unknown[0]}) ---", file=sys.stderr)
+        print(debug_row_unknown[1].prettify(), file=sys.stderr)
+        print("--- FINE DEBUG RUOLO ---\n", file=sys.stderr)
 
     return players
 
