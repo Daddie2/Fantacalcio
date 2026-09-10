@@ -557,7 +557,7 @@ p_biraghi,D,Biraghi,TOR,1.0,5.0
 p_ilic,C,Ilic,LEC,1.0,10.0
 p_anjorin*,C,Anjorin*,TOR,1.0,4.0
 p_padelli,P,Padelli,UDI,1.0,1.0
-p_piana,P,Piana,UDI,1.0,1.0
+p_piana*,P,Piana*,UDI,1.0,1.0
 p_mlacic*,D,Mlacic*,UDI,1.0,3.0
 p_camara_a*,C,Camara A.*,UDI,1.0,3.0
 p_chakvetadze,C,Chakvetadze,UDI,1.0,6.0
@@ -593,3 +593,4 @@ p_ghidotti,P,Ghidotti,PAR,1.0,1.0
 p_robinho_junior,A,Robinho Junior,GEN,1.0,2.0
 p_pompei,P,Pompei,ATA,1.0,1.0
 p_sierro,C,Sierro,PAR,1.0,1.0
+p_libra,C,Libra,BOL,1.0,1.0
