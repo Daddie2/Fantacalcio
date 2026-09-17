@@ -29,7 +29,7 @@ p_wesley,D,Wesley,ROM,18.0,87.0
 p_berardi,A,Berardi,SAS,18.0,106.0
 p_molina_n,D,Molina N.,ROM,18.0,63.0
 p_krstovic,A,Krstovic,ATA,17.0,90.0
-p_de_bruyne,C,De Bruyne,NAP,17.0,103.0
+p_de_bruyne,C,De Bruyne,NAP,17.0,97.0
 p_zaniolo,C,Zaniolo,UDI,17.0,73.0
 p_carnesecchi,P,Carnesecchi,ATA,16.0,56.0
 p_de_ketelaere,A,De Ketelaere,ATA,16.0,86.0
@@ -54,7 +54,7 @@ p_rrahmani,D,Rrahmani,NAP,14.0,51.0
 p_santos_a,A,Santos A.,NAP,14.0,55.0
 p_castro_s,A,Castro S.,ROM,14.0,60.0
 p_simeone,A,Simeone,TOR,14.0,63.0
-p_mastantuono,C,Mastantuono,FIO,14.0,39.0
+p_mastantuono,C,Mastantuono,FIO,14.0,70.0
 p_beto,A,Beto,FIO,14.0,52.0
 p_samardzic,C,Samardzic,ATA,13.0,37.0
 p_raspadori,A,Raspadori,ATA,13.0,50.0
@@ -594,3 +594,4 @@ p_ghidotti,P,Ghidotti,PAR,1.0,1.0
 p_robinho_junior,A,Robinho Junior,GEN,1.0,2.0
 p_pompei,P,Pompei,ATA,1.0,1.0
 p_libra,C,Libra,BOL,1.0,1.0
+p_lovric,C,Lovric,UDI,1.0,1.0
