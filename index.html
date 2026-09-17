@@ -1964,12 +1964,18 @@ function drawRosterPanel(){
   const totalNeeded = ['P','D','C','A'].reduce((s,r)=> s + clamp0(state.slots[r]-countInRole(team,r)), 0);
   const maxBidValue = totalNeeded>0 ? Math.max(1, remaining - (totalNeeded-1)) : null;
 
+  const estimatedRosterCost = team.roster.reduce((s,r)=> s + (marketSuggestions[r.playerId] || 0), 0);
+  const rosterDelta = spent - estimatedRosterCost;
+  const deltaColor = rosterDelta>0 ? 'var(--red)' : (rosterDelta<0 ? 'var(--green)' : 'var(--text-faint)');
+  const deltaLabel = rosterDelta>0 ? `+${fmt(rosterDelta)} sul consigliato` : (rosterDelta<0 ? `${fmt(rosterDelta)} sul consigliato` : 'in linea col consigliato');
+
   let html = `
     <div class="stat-grid" style="margin-bottom:16px;">
       <div class="stat-box"><div class="label">Budget totale</div><div class="value">${fmt(team.budget)}</div></div>
       <div class="stat-box"><div class="label">Speso</div><div class="value gold">${fmt(spent)}</div></div>
       <div class="stat-box"><div class="label">Rimanente</div><div class="value ${remaining<0?'red':'green'}">${fmt(remaining)}</div></div>
       <div class="stat-box"><div class="label">Massimo spendibile</div><div class="value ${maxBidValue===null?'':'gold'}">${maxBidValue===null?'Rosa completa':fmt(maxBidValue)}</div></div>
+      <div class="stat-box"><div class="label">Costo stimato rosa</div><div class="value">${fmt(estimatedRosterCost)}</div><div class="hint" style="margin-top:4px;"><span style="font-family:var(--font-mono);color:${deltaColor};">${deltaLabel}</span></div></div>
     </div>
     <div class="progress-bar"><div style="width:${pct}%"></div></div>
     <div class="stat-grid" style="margin-top:16px;">
