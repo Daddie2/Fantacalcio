@@ -2052,6 +2052,8 @@ function renderRosterAddResults(){
     const badge = status!=='ok' ? ` ${statusBadge(p)}` : '';
     const suggested = marketSuggestions[p.id] || p.qta || 1;
     const roleFull = roleIsFull(team, p.ruolo);
+    const mb = maxBidForTeam(team, p.ruolo);
+    const maxBidStr = (mb && mb.status==='ok') ? ` &middot; Max <b>${fmt(mb.value)}</b> cr.` : '';
     const controlsHtml = roleFull
       ? `<span class="hint" style="margin:0;">Ruolo completo</span>`
       : `<input type="number" class="mini-input" data-add-price="${p.id}" value="${suggested}" min="1">
@@ -2061,7 +2063,7 @@ function renderRosterAddResults(){
       <div>
         <span class="role-tag role-${p.ruolo}">${p.ruolo}</span>
         <span class="sr-name player-link" data-detail="${p.id}">&nbsp;${escapeHtml(p.nome)}</span>${badge}
-        <div class="sr-meta">${escapeHtml(p.squadra)} &middot; Qt. ${fmt(p.qta)} &middot; FVM ${fmt(p.fvm)}</div>
+        <div class="sr-meta">${escapeHtml(p.squadra)} &middot; Qt. ${fmt(p.qta)} &middot; FVM ${fmt(p.fvm)}${maxBidStr}</div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
         ${controlsHtml}
@@ -2370,148 +2372,3 @@ function drawPlayerDetail(){
   if(statoVal === 'infortunato'){
     warning = `<div class="pd-warning"><b>Segnato come infortunato ora.</b>${p.statusNote ? `<br><br>${escapeHtml(p.statusNote)}` : ''}<br><br>Valuta le alternative qui sotto prima di puntarlo in asta.</div>`;
   }
-
-  if(!myTeamId || !teamById(myTeamId)) myTeamId = state.teams[0] && state.teams[0].id;
-  const teamSelectOptions = state.teams.map(t=>`<option value="${t.id}" ${t.id===myTeamId?'selected':''}>${escapeHtml(t.name)}</option>`).join('');
-  let maxBidText = '&mdash;', maxBidClass = '';
-  if(owner){
-    maxBidText = '&mdash;';
-  }else{
-    const mb = maxBidForTeam(teamById(myTeamId), p.ruolo);
-    if(!mb || mb.status==='rosa_completa'){ maxBidText = 'Rosa completa'; }
-    else if(mb.status==='ruolo_pieno'){ maxBidText = 'Ruolo pieno'; }
-    else{ maxBidText = fmt(mb.value); maxBidClass = 'gold'; }
-  }
-
-  const html = `
-    <div class="pd-header">
-      <div>
-        <span class="role-tag role-${p.ruolo}">${p.ruolo}</span>
-        <span class="pd-name">${escapeHtml(p.nome)}</span>
-        <span class="hint" style="margin:0;">${escapeHtml(p.squadra)}</span>
-      </div>
-      <button class="btn btn-ghost btn-sm" id="pdCloseBtn">Chiudi &times;</button>
-    </div>
-
-    ${warning}
-
-    <div class="row" style="margin-bottom:18px;">
-      <div class="col">
-        <label>Stato fisico</label>
-        <select id="pdStatus" class="status-select" style="width:100%;">
-          ${Object.keys(STATUS_LABELS).map(k=>`<option value="${k}" ${k===statoVal?'selected':''}>${STATUS_LABELS[k]}</option>`).join('')}
-        </select>
-      </div>
-      <div class="col">
-        <label>Titolarità</label>
-        <select id="pdTitolarita" class="status-select" style="width:100%;">
-          ${Object.keys(STARTER_LABELS).map(k=>`<option value="${k}" ${k===titVal?'selected':''}>${STARTER_LABELS[k]}</option>`).join('')}
-        </select>
-        <p class="hint" style="margin:4px 0 0 0;">
-          ${p.titolaritaManual ? 'Impostata a mano da te.' : (p.titolaritaAuto ? 'Stima automatica dalle ultime partite fatte (con un turno di tolleranza), integrate con la stagione passata quando quella corrente e\' ancora troppo corta. Senza presenze utilizzabili (es. nuovo arrivo) si guarda la quotazione rispetto ai compagni di ruolo.' : 'Nessun dato di presenze: imposta a mano o importa le statistiche stagione corrente.')}
-          ${p.titolaritaManual ? ' <a href="#" id="pdResetAuto">Torna alla stima automatica</a>' : ''}
-        </p>
-      </div>
-    </div>
-
-    <div class="two-col" style="margin-bottom:18px;">
-      <div class="panel" style="margin-bottom:0;">
-        <div class="panel-title">Stagione corrente</div>
-        ${statBlockHtml(p.stats && p.stats.curr)}
-      </div>
-      <div class="panel" style="margin-bottom:0;">
-        <div class="panel-title">Stagione precedente</div>
-        ${statBlockHtml(p.stats && p.stats.prev)}
-      </div>
-    </div>
-
-    <div class="two-col">
-      <div class="panel" style="margin-bottom:0;">
-        <div class="panel-title">Quanto costa</div>
-        <div class="stat-grid" style="margin-bottom:0;">
-          <div class="stat-box"><div class="label">Quotazione</div><div class="value">${fmt(p.qta)}</div></div>
-          <div class="stat-box"><div class="label">FVM</div><div class="value">${fmt(p.fvm)}</div></div>
-          <div class="stat-box"><div class="label">Consigliato</div><div class="value gold">${owner? '&mdash;' : fmt(suggestedPrice)}</div></div>
-          <div class="stat-box"><div class="label">Massimo spendibile</div><div class="value ${maxBidClass}">${maxBidText}</div></div>
-        </div>
-        ${owner? `<p class="hint">Già preso da ${escapeHtml(owner.team.name)} per ${fmt(owner.price)} cr.</p>` : `
-        <div class="row" style="margin-top:12px;">
-          <div class="col" style="max-width:220px;">
-            <label>Massimo spendibile per</label>
-            <select id="pdTeamSelect" class="mini-select" style="width:100%;">${teamSelectOptions}</select>
-          </div>
-        </div>
-        <p class="hint">Budget rimanente della squadra scelta, meno almeno 1 credito per ciascuno degli altri slot ancora da riempire.</p>`}
-      </div>
-      <div class="panel" style="margin-bottom:0;">
-        <div class="panel-title">Possibili alternative <span class="hint" style="margin:0;">(stesso ruolo, liberi)</span></div>
-        ${alternatives.length ? '<ul class="roster-list">' + alternatives.map(a=>`
-          <li><span class="roster-name player-link" data-detail="${a.id}">${escapeHtml(a.nome)} <span class="hint" style="margin:0;">(${escapeHtml(a.squadra)})</span></span><span class="hint" style="margin:0;">Qt. ${fmt(a.qta)} &middot; FVM ${fmt(a.fvm)}</span></li>
-        `).join('') + '</ul>' : '<p class="hint">Nessuna alternativa libera trovata per questo ruolo.</p>'}
-      </div>
-    </div>
-  `;
-
-  el('playerDetailBody').innerHTML = html;
-  el('pdCloseBtn').addEventListener('click', closePlayerDetail);
-  el('pdStatus').addEventListener('change', function(){
-    p.status = this.value;
-    if(this.value === 'ok') p.statusNote = '';
-    saveState();
-    drawPlayerDetail();
-    renderAll();
-  });
-  el('pdTitolarita').addEventListener('change', function(){
-    p.titolarita = this.value;
-    p.titolaritaManual = true;
-    p.titolaritaAuto = false;
-    saveState();
-    drawPlayerDetail();
-    renderAll();
-  });
-  const resetAutoLink = el('pdResetAuto');
-  if(resetAutoLink){
-    resetAutoLink.addEventListener('click', function(e){
-      e.preventDefault();
-      p.titolaritaManual = false;
-      computeAutoTitolarita();
-      drawPlayerDetail();
-      renderAll();
-    });
-  }
-  el('playerDetailBody').querySelectorAll('[data-detail]').forEach(link=>{
-    link.addEventListener('click', function(){
-      openPlayerDetail(this.dataset.detail);
-    });
-  });
-  const pdTeamSelect = el('pdTeamSelect');
-  if(pdTeamSelect){
-    pdTeamSelect.addEventListener('change', function(){
-      myTeamId = this.value;
-      drawPlayerDetail();
-    });
-  }
-}
-
-/* ================= HELPERS ================= */
-function escapeHtml(s){
-  return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-function escapeAttr(s){ return escapeHtml(s); }
-
-/* ================= INIT ================= */
-function renderAll(){
-  renderSidebarFoot();
-  renderAsta();
-  renderListone();
-  renderRose();
-  renderConsigli();
-}
-
-renderSetup();
-renderAll();
-
-})();
-</script>
-</body>
-</html>
