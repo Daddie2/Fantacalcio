@@ -1,47 +1,44 @@
 nome,squadra,pv,mv,fm
-Malen,ROM,4.0,7.38,11.75
+Malen,ROM,5.0,7.1,10.6
 Odenthal,SAS,1.0,7.0,10.0
 Zhegrova,JUV,2.0,6.75,9.75
 Varela G.,MON,4.0,6.88,9.75
 Raimondo,FRO,4.0,6.75,9.62
 Kaiki,COM,1.0,6.5,9.5
+Martinez L.,INT,4.0,6.75,9.5
 Gatti,JUV,1.0,7.0,9.5
 Moreira,MIL,2.0,6.5,9.5
 Zeballos,MON,1.0,6.5,9.5
-Frattesi,LAZ,4.0,6.88,9.12
-Carlos Augusto,INT,2.0,7.0,9.0
-Thuram,INT,3.0,6.67,9.0
+Noslin,LAZ,3.0,6.67,8.67
 Adams C.,TOR,3.0,6.67,8.67
 Kvernadze,FRO,4.0,6.88,8.62
+Thuram,INT,4.0,6.62,8.62
 Adzic,SAS,5.0,6.6,8.6
 Calhanoglu,INT,3.0,6.67,8.5
+Frattesi,LAZ,5.0,6.7,8.5
 Esposito F.P.,INT,4.0,6.75,8.5
 Diao,COM,4.0,6.62,8.38
-Soulè,ROM,4.0,6.62,8.38
 Mastantuono,FIO,4.0,6.12,8.38
-Pisilli,ROM,3.0,6.5,8.33
-Ekkelenkamp,UDI,4.0,6.5,8.25
+Maldini,CAG,5.0,6.5,8.3
+Carlos Augusto,INT,3.0,6.83,8.17
 Coulibaly L.,LEC,4.0,6.38,8.12
-Dybala,ROM,4.0,7.12,8.12
 Esposito Se.,SAS,2.0,6.5,8.0
 Bonny,INT,2.0,6.5,8.0
-Martinez L.,INT,3.0,6.33,8.0
-Noslin,LAZ,2.0,6.5,8.0
+Soulè,ROM,5.0,6.6,8.0
 Favasuli,NAP,1.0,7.0,8.0
-Maldini,CAG,4.0,6.38,7.88
+Dybala,ROM,5.0,7.1,7.9
 Baturina,COM,4.0,6.5,7.88
-Kamara H.,UDI,4.0,6.38,7.88
 Gonzalez N.,JUV,3.0,6.83,7.83
+Ekkelenkamp,UDI,5.0,6.4,7.8
 Douvikas,COM,4.0,6.25,7.75
-Zielinski,INT,4.0,6.75,7.75
 Hojlund,NAP,4.0,6.25,7.75
-Bisseck,INT,3.0,6.67,7.67
+Kulenovic,TOR,2.0,6.25,7.75
+Konè M.,ROM,5.0,6.6,7.7
 Koopmeiners,JUV,3.0,6.33,7.67
 Robinson J.,MON,3.0,6.67,7.67
 De Bruyne,NAP,4.0,6.62,7.62
+Pisilli,ROM,4.0,6.25,7.62
 Cissè A.,MIL,4.0,6.25,7.62
-Diouf,INT,3.0,6.5,7.5
-Barella,INT,4.0,6.5,7.5
 Tiago Gabriel,LEC,4.0,6.0,7.5
 Gorter,LEC,2.0,6.0,7.5
 Rabiot,MIL,4.0,6.25,7.5
@@ -49,84 +46,87 @@ Vergara,NAP,3.0,6.33,7.5
 Volpato,SAS,3.0,6.67,7.5
 Piotrowski,UDI,2.0,6.25,7.5
 Sagrado,VEN,2.0,6.0,7.5
-Romano,CAG,4.0,6.62,7.38
+Kamara H.,UDI,5.0,6.2,7.4
 Lobotka,NAP,4.0,6.62,7.38
 Romero D.,PAR,3.0,6.33,7.33
+Zielinski,INT,5.0,6.5,7.3
 Paz N.,COM,4.0,6.25,7.25
+Diouf,INT,4.0,6.5,7.25
+Romano,CAG,5.0,6.6,7.2
+Zaccagni,LAZ,5.0,6.4,7.2
 Mangas,MON,5.0,6.2,7.2
 Raspadori,ATA,3.0,6.17,7.17
-Wesley,ROM,3.0,6.83,7.17
 Bracaglia,FRO,4.0,6.38,7.12
 Pellegrino M.,FIO,4.0,5.75,7.12
-Hainaut,VEN,4.0,6.12,7.12
 Lontani,PAR,4.0,6.38,7.12
 Mora,ROM,4.0,6.38,7.12
-Mendy P.,CAG,4.0,6.25,7.0
+Bernardeschi,BOL,5.0,6.4,7.0
+Mina,CAG,1.0,7.0,7.0
 Ramon,COM,4.0,6.25,7.0
+Bisseck,INT,4.0,6.25,7.0
+Barella,INT,5.0,6.3,7.0
 Bremer,JUV,4.0,6.25,7.0
 Chukwueze,MIL,4.0,6.5,7.0
 Pulisic,MIL,1.0,6.5,7.0
-Hermoso,ROM,4.0,6.5,7.0
-Davis K.,UDI,3.0,6.5,7.0
-Gueye,UDI,3.0,6.0,7.0
-Yeboah J.,VEN,4.0,6.25,7.0
+Wesley,ROM,4.0,6.75,7.0
+Mendy P.,CAG,5.0,6.3,6.9
+Mandragora,TOR,5.0,6.1,6.9
+Hainaut,VEN,5.0,6.1,6.9
 Scamacca,ATA,4.0,6.12,6.88
-Mandragora,TOR,4.0,6.12,6.88
+Tavares N.,LAZ,4.0,6.38,6.88
 Berardi,SAS,4.0,6.12,6.88
-Karlstrom,UDI,4.0,6.25,6.88
 Bowie,SAS,5.0,6.2,6.8
 Ederson D.S.,ATA,4.0,6.0,6.75
 Samardzic,ATA,4.0,6.0,6.75
-Adopo,CAG,4.0,6.25,6.75
 Milla,COM,2.0,6.75,6.75
-Cancellieri,LAZ,4.0,6.12,6.75
 Comuzzo,TOR,4.0,6.0,6.75
-Abankwah,UDI,4.0,6.12,6.75
-Balerdi,ROM,2.0,6.75,6.75
+Davis K.,UDI,4.0,6.38,6.75
+Gueye,UDI,4.0,6.0,6.75
+Adopo,CAG,5.0,6.3,6.7
+Cancellieri,LAZ,5.0,6.2,6.7
+Hermoso,ROM,5.0,6.3,6.7
 Doig,SAS,5.0,6.1,6.7
 Matic,SAS,5.0,6.6,6.7
+Abankwah,UDI,5.0,6.2,6.7
+Karlstrom,UDI,5.0,6.3,6.7
 Dovbyk,BOL,3.0,5.83,6.67
 Valle,COM,3.0,6.33,6.67
 Gudmundsson A.,LAZ,3.0,5.83,6.67
 Doekhi,LAZ,3.0,6.33,6.67
-Tavares N.,LAZ,3.0,6.33,6.67
 Osmajic,GEN,3.0,5.67,6.67
+Balerdi,ROM,3.0,6.67,6.67
 Calò,FRO,4.0,6.38,6.62
 Masini,FRO,4.0,6.38,6.62
 Ramos G.,MIL,4.0,5.88,6.62
+Mandas,LAZ,5.0,6.6,6.6
 De Roon,ROM,1.0,6.5,6.5
-Piccoli,BOL,4.0,5.75,6.5
 Oyono A.,FRO,4.0,6.38,6.5
-Dimarco,INT,4.0,6.25,6.5
 Conceicao,JUV,4.0,6.25,6.5
-Zaccagni,LAZ,4.0,6.25,6.5
 Saelemaekers,MIL,3.0,6.17,6.5
 Colpani,MON,4.0,5.75,6.5
-Ghilardi,ROM,2.0,6.5,6.5
-Mancini,ROM,4.0,6.25,6.5
 Bakola,SAS,4.0,6.25,6.5
 Palma,UDI,1.0,6.5,6.5
-Zaniolo,UDI,1.0,6.5,6.5
+Zanoli,UDI,1.0,6.5,6.5
 Busio,VEN,4.0,6.12,6.5
-Adams A.,VEN,4.0,5.75,6.5
-Belghali,TOR,2.0,6.0,6.5
+Mancini,ROM,5.0,6.2,6.4
 Laurientè,SAS,5.0,6.3,6.4
 Krstovic,ATA,4.0,5.75,6.38
+Miranda J.,BOL,4.0,6.12,6.38
 Da Cunha,COM,4.0,6.38,6.38
 Rrahmani,NAP,4.0,6.12,6.38
 Politano,NAP,4.0,5.75,6.38
-Cacciamani,TOR,4.0,6.12,6.38
+Molina N.,ROM,4.0,6.12,6.38
 Zalewski,ATA,3.0,6.0,6.33
-Miranda J.,BOL,3.0,6.0,6.33
 Kean,COM,3.0,6.0,6.33
 Locatelli,JUV,3.0,6.17,6.33
-Comert,TOR,3.0,6.0,6.33
 Ilic,LEC,3.0,5.83,6.33
 Chalobah T.,COM,3.0,6.33,6.33
+Piccoli,BOL,5.0,5.7,6.3
+Dimarco,INT,5.0,6.1,6.3
 Birindelli,MON,5.0,6.0,6.3
+Cristante,ROM,5.0,6.3,6.3
+Cacciamani,TOR,5.0,6.1,6.3
 Leysen F.,SAS,5.0,6.2,6.3
-Bernardeschi,BOL,4.0,6.25,6.25
-Rodriguez Ju.,CAG,4.0,6.25,6.25
 Kempf,COM,2.0,6.25,6.25
 Perrone,COM,4.0,6.25,6.25
 Zerbin,FRO,2.0,6.25,6.25
@@ -138,42 +138,40 @@ Jashari,MIL,2.0,6.25,6.25
 Musah,MIL,4.0,6.25,6.25
 Akinsanmiro,MON,4.0,6.0,6.25
 Mota,MON,2.0,6.25,6.25
-Cristante,ROM,4.0,6.25,6.25
 Couto,COM,4.0,6.0,6.25
 Lulli,ROM,4.0,6.25,6.25
-Braganca,TOR,2.0,6.25,6.25
-Sucic P.,INT,3.0,6.17,6.17
-Belahyane,LAZ,3.0,6.33,6.17
+Zè Pedro,CAG,5.0,6.3,6.2
+Adams A.,VEN,5.0,5.6,6.2
+Helland,BOL,3.0,6.17,6.17
 Almqvist,PAR,3.0,6.0,6.17
 Njie,FIO,3.0,6.33,6.17
-Correia T.,VEN,3.0,6.17,6.17
-Jones C.,INT,3.0,6.17,6.17
-Ferguson,BOL,4.0,6.12,6.12
-Zè Pedro,CAG,4.0,6.25,6.12
-Winks,CAG,4.0,6.12,6.12
+Belghali,TOR,3.0,6.0,6.17
+Pobega,BOL,4.0,6.12,6.12
 Calvani,FRO,4.0,6.38,6.12
 Fini,FRO,4.0,6.12,6.12
 Vasquez,GEN,4.0,5.62,6.12
 Messias,GEN,4.0,6.12,6.12
-Bastoni,INT,4.0,6.12,6.12
+Sucic P.,INT,4.0,6.12,6.12
 Kalulu,JUV,4.0,6.12,6.12
+Belahyane,LAZ,4.0,6.25,6.12
 Veiga D.,LEC,4.0,5.88,6.12
 Gila,MIL,4.0,6.25,6.12
 Di Lorenzo,NAP,4.0,6.0,6.12
 Valeri,PAR,4.0,6.12,6.12
-Konè M.,ROM,4.0,6.25,6.12
-Fortini,TOR,4.0,6.12,6.12
+Comert,TOR,4.0,5.88,6.12
+Ferguson,BOL,5.0,6.1,6.1
+Caprile,CAG,5.0,6.5,6.1
+Rodriguez Ju.,CAG,5.0,6.1,6.1
+Winks,CAG,5.0,6.1,6.1
+Taylor K.,LAZ,5.0,6.1,6.1
 Cinquegrano,SAS,5.0,5.9,6.1
 Scalvini,ATA,4.0,6.0,6.0
 Sulemana I.,SAS,1.0,6.0,6.0
-Helland,BOL,2.0,6.0,6.0
 Holm,BOL,4.0,6.12,6.0
-Zortea,BOL,2.0,6.0,6.0
-Pobega,BOL,3.0,6.0,6.0
+Zortea,BOL,3.0,6.0,6.0
 Kofler,CAG,2.0,6.0,6.0
 Zappa,CAG,1.0,6.0,6.0
-Obert,CAG,4.0,6.0,6.0
-Deiola,CAG,4.0,6.25,6.0
+Obert,CAG,5.0,6.0,6.0
 Fazzini,CAG,4.0,5.88,6.0
 Felici,CAG,1.0,6.0,6.0
 Borrelli,CAG,1.0,6.0,6.0
@@ -183,11 +181,10 @@ Liberali,COM,1.0,6.0,6.0
 Fagioli,FIO,4.0,5.88,6.0
 Hasa,FRO,2.0,6.0,6.0
 Amorim,GEN,2.0,6.0,6.0
-Luis Henrique,INT,2.0,6.0,6.0
+Luis Henrique,INT,3.0,6.0,6.0
 McKennie,JUV,1.0,6.0,6.0
 Pedraza,LAZ,2.0,6.0,6.0
 Marusic,LAZ,1.0,6.0,6.0
-Taylor K.,LAZ,4.0,6.0,6.0
 Maleh,LEC,4.0,6.0,6.0
 Gabbia,MIL,1.0,6.0,6.0
 Bartesaghi,MIL,2.0,6.0,6.0
@@ -200,38 +197,44 @@ Ndiaye,PAR,1.0,6.0,6.0
 Valenti,PAR,1.0,6.0,6.0
 Britschgi,PAR,3.0,6.0,6.0
 Diallo O.,PAR,1.0,6.0,6.0
-Svilar,ROM,4.0,6.25,6.0
+Ghilardi,ROM,3.0,6.17,6.0
 Koulierakis,ROM,1.0,6.0,6.0
+Rensch,ROM,1.0,6.0,6.0
 Castro S.,ROM,4.0,6.0,6.0
 Idzes,SAS,3.0,6.17,6.0
-Ismajli,TOR,3.0,6.0,6.0
 Pedersen,TOR,1.0,6.0,6.0
-Fitz-Jim,TOR,4.0,6.0,6.0
+Fitz-Jim,TOR,5.0,6.0,6.0
+Oristanio,TOR,1.0,6.0,6.0
 Solet,UDI,3.0,6.0,6.0
-Unai Gomez,UDI,3.0,5.67,6.0
-Molina N.,ROM,3.0,6.0,6.0
+Correia T.,VEN,4.0,6.12,6.0
 Schmid,FRO,4.0,6.0,6.0
 Obrador,SAS,1.0,6.0,6.0
+Fortini,TOR,5.0,6.0,6.0
+Jones C.,INT,4.0,6.0,6.0
+Sutalo J.,LAZ,2.0,6.0,6.0
 Bobcek,FRO,1.0,6.0,6.0
-Juan Jesus,VEN,1.0,6.0,6.0
 Caleta-Car,SAS,1.0,6.0,6.0
-Sugawara,CAG,1.0,6.0,6.0
-Patterson,TOR,1.0,6.0,6.0
+Sugawara,CAG,2.0,6.0,6.0
+Braganca,TOR,3.0,6.17,6.0
 Fernandez T.,VEN,1.0,6.0,6.0
 El Shaarawy,GEN,1.0,6.0,6.0
 Rodriguez R.,TOR,1.0,6.0,6.0
 Esteban,LEC,1.0,6.0,6.0
+Deiola,CAG,5.0,6.1,5.9
+Bastoni,INT,5.0,6.0,5.9
+Coco,TOR,5.0,5.9,5.9
+Yeboah J.,VEN,5.0,5.9,5.9
 Dominguez B.,SAS,4.0,5.88,5.88
-Caprile,CAG,4.0,6.38,5.88
 Baldanzi,GEN,4.0,5.88,5.88
-Akanji,INT,4.0,5.75,5.88
 Modric,MIL,4.0,5.88,5.88
 Cutrone,MON,4.0,5.88,5.88
 Spinazzola,NAP,4.0,5.88,5.88
 Delprato,PAR,4.0,6.0,5.88
-Coco,TOR,4.0,5.88,5.88
+Ismajli,TOR,4.0,5.88,5.88
 Sow,GEN,4.0,5.75,5.88
 Zappacosta,ATA,3.0,5.83,5.83
+Moro N.,BOL,3.0,5.83,5.83
+Orsolini,BOL,3.0,5.83,5.83
 Monterisi,FRO,3.0,5.83,5.83
 Stones,INT,3.0,5.83,5.83
 Boga,JUV,3.0,5.83,5.83
@@ -242,40 +245,42 @@ Ordonez C.,PAR,3.0,5.83,5.83
 Bernabè,PAR,3.0,5.83,5.83
 Lipani,SAS,3.0,6.17,5.83
 Forson O.,MON,3.0,5.83,5.83
+Theate,BOL,3.0,5.83,5.83
+Cambiaghi,BOL,5.0,5.9,5.8
+Akanji,INT,5.0,5.8,5.8
+Provstgaard,LAZ,5.0,5.9,5.8
+Svilar,ROM,5.0,6.4,5.8
 Thorstvedt,SAS,5.0,5.8,5.8
 Carnesecchi,ATA,4.0,6.75,5.75
 Kolasinac,ATA,4.0,5.75,5.75
 Bernasconi,ATA,2.0,5.75,5.75
 Alhassane,BOL,2.0,5.75,5.75
-Moro N.,BOL,2.0,5.75,5.75
-Cambiaghi,BOL,4.0,5.88,5.75
-Orsolini,BOL,2.0,5.75,5.75
 Rodriguez Je.,COM,2.0,5.75,5.75
 Cichella,FRO,2.0,5.75,5.75
 Norton-Cuffy,GEN,2.0,5.75,5.75
 Pavard,INT,2.0,5.75,5.75
-Provstgaard,LAZ,4.0,5.88,5.75
-Floriani Mussolini,LAZ,4.0,5.88,5.75
 Pierotti,LEC,4.0,5.75,5.75
 N'Dri,LEC,4.0,5.88,5.75
 Pavlovic,MIL,4.0,6.0,5.75
 McTominay,NAP,2.0,5.75,5.75
-N'Dicka,ROM,2.0,5.75,5.75
 Gineitis,TOR,4.0,5.62,5.75
 Bertola,UDI,2.0,5.75,5.75
-Vojvoda,UDI,4.0,5.75,5.75
-Miller L.,UDI,4.0,5.88,5.75
 Zarraga,UDI,2.0,5.75,5.75
+Chakvetadze,UDI,2.0,5.75,5.75
+Unai Gomez,UDI,4.0,5.5,5.75
+Zaniolo,UDI,2.0,6.0,5.75
 Franjic,VEN,2.0,5.75,5.75
 Basic,VEN,2.0,5.75,5.75
-Perez K.,VEN,4.0,5.88,5.75
 Terzic,FRO,2.0,5.75,5.75
 Foe Ondoa,MON,2.0,5.75,5.75
-Theate,BOL,2.0,5.75,5.75
 Beto,FIO,2.0,5.75,5.75
 Woltemade,JUV,2.0,5.75,5.75
 Gnonto,FIO,2.0,5.75,5.75
+Patterson,TOR,2.0,6.0,5.75
+Floriani Mussolini,LAZ,5.0,5.8,5.7
 Carboni A.,MON,5.0,5.7,5.7
+Vojvoda,UDI,5.0,5.7,5.7
+Perez K.,VEN,5.0,5.9,5.7
 Gaetano,ATA,3.0,5.67,5.67
 Lucumì,JUV,3.0,6.0,5.67
 Viery,FIO,3.0,5.67,5.67
@@ -283,6 +288,8 @@ Jimenez A.,FIO,3.0,5.5,5.67
 Oulai,FIO,3.0,5.67,5.67
 Brescianini,FIO,3.0,5.67,5.67
 Alajbegovic,JUV,3.0,5.67,5.67
+N'Dicka,ROM,3.0,5.83,5.67
+Ilkhan,TOR,3.0,5.67,5.67
 Fatah,LEC,3.0,5.67,5.67
 De Ketelaere,ATA,4.0,5.62,5.62
 Cittadini,FRO,4.0,5.75,5.62
@@ -290,20 +297,21 @@ Ellertsson,GEN,4.0,5.62,5.62
 Frendrup,GEN,4.0,5.62,5.62
 Vitinha O.,GEN,4.0,5.62,5.62
 Celik,JUV,4.0,5.75,5.62
-Mandas,LAZ,4.0,6.38,5.62
 Isaksen,LAZ,4.0,5.75,5.62
 Loftus-Cheek,MIL,4.0,5.75,5.62
 Troilo,PAR,4.0,5.75,5.62
 Keita M.,PAR,4.0,5.75,5.62
-Simeone,TOR,4.0,5.62,5.62
-Ebosse,UDI,4.0,5.62,5.62
 Haps,VEN,4.0,5.5,5.62
 Tourè E.,PAR,4.0,5.62,5.62
+Simeone,TOR,5.0,5.6,5.6
+Ebosse,UDI,5.0,5.6,5.6
+Miller L.,UDI,5.0,5.7,5.6
 Kossounou,ATA,4.0,5.5,5.5
 Pasalic,ATA,3.0,5.5,5.5
-Heggem,BOL,4.0,5.62,5.5
+Heggem,BOL,5.0,5.6,5.5
+De Silvestri,BOL,1.0,5.5,5.5
 Rowe,ATA,2.0,5.5,5.5
-Odgaard,BOL,4.0,5.62,5.5
+Odgaard,BOL,5.0,5.6,5.5
 Tornqvist,MON,1.0,6.5,5.5
 Smolcic I.,COM,1.0,5.5,5.5
 Ranieri L.,FIO,2.0,5.5,5.5
@@ -327,31 +335,30 @@ Neres,NAP,1.0,5.5,5.5
 Cremaschi,PAR,1.0,5.5,5.5
 Frigan,PAR,2.0,5.5,5.5
 Elphege,PAR,2.0,5.5,5.5
-Ilkhan,TOR,2.0,5.5,5.5
 Aboukhlal,TOR,2.0,5.5,5.5
-Kulenovic,TOR,1.0,5.5,5.5
 Zapata D.,TOR,1.0,5.5,5.5
-Chakvetadze,UDI,1.0,5.5,5.5
-Helgason,VEN,1.0,5.5,5.5
+Helgason,VEN,2.0,5.5,5.5
 Lauberbach,VEN,1.0,5.5,5.5
-Rrahmani Al.,VEN,1.0,5.5,5.5
+Rrahmani Al.,VEN,2.0,5.5,5.5
 Elmas,ATA,2.0,5.5,5.5
-Sutalo J.,LAZ,1.0,5.5,5.5
 Drobnic,PAR,1.0,5.5,5.5
 Kessiè,ATA,1.0,5.5,5.5
 Gagliardini,CAG,1.0,5.5,5.5
 Monteiro J.,LEC,2.0,5.5,5.5
+Juan Jesus,VEN,2.0,5.75,5.5
 Diego Carlos,PAR,2.0,5.5,5.5
 Sarr P.,JUV,1.0,5.5,5.5
 Ehizibue,GEN,2.0,5.75,5.5
 Sierro,PAR,1.0,5.5,5.5
+Vlasic,TOR,5.0,5.4,5.4
 Atta,FIO,4.0,5.38,5.38
 Palmisani,FRO,4.0,6.38,5.38
 Marcandalli,GEN,4.0,5.38,5.38
 Kolo Muani,JUV,4.0,5.12,5.38
 Marin R.,NAP,4.0,5.5,5.38
-Vlasic,TOR,4.0,5.38,5.38
+Sohm,VEN,4.0,5.62,5.38
 Zambo Anguissa,NAP,3.0,5.33,5.33
+Bayo V.,UDI,3.0,5.5,5.33
 Bellanova,ATA,2.0,5.5,5.25
 Amondarain,BOL,2.0,5.5,5.25
 Joao Mario,FIO,2.0,5.25,5.25
@@ -360,10 +367,12 @@ Douglas Luiz,JUV,4.0,5.38,5.25
 Geubbels,LEC,2.0,5.25,5.25
 Folorunsho,MON,4.0,5.5,5.25
 Pinamonti,LAZ,2.0,5.25,5.25
-Sohm,VEN,3.0,5.5,5.17
+Kevin Carlos,CAG,2.0,5.5,5.25
+Moreno M.,VEN,3.0,5.5,5.17
 Dragusin,FIO,4.0,5.0,5.12
 Maignan,MIL,4.0,6.12,5.12
 Vicario,JUV,4.0,6.12,5.12
+Schingtienne,VEN,5.0,5.4,5.1
 Pessina Mas.,BOL,1.0,6.0,5.0
 Pongracic,FIO,1.0,5.0,5.0
 Valdepenas,FIO,2.0,5.0,5.0
@@ -374,12 +383,8 @@ Gaspar K.,LEC,3.0,5.33,5.0
 Colombo L.,MON,1.0,5.5,5.0
 Olivera,NAP,1.0,5.0,5.0
 Casadei,TOR,1.0,5.0,5.0
-Kabasele,UDI,2.0,5.0,5.0
-Bayo V.,UDI,2.0,5.25,5.0
+Kabasele,UDI,3.0,5.0,5.0
 Bella-Kotchap,VEN,2.0,5.0,5.0
-Moreno M.,VEN,2.0,5.25,5.0
-Schingtienne,VEN,4.0,5.25,5.0
-Kevin Carlos,CAG,1.0,5.5,5.0
 Mout,MON,1.0,5.0,5.0
 Badiashile,NAP,1.0,5.0,5.0
 Sanchez Ro.,COM,1.0,6.0,5.0
@@ -387,19 +392,19 @@ Libra,BOL,1.0,5.0,5.0
 Butez,COM,3.0,5.83,4.83
 Meret,NAP,3.0,6.33,4.67
 Corvi,PAR,4.0,6.12,4.62
-Skorupski,BOL,3.0,5.83,4.5
 El Azzouzi O.,BOL,1.0,5.0,4.5
 Otoa,GEN,1.0,4.5,4.5
 Dagasso,VEN,1.0,5.0,4.5
-Martinez Jo.,INT,4.0,5.88,4.38
+Martinez Jo.,INT,5.0,6.0,4.4
+Skorupski,BOL,4.0,5.62,4.38
+Perri,TOR,3.0,5.67,4.33
 Falcone,LEC,4.0,6.12,4.25
-Perri,TOR,2.0,5.5,4.0
-Okoye,UDI,4.0,6.38,3.88
+Okoye,UDI,5.0,6.3,4.1
 Muric,SAS,5.0,5.6,3.8
 Bijlow,GEN,4.0,5.75,3.75
 Mascardi,TOR,2.0,5.75,3.75
 Halhal,VEN,2.0,4.75,3.5
-Stankovic F.,VEN,4.0,6.0,3.25
+Stankovic F.,VEN,5.0,6.0,3.4
 De Gea,FIO,4.0,5.62,2.88
 Thiam,MON,3.0,5.17,2.83
 Pizzignacco,MON,1.0,5.0,1.0
@@ -412,11 +417,9 @@ Sulemana K.,ATA,0.0,0.0,0.0
 Happonen,BOL,0.0,0.0,0.0
 Casale,BOL,0.0,0.0,0.0
 Vitik,BOL,0.0,0.0,0.0
-De Silvestri,BOL,0.0,0.0,0.0
 Dallinga,BOL,0.0,0.0,0.0
 Ciocci,CAG,0.0,0.0,0.0
 Sherri,CAG,0.0,0.0,0.0
-Mina,CAG,0.0,0.0,0.0
 Raterink,CAG,0.0,0.0,0.0
 Idrissi R.,CAG,0.0,0.0,0.0
 Liteta,CAG,0.0,0.0,0.0
@@ -519,7 +522,6 @@ Ondrejka,PAR,0.0,0.0,0.0
 De Marzi,ROM,0.0,0.0,0.0
 Gollini,ROM,0.0,0.0,0.0
 Ziolkowski,MON,0.0,0.0,0.0
-Rensch,ROM,0.0,0.0,0.0
 Angelino,ROM,0.0,0.0,0.0
 El Aynaoui,ROM,0.0,0.0,0.0
 Vaz,ROM,0.0,0.0,0.0
@@ -537,12 +539,10 @@ Paleari,TOR,0.0,0.0,0.0
 Siviero,TOR,0.0,0.0,0.0
 Biraghi,TOR,0.0,0.0,0.0
 Anjorin,TOR,0.0,0.0,0.0
-Oristanio,TOR,0.0,0.0,0.0
 Padelli,UDI,0.0,0.0,0.0
 Piana,UDI,0.0,0.0,0.0
 Mlacic,UDI,0.0,0.0,0.0
 Kristensen T.,ATA,0.0,0.0,0.0
-Zanoli,UDI,0.0,0.0,0.0
 Arizala,UDI,0.0,0.0,0.0
 Camara A.,UDI,0.0,0.0,0.0
 Buksa,UDI,0.0,0.0,0.0
