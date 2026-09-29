@@ -519,7 +519,7 @@ p_rugani,D,Rugani,JUV,1.0,3.0
 p_cabal,D,Cabal,JUV,1.0,4.0
 p_motta,P,Motta,LAZ,1.0,1.0
 p_renzetti,P,Renzetti,LAZ,1.0,1.0
-p_patric,D,Patric,LAZ,1.0,1.0
+p_patric*,D,Patric*,LAZ,1.0,1.0
 p_lazzari,D,Lazzari,LAZ,1.0,5.0
 p_pellegrini_lu,D,Pellegrini Lu.,LAZ,1.0,7.0
 p_przyborek,C,Przyborek,LAZ,1.0,5.0
@@ -597,3 +597,4 @@ p_pompei,P,Pompei,ATA,1.0,1.0
 p_enem,A,Enem,BOL,1.0,4.0
 p_libra,C,Libra,BOL,1.0,2.0
 p_lovric,C,Lovric,UDI,1.0,1.0
+p_neto,P,Neto,JUV,1.0,1.0
