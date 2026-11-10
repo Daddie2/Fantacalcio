@@ -1,0 +1,24 @@
+name: Promemoria formazione
+
+# Notifica push sul telefono anche con l'app chiusa, tramite ntfy.sh (gratis, senza account).
+# 1) Installa l'app "ntfy" e iscriviti a un topic con nome lungo e casuale (es. fanta-k3j9x2m7q).
+# 2) Su GitHub: Settings > Secrets and variables > Actions > New repository secret
+#    nome NTFY_TOPIC, valore = quel topic.
+# Gli orari cron sono in UTC (Italia = UTC+1 in inverno, UTC+2 in estate) e GitHub può
+# ritardarli di qualche minuto. Modifica giorno/ora in base alla tua scadenza.
+on:
+  schedule:
+    - cron: '0 11 * * 6'   # sabato 11:00 UTC
+    - cron: '0 11 * * 0'   # domenica 11:00 UTC
+  workflow_dispatch: {}
+
+jobs:
+  ntfy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Invia notifica
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: |
+          curl -sf -H "Title: Fanta War Room" -H "Priority: high" \
+            -d "Hai messo la formazione?" "https://ntfy.sh/$NTFY_TOPIC"
