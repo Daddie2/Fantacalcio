@@ -2,10 +2,10 @@ name: Aggiorna dati Fantacalcio
 
 on:
   schedule:
-    # Ogni giorno alle 6:00 UTC (le quotazioni/statistiche cambiano poco
-    # più spesso di così: puoi aumentare la frequenza durante l'asta,
-    # es. '0 */2 * * *' per ogni 2 ore).
+    # Ogni giorno alle 6:00 UTC: quotazioni, statistiche, indisponibili
     - cron: '0 6 * * *'
+    # Venerdì, sabato e domenica ogni 3 ore (8-17 UTC): aggiorna le probabili formazioni
+    - cron: '0 8,11,14,17 * * 5,6,0'
   workflow_dispatch: {}   # permette anche di lanciarlo a mano da GitHub
 
 permissions:
@@ -27,10 +27,22 @@ jobs:
       - name: Scarica i file da fantacalcio.it
         run: python scripts/scrape_fantacalcio.py
 
+      - name: Scarica probabili formazioni da Gazzetta
+        run: python scripts/fetch_formazioni.py
+        continue-on-error: true   # se Gazzetta blocca o cambia pagina, il resto non si ferma
+
+      - name: Salva gli HTML di debug (scaricabili dalla pagina del run)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-html
+          path: data/debug_*.html
+          if-no-files-found: ignore
+
       - name: Committa se qualcosa è cambiato
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/quotazioni.csv data/stats_curr.csv data/stats_prev.csv data/indisponibili.csv
-          git diff --cached --quiet || git commit -m "Aggiorna dati fantacalcio.it [skip ci]"
+          git add data/*.csv
+          git diff --cached --quiet || git commit -m "Aggiorna dati fantacalcio [skip ci]"
           git push
