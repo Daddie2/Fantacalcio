@@ -92,6 +92,13 @@ thead th.sticky-col{z-index:3;}
 tbody tr:hover .sticky-col{background:var(--panel-2);}
 .panel .sticky-col{background:var(--panel);}
 .panel tbody tr:hover .sticky-col{background:var(--panel-2);}
+
+/* Evidenziazione riga squadra attiva nella Panoramica */
+.team-row { transition: background .15s; }
+.team-row:hover { background: var(--panel-2); }
+.active-team-row { background-color: rgba(212, 169, 62, 0.08) !important; }
+.active-team-row .sticky-col { color: var(--gold); font-weight: 600; border-left: 3px solid var(--gold); padding-left: 7px; }
+
 .role-tag{display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;border-radius:3px;font-size:11px;font-weight:600;font-family:var(--font-mono);}
 .role-P{background:#3a3320;color:#d4a93e;}
 .role-D{background:#20323a;color:#5fa3b8;}
@@ -333,7 +340,7 @@ input[type=time]{background:#fff;color:#000;}
 
       <div class="panel">
         <div class="panel-title">Importa statistiche (stagione corrente e precedente)</div>
-        <p class="hint" style="margin-top:0;">Vai su <a href="https://www.fantacalcio.it/statistiche-serie-a" target="_blank" rel="noopener">fantacalcio.it/statistiche-serie-a</a>, scegli la stagione, esporta/copia la tabella (Nome, Squadra, Pv, Mv, Fm, Gol, Assist, Ammonizioni, Espulsioni...) e caricala qui. I dati vengono abbinati ai giocatori del listone per nome. Colonne riconosciute: Nome/Calciatore, Squadra, Pv/Presenze, Mv, Fm, Gf/Gol, Gs, Ass/Assist, Amm, Esp, Rp, Rc, Au.</p>
+        <p class="hint" style="margin-top:0;">Vai su <a href="https://www.fantacalcio.it/statistiche-serie-a" target="_blank" rel="noopener">fantacalcio.it/statistiche-serie-a</a>, scegli la stagione, esporta/copia la tabella (Nome, Squadra, Pv, Mv, Fm, Gol, Assist, Ammonizioni, Espulsioni...) e caricala qui. I dati vengono abbinati ai giocatori del listone per nome.</p>
         <div class="row">
           <div class="col"><label>File statistiche stagione corrente</label><input type="file" id="statsFileCurr" accept=".xlsx,.xls,.csv"></div>
           <div class="col"><label>File statistiche stagione precedente</label><input type="file" id="statsFilePrev" accept=".xlsx,.xls,.csv"></div>
@@ -405,8 +412,10 @@ input[type=time]{background:#fff;color:#000;}
     <section class="view" id="view-rose">
       <h1>Rose &amp; Budget</h1>
       <p class="subtitle">Quanto ha speso e quanto ha ancora ogni squadra della lega.</p>
+      
       <div class="panel">
         <div class="panel-title">Panoramica lega</div>
+        <p class="hint" style="margin-top:-6px;margin-bottom:10px;">Clicca su una riga per vedere subito la rosa di quella squadra.</p>
         <div style="overflow-x:auto;">
         <table>
           <thead>
@@ -425,6 +434,7 @@ input[type=time]{background:#fff;color:#000;}
         </table>
         </div>
       </div>
+
       <div class="team-tabs" id="rosterTabs"></div>
       <div class="panel" id="rosterPanel"></div>
     </section>
@@ -1193,6 +1203,12 @@ const ROLE_ORDER_PRESETS = {default:['P','D','C','A'], reverse:['A','C','D','P']
 
 function renderRose(){
   if(state.players.length) marketSuggestions = computeMarketSuggestions();
+  
+  // Validazione ID squadra attiva
+  if(!activeRosterTeam || !state.teams.find(t=>t.id===activeRosterTeam)) {
+    if(state.teams.length) activeRosterTeam = state.teams[0].id;
+  }
+
   let rows = state.teams.map(t=>{
     const spent = spentByTeam(t);
     return {t, spent, remaining: t.budget-spent, P:countInRole(t,'P'), D:countInRole(t,'D'), C:countInRole(t,'C'), A:countInRole(t,'A'), total:t.roster.length};
@@ -1205,11 +1221,39 @@ function renderRose(){
     });
   }
   document.querySelectorAll('#view-rose thead [data-sort-arrow]').forEach(s=> s.textContent = s.dataset.sortArrow===overviewSort.key ? (overviewSort.dir===1?'▲':'▼') : '');
+  
   el('overviewBody').innerHTML = rows.map(r=>{
     const t=r.t;
-    return `<tr><td class="sticky-col">${escapeHtml(t.name)}</td><td class="num">${fmt(r.spent)}</td><td class="num" style="color:${r.remaining<0?'var(--red)':'var(--green)'}">${fmt(r.remaining)}</td><td class="num">${r.P}/${state.slots.P}</td><td class="num">${r.D}/${state.slots.D}</td><td class="num">${r.C}/${state.slots.C}</td><td class="num">${r.A}/${state.slots.A}</td><td class="num">${r.total}/${state.slots.P+state.slots.D+state.slots.C+state.slots.A}</td></tr>`;
+    const isActive = t.id === activeRosterTeam;
+    return `<tr class="team-row ${isActive ? 'active-team-row' : ''}" data-team-id="${t.id}">
+      <td class="sticky-col">${escapeHtml(t.name)}</td>
+      <td class="num">${fmt(r.spent)}</td>
+      <td class="num" style="color:${r.remaining<0?'var(--red)':'var(--green)'}">${fmt(r.remaining)}</td>
+      <td class="num">${r.P}/${state.slots.P}</td>
+      <td class="num">${r.D}/${state.slots.D}</td>
+      <td class="num">${r.C}/${state.slots.C}</td>
+      <td class="num">${r.A}/${state.slots.A}</td>
+      <td class="num">${r.total}/${state.slots.P+state.slots.D+state.slots.C+state.slots.A}</td>
+    </tr>`;
   }).join('');
-  if(!activeRosterTeam && state.teams.length) activeRosterTeam = state.teams[0].id;
+
+  // Rendi cliccabili le righe della tabella
+  el('overviewBody').querySelectorAll('.team-row').forEach(row => {
+    row.addEventListener('click', function() {
+      const tid = this.dataset.teamId;
+      if(activeRosterTeam !== tid) {
+        activeRosterTeam = tid;
+        rosterAddQuery = '';
+        renderRose();
+        // Scorri al pannello della rosa per mostrare il risultato
+        setTimeout(() => {
+          const panel = el('rosterPanel');
+          if(panel) panel.scrollIntoView({behavior: 'smooth', block: 'start'});
+        }, 50);
+      }
+    });
+  });
+
   el('rosterTabs').innerHTML = state.teams.map(t=>`<button data-team="${t.id}" class="${t.id===activeRosterTeam?'active':''}">${escapeHtml(t.name)}</button>`).join('');
   el('rosterTabs').querySelectorAll('button').forEach(b=> b.addEventListener('click', function(){
     if(activeRosterTeam!==this.dataset.team) rosterAddQuery='';
@@ -1490,8 +1534,6 @@ function buildRolePlan(role, n, budget, pool, scale, sg){
 
   // 1) PRIMA gli slot per i giocatori in watchlist del ruolo, se disponibili e nel budget
   const wantedInRole = pool.filter(p=> isWatched(p.id) && isAvailable(p));
-  // quanto possiamo permetterci per loro: parte del budget proporzionale
-  const wantedBudget = Math.min(budget, budget * 0.7); // fino al 70% del budget di reparto può andare ai "puntati"
   let spentOnWanted = 0;
   const maxWanted = Math.min(coreN, wantedInRole.length);
   wantedInRole.sort((a,b)=> (sg(b)-sg(a)) || (playScore(b)-playScore(a)));
@@ -1499,7 +1541,6 @@ function buildRolePlan(role, n, budget, pool, scale, sg){
     const p = wantedInRole[i];
     const cost = sg(p);
     if(used.has(p.id)) continue;
-    // lascia almeno 1 credito per ogni altro slot ancora da riempire
     const minReserveForOthers = Math.max(0, (n - picked.length - 1)) * 1;
     if(spentOnWanted + cost + minReserveForOthers > budget) continue;
     take(p);
@@ -1535,7 +1576,6 @@ function buildRolePlan(role, n, budget, pool, scale, sg){
   if(fillersNeeded > 0){
     const cap = Math.max(1, Math.min(fillCapMax, Math.floor((budget - picked.reduce((s,x)=>s+sg(x.p),0)) / fillersNeeded) || 1));
     const rank = (a,b)=> (playScore(b)-playScore(a)) || (sg(a)-sg(b));
-    // prima eventuali "puntati" del ruolo non ancora presi che stanno nel cap
     const wantedLeft = pool.filter(p=> isWatched(p.id) && !used.has(p.id) && sg(p) <= cap);
     const wantFill = wantedLeft.slice(0, fillersNeeded);
     wantFill.forEach(p=>{ take(p); picked[picked.length-1].kind='fill'; });
@@ -1617,7 +1657,6 @@ function drawConsigli(){
   }
   const shownBudget = r => plans ? plans.budgets[r] : roleBudgets[r];
 
-  // WATCHLIST SUMMARY: quanto budget serve per i puntati
   const watchedFree = getWatchlist().map(id=>playerById(id)).filter(p=> p && !ownerOf(p.id) && isAvailable(p));
   const watchedCost = watchedFree.reduce((s,p)=> s + sg(p), 0);
   const watchedAlreadyInPlan = plans ? activeRoles.reduce((s,r)=> s + plans.byRole[r].filter(x=> isWatched(x.p.id)).length, 0) : 0;
