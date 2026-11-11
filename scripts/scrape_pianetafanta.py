@@ -1,9 +1,11 @@
 """
-Scarica da PianetaFanta le statistiche casa/fuori di ogni giocatore del listone.
+Scarica da PianetaFanta tutte le statistiche di ogni giocatore del listone
+(generale, casa, fuori, forma, ecc.).
 Input : data/quotazioni.csv       (serve prima scrape_fantacalcio.py)
         data/slug_override.csv    (opzionale, a mano: nome,slug - ha la precedenza su tutto)
 Output: data/stats_pianetafanta.csv  con le colonne che si aspetta index.html:
         nome, squadra, golcasa, golfuori, assistcasa, assistfuori, ammcasa, ammfuori, fmcasa, fmfuori
+        + tutte le altre colonne trovate nella pagina, con prefisso pf_ (es. pf_statCasa_..., pf_statForma_...)
         data/slug_trovati.csv        cache automatica degli slug scoperti (nome,slug)
         data/slug_mancanti.csv       nomi che nemmeno la ricerca automatica ha risolto
 
@@ -42,6 +44,11 @@ NEXT_RE = re.compile(r'<script id="__NEXT_DATA__" type="application/json">(.*?)<
 RSC_RE = re.compile(r'self\.__next_f\.push\(\[\d+,"(.*?)"\]\)', re.DOTALL)
 TITLE_RE = re.compile(r"<title[^>]*>(.*?)</title>", re.DOTALL | re.IGNORECASE)
 TEAM_RE = re.compile(r"([^\n·]{2,40}?)\s*·\s*(?:portiere|difensore|centrocampista|attaccante)", re.IGNORECASE)
+
+# nomi di chiavi che contengono statistiche (statCasa, statFuori, statForma, last5, ...)
+# Per prendere ogni oggetto della pagina, senza filtro, metti: NAME_RE = re.compile(r".")
+NAME_RE = re.compile(r"stat|forma|last|ultim|gener|casa|fuori|total|stagion|season|minut|presen", re.I)
+KEY_OBJ_RE = re.compile(r'"([A-Za-z_]\w*)":\s*([\{\[])')
 
 OVERRIDE_PATH = "data/slug_override.csv"
 CACHE_PATH = "data/slug_trovati.csv"
@@ -190,13 +197,54 @@ def find_obj(text, key):
     return None
 
 
+def flatten(obj, prefix="", out=None, depth=0):
+    """Trasforma dict/liste annidati in {'a_b_c': valore} tenendo solo i valori semplici."""
+    if out is None:
+        out = {}
+    if depth > 5:
+        return out
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            flatten(v, f"{prefix}{k}_", out, depth + 1)
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj[:30]):
+            flatten(v, f"{prefix}{i}_", out, depth + 1)
+    elif obj is None or isinstance(obj, (bool, int, float)) or (isinstance(obj, str) and len(obj) <= 120):
+        out[prefix.rstrip("_")] = "" if obj is None else obj
+    return out
+
+
+def find_all_objs(text):
+    """Tutti gli oggetti/liste con una chiave che somiglia a statistiche (statCasa, statForma, ...)."""
+    found, pos, dec = {}, 0, json.JSONDecoder()
+    while True:
+        m = KEY_OBJ_RE.search(text, pos)
+        if not m:
+            break
+        name, start = m.group(1), m.start(2)
+        try:
+            obj, end = dec.raw_decode(text, start)
+        except ValueError:
+            pos = m.end()
+            continue
+        if NAME_RE.search(name):
+            if name not in found:
+                found[name] = obj
+            pos = end          # salta il contenuto: e' gia' incluso
+        else:
+            pos = m.end()      # entra dentro: le statistiche possono stare piu' giu'
+    return found
+
+
 def extract_props(html):
-    """Ritorna (props, via) con props = {'squadra', 'statCasa', 'statFuori'} oppure (None, None)."""
+    """Ritorna (props, via) con props = {'squadra', 'statCasa', 'statFuori', '_all'} oppure (None, None)."""
     m = NEXT_RE.search(html)
     if m:
         try:
             props = json.loads(m.group(1)).get("props", {}).get("pageProps", {})
             if props:
+                allp = {k: v for k, v in props.items() if NAME_RE.search(k)} or dict(props)
+                props["_all"] = allp
                 return props, "pages-router"
         except ValueError:
             pass
@@ -213,7 +261,10 @@ def extract_props(html):
     if casa is None and fuori is None:
         casa, fuori = find_obj(html, "statCasa"), find_obj(html, "statFuori")
     if casa is not None or fuori is not None:
-        return {"squadra": None, "statCasa": casa or {}, "statFuori": fuori or {}}, "app-router"
+        allobjs = find_all_objs(blob) if blob else {}
+        if not allobjs:
+            allobjs = find_all_objs(html)
+        return {"squadra": None, "statCasa": casa or {}, "statFuori": fuori or {}, "_all": allobjs}, "app-router"
     return None, None
 
 
@@ -232,13 +283,17 @@ def build_row(name, team, props):
     if not isinstance(casa, dict) or not isinstance(fuori, dict) or not (casa or fuori):
         return None, "statCasa/statFuori assenti o con altro formato"
     fm = lambda d: round(num(d.get("MFG")), 2) if d.get("MFG") else ""
-    return {
+    row = {
         "nome": name, "squadra": team,
         "golcasa": casa.get("GoalReal", 0), "golfuori": fuori.get("GoalReal", 0),
         "assistcasa": casa.get("Assist", 0), "assistfuori": fuori.get("Assist", 0),
         "ammcasa": casa.get("Amm", 0), "ammfuori": fuori.get("Amm", 0),
         "fmcasa": fm(casa), "fmfuori": fm(fuori),
-    }, None
+    }
+    # tutto il resto della pagina (generale, casa, fuori, forma, ...) con prefisso pf_
+    for k, v in flatten(props.get("_all") or {}).items():
+        row.setdefault("pf_" + k, v)
+    return row, None
 
 
 def get_data(session, name, team):
@@ -361,10 +416,12 @@ def main():
         print("ATTENZIONE: nessun dato estratto. Guarda la riga [diag] e data/debug_pianetafanta.html.", file=sys.stderr)
         sys.exit(1)
     results.sort(key=lambda r: (r["squadra"], r["nome"]))
+    extra = sorted({k for r in results for k in r if k not in FIELDS})
     with open("data/stats_pianetafanta.csv", "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=FIELDS)
+        w = csv.DictWriter(f, fieldnames=FIELDS + extra, restval="")
         w.writeheader()
         w.writerows(results)
+    print(f"  colonne extra salvate: {len(extra)}", flush=True)
     print(f"OK: data/stats_pianetafanta.csv ({len(results)} giocatori)")
 
 
