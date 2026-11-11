@@ -332,6 +332,45 @@ input[type=time]{background:#fff;color:#000;}
         <div class="btn-row"><button class="btn btn-gold" id="importPasteBtn">Importa da testo</button><span class="hint" id="importStatus" style="margin:0;"></span></div>
       </div>
 
+            <div class="panel">
+        <div class="panel-title">Importa statistiche (stagione corrente e precedente)</div>
+        <p class="hint" style="margin-top:0;">Vai su <a href="https://www.fantacalcio.it/statistiche-serie-a" target="_blank" rel="noopener">fantacalcio.it/statistiche-serie-a</a>, scegli la stagione, esporta/copia la tabella (Nome, Squadra, Pv, Mv, Fm, Gol, Assist, Ammonizioni, Espulsioni...) e caricala qui. I dati vengono abbinati ai giocatori del listone per nome. Colonne riconosciute: Nome/Calciatore, Squadra, Pv/Presenze, Mv, Fm, Gf/Gol, Gs, Ass/Assist, Amm, Esp, Rp, Rc, Au. Importando le statistiche della stagione corrente, l'app stima da sola se un giocatore è titolare, in ballottaggio o panchinaro confrontando le sue presenze con quelle della sua squadra: resta comunque una stima (soprattutto a inizio stagione, con poche partite giocate), correggila a mano nella scheda del giocatore quando serve.</p>
+        <div class="row">
+          <div class="col">
+            <label>File statistiche stagione corrente (2026/27 o ultima disponibile)</label>
+            <input type="file" id="statsFileCurr" accept=".xlsx,.xls,.csv">
+          </div>
+          <div class="col">
+            <label>File statistiche stagione precedente</label>
+            <input type="file" id="statsFilePrev" accept=".xlsx,.xls,.csv">
+          </div>
+        </div>
+        <p class="hint" style="margin-top:0;">Oppure incolla il CSV di una stagione qui sotto:</p>
+        <div class="row">
+          <div class="col">
+            <textarea id="statsPasteCurr" placeholder="Incolla CSV statistiche stagione corrente..."></textarea>
+            <div class="btn-row"><button class="btn btn-ghost btn-sm" id="statsPasteCurrBtn">Importa come stagione corrente</button></div>
+          </div>
+          <div class="col">
+            <textarea id="statsPastePrev" placeholder="Incolla CSV statistiche stagione precedente..."></textarea>
+            <div class="btn-row"><button class="btn btn-ghost btn-sm" id="statsPastePrevBtn">Importa come stagione precedente</button></div>
+          </div>
+        </div>
+        <p class="hint" id="statsImportStatus" style="margin-top:0;"></p>
+        <p class="hint" style="margin-top:0;">Lo stato fisico non è disponibile in un file scaricabile, ma non serve scriverlo giocatore per giocatore: qui sotto puoi incollare il testo di una pagina infortunati e l'app li segna da sola.</p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Rileva infortunati automaticamente</div>
+        <p class="hint" style="margin-top:0;">Apri <a href="https://www.fantacalcio.it/indisponibili-serie-a" target="_blank" rel="noopener">fantacalcio.it/indisponibili-serie-a</a> o <a href="https://www.sosfanta.com/indisponibili-e-squalificati/tabella-indisponibili-seriea-fantacalcio-asta-infortunati-tempi-recupero-squalificati-diffidati/" target="_blank" rel="noopener">sosfanta.com</a>, seleziona tutto il testo della pagina (Ctrl+A, Ctrl+C) e incollalo qui sotto: l'app cerca i nomi dei tuoi giocatori nel testo e li segna come "Infortunato ora" in automatico. Rivedi comunque i risultati nel listone: qualche falso positivo (giocatori "in dubbio" più che infortunati, o nomi comuni) può capitare.</p>
+        <textarea id="injuryPasteInput" placeholder="Incolla qui il testo della pagina infortunati..."></textarea>
+        <div class="btn-row">
+          <button class="btn btn-gold" id="detectInjuriesBtn">Rileva e segna infortunati</button>
+          <button class="btn btn-ghost btn-sm" id="clearInjuriesBtn">Azzera tutti gli stati fisici</button>
+          <span class="hint" id="injuryDetectStatus" style="margin:0;"></span>
+        </div>
+      </div>
+
       <div id="listoneEmpty" class="panel" style="display:none;">
         <div class="empty-state"><div class="big">Nessun giocatore importato</div><p>Carica il listone qui sopra per iniziare.</p></div>
       </div>
@@ -569,7 +608,8 @@ function saveState(){
 }
 
 /* ================= UTIL ================= */
-function el(id){ return document.getElementById(id); }
+var NO_EL = {addEventListener(){}, removeEventListener(){}, classList:{add(){},remove(){},toggle(){},contains(){return false;}}, style:{}, dataset:{}, value:'', checked:false, textContent:'', innerHTML:'', files:[], querySelector(){return null;}, querySelectorAll(){return [];}, scrollIntoView(){}, focus(){}, click(){}};
+function el(id){ return document.getElementById(id) || NO_EL; }
 function fmt(n){ return Math.round(n).toLocaleString('it-IT'); }
 function clamp0(n){ return n<0?0:n; }
 let toastTimer=null;
