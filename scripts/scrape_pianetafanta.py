@@ -1,428 +1,461 @@
 """
-Scarica da PianetaFanta tutte le statistiche di ogni giocatore del listone
-(generale, casa, fuori, forma, ecc.).
-Input : data/quotazioni.csv       (serve prima scrape_fantacalcio.py)
-        data/slug_override.csv    (opzionale, a mano: nome,slug - ha la precedenza su tutto)
-Output: data/stats_pianetafanta.csv  con le colonne che si aspetta index.html:
-        nome, squadra, golcasa, golfuori, assistcasa, assistfuori, ammcasa, ammfuori, fmcasa, fmfuori
-        + tutte le altre colonne trovate nella pagina, con prefisso pf_ (es. pf_statCasa_..., pf_statForma_...)
-        data/slug_trovati.csv        cache automatica degli slug scoperti (nome,slug)
-        data/slug_mancanti.csv       nomi che nemmeno la ricerca automatica ha risolto
-
-Come trova gli slug:
-- PianetaFanta usa cognome + iniziali del nome per distinguere gli omonimi (pessina-m, pessina-ma).
-  Per ogni nome che non risponde con lo slug "ovvio" lo script prova: cognome + iniziali date dal
-  listone (Pessina Mas. -> pessina-mas, pessina-ma, pessina-m), poi cognome + ogni lettera a-z,
-  poi il solo cognome.
-- Ogni pagina viene accettata solo se la squadra scritta nella pagina coincide con quella del
-  listone. Le varianti non "ovvie" richiedono sempre la squadra verificata, cosi' gli omonimi
-  non entrano nel CSV.
-- Gli slug scoperti vengono salvati in data/slug_trovati.csv e riusati ai run successivi.
+Scarica quotazioni, statistiche e indisponibili da fantacalcio.it.
 """
-import csv
-import html as htmllib
-import json
 import os
-import re
-import string
 import sys
-import time
-import unicodedata
-from collections import Counter, defaultdict
-from concurrent.futures import ThreadPoolExecutor, as_completed
-
+import re
+import csv
 import requests
-from urllib3.util.retry import Retry
+from datetime import date
+from bs4 import BeautifulSoup
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
-    "Accept-Language": "it-IT,it;q=0.9",
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "it-IT,it;q=0.9,en;q=0.8",
 }
-BASE = "https://www.pianetafanta.it/giocatori/"
-FIELDS = ["nome", "squadra", "golcasa", "golfuori", "assistcasa", "assistfuori", "ammcasa", "ammfuori", "fmcasa", "fmfuori"]
-NEXT_RE = re.compile(r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>', re.DOTALL)
-RSC_RE = re.compile(r'self\.__next_f\.push\(\[\d+,"(.*?)"\]\)', re.DOTALL)
-TITLE_RE = re.compile(r"<title[^>]*>(.*?)</title>", re.DOTALL | re.IGNORECASE)
-TEAM_RE = re.compile(r"([^\n·]{2,40}?)\s*·\s*(?:portiere|difensore|centrocampista|attaccante)", re.IGNORECASE)
 
-# nomi di chiavi che contengono statistiche (statCasa, statFuori, statForma, last5, ...)
-# Per prendere ogni oggetto della pagina, senza filtro, metti: NAME_RE = re.compile(r".")
-NAME_RE = re.compile(r"stat|forma|last|ultim|gener|casa|fuori|total|stagion|season|minut|presen", re.I)
-KEY_OBJ_RE = re.compile(r'"([A-Za-z_]\w*)":\s*([\{\[])')
+URLS = {
+    "quotazioni": "https://www.fantacalcio.it/quotazioni-fantacalcio",
+    "statistiche": "https://www.fantacalcio.it/statistiche-serie-a",
+    "indisponibili": "https://www.fantacalcio.it/indisponibili-serie-a",
+}
 
-OVERRIDE_PATH = "data/slug_override.csv"
-CACHE_PATH = "data/slug_trovati.csv"
-MISSING_PATH = "data/slug_mancanti.csv"
+# Template per le pagine di statistiche di una stagione specifica (storiche).
+# La pagina statistiche-serie-a "semplice" (in URLS sopra) punta invece
+# sempre da sola alla stagione IN CORSO, senza bisogno di specificarla.
+STATS_SEASON_URL_TEMPLATE = "https://www.fantacalcio.it/statistiche-serie-a/{season}/italia"
 
-fail = Counter()                 # motivo -> quanti giocatori
-examples = defaultdict(list)     # motivo -> alcuni nomi di esempio
-missing = []                     # (nome, squadra) non risolti
-unverified = []                  # nomi accettati senza poter verificare la squadra
-found_slugs = {}                 # nome -> slug scoperto in questo run
-OVERRIDES = {}
-CACHE = {}
-debug_saved = False
+BLOCK_MARKERS = [
+    "captcha", "attention required", "access denied",
+    "just a moment", "checking your browser", "are you human",
+]
 
 
-def record_fail(reason, name):
-    fail[reason] += 1
-    if len(examples[reason]) < 12:
-        examples[reason].append(name)
+def current_season_label():
+    """
+    Calcola l'etichetta stagione corrente nel formato usato dal sito
+    (es. '2026-27'). La Serie A parte convenzionalmente ad agosto: se
+    siamo tra luglio e dicembre la stagione è annoCorrente-annoProssimo,
+    altrimenti annoScorso-annoCorrente.
+    """
+    today = date.today()
+    start_year = today.year if today.month >= 7 else today.year - 1
+    end_short = (start_year + 1) % 100
+    return f"{start_year}-{end_short:02d}"
 
 
-def make_slug(name):
-    s = unicodedata.normalize("NFD", name.lower())
-    s = "".join(c for c in s if unicodedata.category(c) != "Mn")     # via gli accenti
-    return re.sub(r"[^a-z0-9]+", "-", s).strip("-")
+def previous_season_label():
+    """Etichetta della stagione precedente a quella corrente, stesso formato."""
+    today = date.today()
+    start_year = (today.year if today.month >= 7 else today.year - 1) - 1
+    end_short = (start_year + 1) % 100
+    return f"{start_year}-{end_short:02d}"
 
 
-def load_slug_csv(path, target):
-    if not os.path.exists(path):
-        return
-    with open(path, encoding="utf-8") as f:
-        for r in csv.DictReader(f):
-            nome, slug = (r.get("nome") or "").strip(), (r.get("slug") or "").strip()
-            if nome and slug:
-                target[nome] = slug.strip("/").split("/")[-1].split("?")[0]   # accetta anche l'URL intero
 
-
-def split_name(name):
-    """'Esposito F.P.' -> ('Esposito', 'fp'); 'Pessina Mas.' -> ('Pessina', 'mas'); 'N'Dicka' -> ("N'Dicka", '')."""
-    clean = name.replace("*", "").strip()
-    toks = clean.split()
-    ini = ""
-    while len(toks) > 1 and (toks[-1].endswith(".") or (len(toks[-1]) <= 2 and toks[-1][0].isupper())):
-        ini = re.sub(r"[^A-Za-z]", "", toks.pop()).lower() + ini
-    return " ".join(toks), ini
-
-
-def slug_candidates(name):
-    """Lista di (slug, sicuro). 'sicuro' = ok anche se la squadra non e' verificabile."""
-    out, seen = [], set()
-
-    def add(slug, safe=False, raw=False):
-        s = slug if raw else make_slug(slug)
-        if s and s not in seen:
-            seen.add(s)
-            out.append((s, safe))
-
-    if name in OVERRIDES:
-        add(OVERRIDES[name], safe=True, raw=True)
-    if name in CACHE:
-        add(CACHE[name], safe=True, raw=True)
-
-    clean = name.replace("*", "").strip()
-    sur, ini = split_name(name)
-    add(clean, safe=True)
-    add(clean.replace("'", "").replace("’", ""), safe=True)
-    add(re.sub(r"[-'’]", "", clean), safe=True)
-
-    # varianti del solo cognome (base per iniziali e scansione)
-    bases = []
-    for b in (make_slug(sur), make_slug(re.sub(r"['’]", "", sur)), make_slug(re.sub(r"[-'’]", "", sur))):
-        if b and b not in bases:
-            bases.append(b)
-    words = sur.split()
-    if len(words) > 1:
-        for w in (words[-1], words[0]):
-            b = make_slug(w)
-            if b and b not in bases:
-                bases.append(b)
-
-    # cognome + iniziali del listone, dalla piu' lunga alla piu' corta
-    if ini:
-        for b in bases:
-            for k in range(len(ini), 0, -1):
-                add(f"{b}-{ini[:k]}")
-
-    # cognome da solo
-    for b in bases:
-        add(b)
-
-    # scansione cognome + lettera (le prime due basi, per limitare le richieste)
-    for b in bases[:2]:
-        if ini:
-            for c in string.ascii_lowercase:
-                add(f"{b}-{ini[0]}{c}")
-        else:
-            for c in string.ascii_lowercase:
-                add(f"{b}-{c}")
-    return out
-
-
-def norm_team(s):
-    s = unicodedata.normalize("NFD", str(s or "").upper())
-    return "".join(c for c in s if c.isalpha())
-
-
-def team_ok(page_team, team):
-    """True/False se confrontabile, None se la squadra della pagina non e' nota."""
-    a, b = norm_team(page_team), norm_team(team)
-    if not a or not b:
-        return None
-    return a[:3] == b[:3] or a in b or b in a
-
-
-def page_team(html):
-    """Squadra dall'intestazione della pagina ('FROSINONE · CENTROCAMPISTA ...')."""
-    text = re.sub(r"<script.*?</script>|<style.*?</style>", " ", html, flags=re.DOTALL | re.IGNORECASE)
-    text = htmllib.unescape(re.sub(r"<[^>]+>", "\n", text))
-    m = TEAM_RE.search(text)
-    return m.group(1).strip() if m else None
-
-
-def num(v):
+def fetch_page(url):
+    """Scarica una pagina HTML, con diagnostica su status/dimensione/blocchi."""
     try:
-        return float(v)
-    except (TypeError, ValueError):
+        resp = requests.get(url, headers=HEADERS, timeout=30)
+        print(f"   -> {url}: status={resp.status_code}, bytes={len(resp.content)}", file=sys.stderr)
+        resp.raise_for_status()
+
+        text_lower = resp.text.lower()
+        hits = [m for m in BLOCK_MARKERS if m in text_lower]
+        if hits:
+            print(f"   SOSPETTO BLOCCO/CHALLENGE su {url}: marker trovati={hits}", file=sys.stderr)
+
+        return resp.text
+    except requests.RequestException as e:
+        print(f"ERRORE scaricando {url}: {e}", file=sys.stderr)
+        return None
+
+
+def clean_number(val):
+    """Pulisce un valore numerico da stringa (es. '1.234,5' -> 1234.5)."""
+    if not val:
+        return 0
+    clean = re.sub(r'[^\d,.\-]', '', str(val))
+    if ',' in clean and '.' in clean:
+        clean = clean.replace('.', '').replace(',', '.')
+    else:
+        clean = clean.replace(',', '.')
+    try:
+        return float(clean)
+    except ValueError:
         return 0
 
 
-def find_obj(text, key):
-    """Cerca '"key":{...}' dentro un testo e ritorna l'oggetto JSON (dict) oppure None."""
-    needle = '"%s":' % key
-    i = text.find(needle)
-    while i >= 0:
-        k = i + len(needle)
-        while k < len(text) and text[k] == " ":
-            k += 1
-        if k < len(text) and text[k] == "{":
-            try:
-                obj, _ = json.JSONDecoder().raw_decode(text, k)
-                if isinstance(obj, dict):
-                    return obj
-            except ValueError:
-                pass
-        i = text.find(needle, i + 1)
-    return None
+def build_header_labels(header_row):
+    """
+    Espande gli header rispettando gli attributi colspan.
 
-
-def flatten(obj, prefix="", out=None, depth=0):
-    """Trasforma dict/liste annidati in {'a_b_c': valore} tenendo solo i valori semplici."""
-    if out is None:
-        out = {}
-    if depth > 5:
-        return out
-    if isinstance(obj, dict):
-        for k, v in obj.items():
-            flatten(v, f"{prefix}{k}_", out, depth + 1)
-    elif isinstance(obj, list):
-        for i, v in enumerate(obj[:30]):
-            flatten(v, f"{prefix}{i}_", out, depth + 1)
-    elif obj is None or isinstance(obj, (bool, int, float)) or (isinstance(obj, str) and len(obj) <= 120):
-        out[prefix.rstrip("_")] = "" if obj is None else obj
-    return out
-
-
-def find_all_objs(text):
-    """Tutti gli oggetti/liste con una chiave che somiglia a statistiche (statCasa, statForma, ...)."""
-    found, pos, dec = {}, 0, json.JSONDecoder()
-    while True:
-        m = KEY_OBJ_RE.search(text, pos)
-        if not m:
-            break
-        name, start = m.group(1), m.start(2)
+    Su fantacalcio.it la cella header 'Calciatore' copre con colspan le
+    colonne icona (checkbox/preferiti/ruolo) + la colonna nome. Se non
+    espandiamo il colspan, l'indice degli header non corrisponde più
+    all'indice delle celle nelle righe dati (che invece sono tutte celle
+    singole), e ogni colonna dopo 'Calciatore' risulta disallineata.
+    """
+    labels = []
+    for cell in header_row.find_all(['th', 'td']):
         try:
-            obj, end = dec.raw_decode(text, start)
-        except ValueError:
-            pos = m.end()
+            colspan = int(cell.get('colspan', 1))
+        except (TypeError, ValueError):
+            colspan = 1
+        text = cell.get_text(strip=True)
+        labels.extend([text] * max(colspan, 1))
+    return labels
+
+
+def extract_from_table(html, required_keywords):
+    """Trova la tabella giusta cercando keyword negli header (espansi per colspan)."""
+    soup = BeautifulSoup(html, 'html.parser')
+    tables = soup.find_all('table')
+
+    for table in tables:
+        header_row = table.find('tr')
+        if not header_row:
             continue
-        if NAME_RE.search(name):
-            if name not in found:
-                found[name] = obj
-            pos = end          # salta il contenuto: e' gia' incluso
-        else:
-            pos = m.end()      # entra dentro: le statistiche possono stare piu' giu'
-    return found
+        headers = build_header_labels(header_row)
+        header_text = ' '.join(headers).upper()
+        if any(k in header_text for k in required_keywords):
+            return table, headers
 
-
-def extract_props(html):
-    """Ritorna (props, via) con props = {'squadra', 'statCasa', 'statFuori', '_all'} oppure (None, None)."""
-    m = NEXT_RE.search(html)
-    if m:
-        try:
-            props = json.loads(m.group(1)).get("props", {}).get("pageProps", {})
-            if props:
-                allp = {k: v for k, v in props.items() if NAME_RE.search(k)} or dict(props)
-                props["_all"] = allp
-                return props, "pages-router"
-        except ValueError:
-            pass
-
-    chunks = []
-    for c in RSC_RE.findall(html):
-        try:
-            chunks.append(json.loads('"' + c + '"'))
-        except ValueError:
-            continue
-    blob = "".join(chunks)
-    casa = find_obj(blob, "statCasa") if blob else None
-    fuori = find_obj(blob, "statFuori") if blob else None
-    if casa is None and fuori is None:
-        casa, fuori = find_obj(html, "statCasa"), find_obj(html, "statFuori")
-    if casa is not None or fuori is not None:
-        allobjs = find_all_objs(blob) if blob else {}
-        if not allobjs:
-            allobjs = find_all_objs(html)
-        return {"squadra": None, "statCasa": casa or {}, "statFuori": fuori or {}, "_all": allobjs}, "app-router"
     return None, None
 
 
-def diag(url, resp):
-    html = resp.text
-    t = TITLE_RE.search(html)
-    title = t.group(1).strip()[:80] if t else None
-    print(f"[diag] {url} status={resp.status_code} bytes={len(html)} title={title!r} "
-          f"__NEXT_DATA__={'__NEXT_DATA__' in html} __next_f={'__next_f' in html} "
-          f"statCasa={'statCasa' in html} GoalReal={'GoalReal' in html} team={page_team(html)!r}", file=sys.stderr)
+def extract_ruolo(row):
+    """
+    Estrae il ruolo Classic (P/D/C/A) da una riga della tabella quotazioni.
+
+    Fonte esatta, verificata sull'HTML reale del sito: l'attributo
+    data-filter-role-classic sul <tr> stesso, es.
+    <tr ... data-filter-role-classic="c" ...>. Non serve interpretare
+    icone o classi CSS.
+    """
+    valid = {'P', 'D', 'C', 'A'}
+
+    val = (row.get('data-filter-role-classic') or '').strip().upper()
+    if val in valid:
+        return val
+
+    # Fallback se l'attributo sparisse: data-value dello span dentro
+    # <th class="player-role-classic">
+    classic_th = row.find(class_='player-role-classic')
+    if classic_th:
+        span = classic_th.find('span', class_='role')
+        if span:
+            val2 = (span.get('data-value') or '').strip().upper()
+            if val2 in valid:
+                return val2
+
+    return '?'
 
 
-def build_row(name, team, props):
-    """Ritorna (riga, motivo_errore)."""
-    casa, fuori = props.get("statCasa") or {}, props.get("statFuori") or {}
-    if not isinstance(casa, dict) or not isinstance(fuori, dict) or not (casa or fuori):
-        return None, "statCasa/statFuori assenti o con altro formato"
-    fm = lambda d: round(num(d.get("MFG")), 2) if d.get("MFG") else ""
-    row = {
-        "nome": name, "squadra": team,
-        "golcasa": casa.get("GoalReal", 0), "golfuori": fuori.get("GoalReal", 0),
-        "assistcasa": casa.get("Assist", 0), "assistfuori": fuori.get("Assist", 0),
-        "ammcasa": casa.get("Amm", 0), "ammfuori": fuori.get("Amm", 0),
-        "fmcasa": fm(casa), "fmfuori": fm(fuori),
-    }
-    # tutto il resto della pagina (generale, casa, fuori, forma, ...) con prefisso pf_
-    for k, v in flatten(props.get("_all") or {}).items():
-        row.setdefault("pf_" + k, v)
-    return row, None
+def parse_quotazioni(html):
+    """Estrae le quotazioni dalla tabella reale di fantacalcio.it."""
+    table, headers = extract_from_table(html, ['CALCIATORE', 'FVM', 'QUOTAZ'])
+    if not table:
+        print("ATTENZIONE: tabella quotazioni non trovata, struttura pagina cambiata", file=sys.stderr)
+        return []
 
+    # QI/QA/FVM compaiono due volte (Classic + Mantra): prendiamo la prima
+    # occorrenza di ciascuno = Classic. Il nome giocatore non si trova per
+    # testo header (la cella 'Calciatore' ha colspan su più colonne): è
+    # sempre la colonna immediatamente prima di 'Sq'.
+    col_map = {}
+    seen = {'qi': False, 'qta': False, 'fvm': False}
+    squadra_idx = None
+    for i, h in enumerate(headers):
+        h_clean = h.upper().replace(' ', '').replace('.', '').replace('/', '')
+        if h_clean in ('SQ', 'SQUADRA', 'TEAM') and squadra_idx is None:
+            squadra_idx = i
+        elif h_clean == 'QI' and not seen['qi']:
+            col_map['qi'] = i
+            seen['qi'] = True
+        elif h_clean == 'QA' and not seen['qta']:
+            col_map['qta'] = i
+            seen['qta'] = True
+        elif 'FVM' in h_clean and not seen['fvm']:
+            col_map['fvm'] = i
+            seen['fvm'] = True
 
-def get_data(session, name, team):
-    global debug_saved
-    any_page = False
-    last_reason = None
+    if squadra_idx is None or squadra_idx == 0:
+        print("ATTENZIONE: colonna 'Sq' non trovata nella tabella quotazioni", file=sys.stderr)
+        return []
 
-    for slug, safe in slug_candidates(name):
-        url = BASE + slug
-        try:
-            resp = session.get(url, timeout=15)
-        except requests.RequestException:
-            record_fail("errore di rete", name)
-            return None
-        if resp.status_code == 404:
+    col_map['squadra'] = squadra_idx
+    col_map['nome'] = squadra_idx - 1
+
+    players = []
+    rows = table.find_all('tr')[1:]
+    for row in rows:
+        cols = row.find_all(['td', 'th'])
+        row_data = [c.get_text(strip=True) for c in cols]
+
+        nome_idx = col_map['nome']
+        if nome_idx >= len(row_data):
             continue
-        if resp.status_code != 200:
-            record_fail(f"HTTP {resp.status_code}", name)
-            return None
-        any_page = True
-
-        props, _via = extract_props(resp.text)
-        if props is None:
-            if not debug_saved:
-                debug_saved = True
-                with open("data/debug_pianetafanta.html", "w", encoding="utf-8") as f:
-                    f.write(resp.text)
-                diag(url, resp)
-            last_reason = "nessun JSON con statCasa/statFuori nella pagina"
+        nome = row_data[nome_idx]
+        if not nome or len(nome) < 2:
             continue
 
-        ok = team_ok(props.get("squadra") or page_team(resp.text), team)
-        if ok is False:
-            last_reason = "squadra diversa (omonimo?)"
+        squadra = row_data[col_map['squadra']] if col_map['squadra'] < len(row_data) else ''
+
+        qta_idx = col_map.get('qta')
+        qta = clean_number(row_data[qta_idx]) if qta_idx is not None and qta_idx < len(row_data) else 0
+
+        fvm_idx = col_map.get('fvm')
+        fvm = clean_number(row_data[fvm_idx]) if fvm_idx is not None and fvm_idx < len(row_data) else 0
+
+        ruolo = extract_ruolo(row)
+
+        players.append({
+            'id': f"p_{nome.lower().replace(' ', '_').replace('.', '')}",
+            'ruolo': ruolo,
+            'nome': nome,
+            'squadra': squadra,
+            'qta': qta,
+            'fvm': fvm
+        })
+
+    return players
+
+
+def parse_statistiche(html):
+    """Estrae le statistiche dalla tabella di fantacalcio.it."""
+    table, headers = extract_from_table(html, ['PV', 'MV', 'FANTAMEDIA', 'PRESENZE'])
+    if not table:
+        print("ATTENZIONE: tabella statistiche non trovata, struttura pagina cambiata", file=sys.stderr)
+        return []
+
+    col_map = {}
+    squadra_idx = None
+    for i, h in enumerate(headers):
+        h_clean = h.upper().replace(' ', '').replace('.', '')
+        if h_clean in ('SQ', 'SQUADRA', 'TEAM') and squadra_idx is None:
+            squadra_idx = i
+        elif h_clean == 'PV' and 'pv' not in col_map:
+            col_map['pv'] = i
+        elif h_clean == 'MV' and 'mv' not in col_map:
+            col_map['mv'] = i
+        elif h_clean == 'FM' and 'fm' not in col_map:
+            col_map['fm'] = i
+
+    if squadra_idx is None or squadra_idx == 0:
+        print("ATTENZIONE: colonna 'Sq' non trovata nella tabella statistiche", file=sys.stderr)
+        return []
+
+    col_map['squadra'] = squadra_idx
+    col_map['nome'] = squadra_idx - 1
+
+    stats = []
+    rows = table.find_all('tr')[1:]
+    for row in rows:
+        cols = row.find_all(['td', 'th'])
+        row_data = [c.get_text(strip=True) for c in cols]
+
+        nome_idx = col_map['nome']
+        if nome_idx >= len(row_data):
             continue
-        if ok is None and not safe:
-            last_reason = "squadra non verificabile sulla variante"
+        nome = row_data[nome_idx]
+        if not nome or len(nome) < 2:
             continue
 
-        row, reason = build_row(name, team, props)
-        if row is None:
-            last_reason = reason
-            continue
-        if ok is None:
-            unverified.append(name)
-        if slug != make_slug(name):
-            found_slugs[name] = slug
-        return row
+        entry = {
+            'nome': nome,
+            'squadra': row_data[col_map['squadra']] if col_map['squadra'] < len(row_data) else '',
+        }
+        for field in ('pv', 'mv', 'fm'):
+            idx = col_map.get(field)
+            entry[field] = clean_number(row_data[idx]) if idx is not None and idx < len(row_data) else 0
 
-    if not any_page:
-        record_fail("pagina non trovata (404 su tutte le varianti)", name)
-    else:
-        record_fail(last_reason or "errore sconosciuto", name)
-    missing.append((name, team))
-    return None
+        stats.append(entry)
+
+    return stats
+
+
+def parse_indisponibili(html):
+    """
+    Estrae i calciatori indisponibili (infortunati + squalificati), con
+    squadra e dettaglio (causa e tempi di rientro, testo libero così come
+    pubblicato dal sito - non lo spezzo in campi separati "causa"/"data"
+    perché il sito scrive tutto in prosa libera con formulazioni non
+    standardizzate, es. "da metà novembre", "recuperabile da inizio
+    ottobre": una regex sarebbe troppo fragile).
+
+    ATTENZIONE: questa pagina mostra solo la situazione ATTUALE. Non
+    esiste un archivio storico degli indisponibili per stagioni passate
+    su fantacalcio.it (a differenza delle statistiche), quindi non c'è
+    parametro stagione da gestire qui.
+
+    I diffidati non vengono inclusi: sono ancora disponibili, solo a
+    rischio squalifica alla prossima ammonizione.
+    """
+    soup = BeautifulSoup(html, 'html.parser')
+    records = []
+    current_team = None
+    current_category = None
+    category_labels = {'infortunati', 'squalificati', 'diffidati'}
+
+    for tag in soup.find_all(['img', 'a', 'strong', 'b']):
+        if tag.name == 'img':
+            alt = (tag.get('alt') or '').strip()
+            if alt.lower().startswith('stemma'):
+                current_team = alt[len('Stemma'):].strip() or alt
+                current_category = 'infortunati'  # ogni squadra riparte da qui
+            continue
+
+        text = tag.get_text(strip=True)
+        text_lower = text.lower().strip('- ')
+
+        if tag.name == 'a' and 'infortunati' in text_lower:
+            current_category = 'infortunati'
+            continue
+
+        if text_lower in category_labels:
+            current_category = text_lower
+            continue
+
+        if tag.name in ('strong', 'b') and current_team and current_category in ('infortunati', 'squalificati'):
+            if not text or text == 'Nessuno' or len(text) <= 1:
+                continue
+
+            dettaglio = ''
+            parent = tag.find_parent(['li', 'p', 'div'])
+            if parent:
+                full_text = parent.get_text(' ', strip=True)
+                dettaglio = full_text[len(text):].strip(' :-') if full_text.startswith(text) else full_text
+
+            records.append({
+                'nome': text,
+                'squadra': current_team or '',
+                'categoria': current_category,
+                'dettaglio': dettaglio,
+            })
+
+    if not records:
+        print("ATTENZIONE: nessun indisponibile estratto, struttura pagina cambiata", file=sys.stderr)
+
+    # Rimuove eventuali duplicati esatti mantenendo l'ordine di apparizione
+    seen = set()
+    unique_records = []
+    for r in records:
+        key = (r['nome'], r['squadra'], r['categoria'])
+        if key not in seen:
+            seen.add(key)
+            unique_records.append(r)
+
+    return unique_records
+
+
+def save_csv(data, path, headers):
+    if not data:
+        return False
+    with open(path, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=headers)
+        writer.writeheader()
+        writer.writerows(data)
+    return True
+
+
+def save_debug_html(html, path):
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(html)
 
 
 def main():
     os.makedirs("data", exist_ok=True)
-    quot = "data/quotazioni.csv"
-    if not os.path.exists(quot):
-        print(f"ERRORE: {quot} non trovato. Esegui prima scrape_fantacalcio.py", file=sys.stderr)
+    ok = True
+
+    print("Scarico quotazioni...")
+    html = fetch_page(URLS["quotazioni"])
+    if html:
+        save_debug_html(html, "data/debug_quotazioni.html")
+        players = parse_quotazioni(html)
+        if players:
+            headers = ['id', 'ruolo', 'nome', 'squadra', 'qta', 'fvm']
+            if save_csv(players, "data/quotazioni.csv", headers):
+                print(f"OK: data/quotazioni.csv ({len(players)} giocatori)")
+                n_unknown = sum(1 for p in players if p['ruolo'] == '?')
+                if n_unknown:
+                    print(f"   ATTENZIONE: ruolo non riconosciuto per {n_unknown} giocatori "
+                          f"(vedi commento in extract_ruolo)", file=sys.stderr)
+            else:
+                print("ERRORE: impossibile salvare quotazioni.csv", file=sys.stderr)
+                ok = False
+        else:
+            print("ERRORE: nessun giocatore estratto dalle quotazioni", file=sys.stderr)
+            print("   HTML salvato in data/debug_quotazioni.html per analisi", file=sys.stderr)
+            ok = False
+    else:
+        ok = False
+
+    print("Scarico statistiche...")
+    html = fetch_page(URLS["statistiche"])
+    if html:
+        save_debug_html(html, "data/debug_statistiche.html")
+        stats = parse_statistiche(html)
+        if stats:
+            headers = ['nome', 'squadra', 'pv', 'mv', 'fm']
+            if save_csv(stats, "data/stats_curr.csv", headers):
+                print(f"OK: data/stats_curr.csv ({len(stats)} giocatori)")
+            else:
+                print("ERRORE: impossibile salvare stats_curr.csv", file=sys.stderr)
+                ok = False
+        else:
+            print("ERRORE: nessuna statistica estratta", file=sys.stderr)
+            print("   HTML salvato in data/debug_statistiche.html per analisi", file=sys.stderr)
+            ok = False
+    else:
+        ok = False
+
+    # 2b. Statistiche stagione precedente: dati storici, non cambiano più,
+    # quindi si scaricano una sola volta e poi si salta se già presenti.
+    prev_path = "data/stats_prev.csv"
+    if os.path.exists(prev_path):
+        print(f"Statistiche stagione precedente già presenti in {prev_path}, salto il download.")
+    else:
+        prev_season = previous_season_label()
+        print(f"Statistiche stagione precedente mancanti, scarico {prev_season}...")
+        prev_url = STATS_SEASON_URL_TEMPLATE.format(season=prev_season)
+        html_prev = fetch_page(prev_url)
+        if html_prev:
+            save_debug_html(html_prev, "data/debug_statistiche_prev.html")
+            stats_prev = parse_statistiche(html_prev)
+            if stats_prev:
+                headers = ['nome', 'squadra', 'pv', 'mv', 'fm']
+                if save_csv(stats_prev, prev_path, headers):
+                    print(f"OK: {prev_path} ({len(stats_prev)} giocatori, stagione {prev_season})")
+                else:
+                    print(f"ERRORE: impossibile salvare {prev_path}", file=sys.stderr)
+            else:
+                print(f"ERRORE: nessuna statistica estratta per la stagione {prev_season} "
+                      f"(controlla che l'URL/formato stagione sia corretto: {prev_url})", file=sys.stderr)
+        # Non blocchiamo l'intero run per un fallimento sul backfill storico:
+        # è un'informazione "nice to have", non i dati live dell'asta.
+
+    print("Scarico indisponibili...")
+    html = fetch_page(URLS["indisponibili"])
+    if html:
+        save_debug_html(html, "data/debug_indisponibili.html")
+        injured = parse_indisponibili(html)
+        if injured:
+            headers = ['nome', 'squadra', 'categoria', 'dettaglio']
+            if save_csv(injured, "data/indisponibili.csv", headers):
+                print(f"OK: data/indisponibili.csv ({len(injured)} giocatori)")
+            else:
+                print("ERRORE: impossibile salvare indisponibili.csv", file=sys.stderr)
+
+    if not ok:
+        print("ERRORE: alcuni file non sono stati scaricati/estratti correttamente", file=sys.stderr)
         sys.exit(1)
-    load_slug_csv(OVERRIDE_PATH, OVERRIDES)
-    load_slug_csv(CACHE_PATH, CACHE)
-    print(f"Slug manuali: {len(OVERRIDES)}, slug in cache: {len(CACHE)}", flush=True)
-    with open(quot, encoding="utf-8") as f:
-        players = [{"nome": r["nome"], "squadra": r["squadra"]} for r in csv.DictReader(f) if r.get("nome") and r.get("squadra")]
-    print(f"Trovati {len(players)} giocatori. Scarico da PianetaFanta...", flush=True)
-
-    session = requests.Session()
-    session.headers.update(HEADERS)
-    adapter = requests.adapters.HTTPAdapter(max_retries=Retry(
-        total=2, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504]))
-    session.mount("https://", adapter)
-
-    results = []
-    with ThreadPoolExecutor(max_workers=5) as ex:
-        futures = [ex.submit(get_data, session, p["nome"], p["squadra"]) for p in players]
-        for i, fut in enumerate(as_completed(futures), 1):
-            r = fut.result()
-            if r:
-                results.append(r)
-            if i % 100 == 0:
-                print(f"  {i}/{len(players)} (riusciti: {len(results)})", flush=True)
-            time.sleep(0.05)
-
-    print(f"Riusciti: {len(results)}/{len(players)}", flush=True)
-    print(f"  squadra verificata sulla pagina: {len(results) - len(unverified)}, non verificabile: {len(unverified)}", flush=True)
-    if len(unverified) > len(results) * 0.5:
-        print("  ATTENZIONE: la squadra quasi mai verificabile, guarda la riga [diag] / data/debug_pianetafanta.html", flush=True)
-    for motivo, n in fail.most_common():
-        print(f"  falliti per {motivo}: {n}", flush=True)
-        print(f"     esempi: {', '.join(examples[motivo])}", flush=True)
-
-    if found_slugs:
-        print(f"  slug scoperti automaticamente: {len(found_slugs)}", flush=True)
-        for nome, slug in sorted(found_slugs.items()):
-            print(f"     {nome} -> {BASE}{slug}", flush=True)
-        merged = dict(CACHE)
-        merged.update(found_slugs)
-        with open(CACHE_PATH, "w", newline="", encoding="utf-8") as f:
-            w = csv.writer(f)
-            w.writerow(["nome", "slug"])
-            for nome in sorted(merged):
-                w.writerow([nome, merged[nome]])
-
-    if missing:
-        missing.sort()
-        with open(MISSING_PATH, "w", newline="", encoding="utf-8") as f:
-            w = csv.writer(f)
-            w.writerow(["nome", "slug", "squadra"])
-            for nome, squadra in missing:
-                w.writerow([nome, "", squadra])
-        print(f"  Nomi non risolti: {len(missing)} -> {MISSING_PATH}: compila slug e copia le righe in {OVERRIDE_PATH}", flush=True)
-    elif os.path.exists(MISSING_PATH):
-        os.remove(MISSING_PATH)
-
-    if not results:
-        print("ATTENZIONE: nessun dato estratto. Guarda la riga [diag] e data/debug_pianetafanta.html.", file=sys.stderr)
-        sys.exit(1)
-    results.sort(key=lambda r: (r["squadra"], r["nome"]))
-    extra = sorted({k for r in results for k in r if k not in FIELDS})
-    with open("data/stats_pianetafanta.csv", "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=FIELDS + extra, restval="")
-        w.writeheader()
-        w.writerows(results)
-    print(f"  colonne extra salvate: {len(extra)}", flush=True)
-    print(f"OK: data/stats_pianetafanta.csv ({len(results)} giocatori)")
+    else:
+        print("Tutti i dati scaricati con successo.")
 
 
 if __name__ == "__main__":
