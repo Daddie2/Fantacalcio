@@ -1,23 +1,28 @@
 """
 Scarica da PianetaFanta le statistiche casa/fuori di ogni giocatore del listone.
 Input : data/quotazioni.csv       (serve prima scrape_fantacalcio.py)
-        data/slug_override.csv    (opzionale, colonne: nome,slug)
+        data/slug_override.csv    (opzionale, a mano: nome,slug - ha la precedenza su tutto)
 Output: data/stats_pianetafanta.csv  con le colonne che si aspetta index.html:
         nome, squadra, golcasa, golfuori, assistcasa, assistfuori, ammcasa, ammfuori, fmcasa, fmfuori
-        data/slug_mancanti.csv       giocatori non trovati (nome,slug,squadra): compila la colonna
-                                     slug, poi copia le righe in data/slug_override.csv
+        data/slug_trovati.csv        cache automatica degli slug scoperti (nome,slug)
+        data/slug_mancanti.csv       nomi che nemmeno la ricerca automatica ha risolto
 
-Gestione dei nomi che danno 404:
-- override manuale da data/slug_override.csv (ha sempre la precedenza);
-- varianti automatiche: senza asterisco, senza apostrofo (N'Dicka -> ndicka), senza trattini,
-  senza iniziali finali (Esposito F.P. -> esposito), solo ultima/prima parola;
-- le varianti "rischiose" (solo cognome) vengono elencate nel log per un controllo, perche'
-  potrebbero puntare a un omonimo.
+Come trova gli slug:
+- PianetaFanta usa cognome + iniziali del nome per distinguere gli omonimi (pessina-m, pessina-ma).
+  Per ogni nome che non risponde con lo slug "ovvio" lo script prova: cognome + iniziali date dal
+  listone (Pessina Mas. -> pessina-mas, pessina-ma, pessina-m), poi cognome + ogni lettera a-z,
+  poi il solo cognome.
+- Ogni pagina viene accettata solo se la squadra scritta nella pagina coincide con quella del
+  listone. Le varianti non "ovvie" richiedono sempre la squadra verificata, cosi' gli omonimi
+  non entrano nel CSV.
+- Gli slug scoperti vengono salvati in data/slug_trovati.csv e riusati ai run successivi.
 """
 import csv
+import html as htmllib
 import json
 import os
 import re
+import string
 import sys
 import time
 import unicodedata
@@ -36,15 +41,19 @@ FIELDS = ["nome", "squadra", "golcasa", "golfuori", "assistcasa", "assistfuori",
 NEXT_RE = re.compile(r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>', re.DOTALL)
 RSC_RE = re.compile(r'self\.__next_f\.push\(\[\d+,"(.*?)"\]\)', re.DOTALL)
 TITLE_RE = re.compile(r"<title[^>]*>(.*?)</title>", re.DOTALL | re.IGNORECASE)
+TEAM_RE = re.compile(r"([^\n·]{2,40}?)\s*·\s*(?:portiere|difensore|centrocampista|attaccante)", re.IGNORECASE)
 
 OVERRIDE_PATH = "data/slug_override.csv"
+CACHE_PATH = "data/slug_trovati.csv"
 MISSING_PATH = "data/slug_mancanti.csv"
 
 fail = Counter()                 # motivo -> quanti giocatori
 examples = defaultdict(list)     # motivo -> alcuni nomi di esempio
-missing = []                     # (nome, squadra) con 404 su tutte le varianti
-risky_hits = []                  # (nome, slug usato) trovati con una variante rischiosa
+missing = []                     # (nome, squadra) non risolti
+unverified = []                  # nomi accettati senza poter verificare la squadra
+found_slugs = {}                 # nome -> slug scoperto in questo run
 OVERRIDES = {}
+CACHE = {}
 debug_saved = False
 
 
@@ -60,44 +69,77 @@ def make_slug(name):
     return re.sub(r"[^a-z0-9]+", "-", s).strip("-")
 
 
-def load_overrides():
-    if not os.path.exists(OVERRIDE_PATH):
+def load_slug_csv(path, target):
+    if not os.path.exists(path):
         return
-    with open(OVERRIDE_PATH, encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         for r in csv.DictReader(f):
             nome, slug = (r.get("nome") or "").strip(), (r.get("slug") or "").strip()
             if nome and slug:
-                OVERRIDES[nome] = slug.strip("/").split("/")[-1]   # accetta anche l'URL intero
-    print(f"Override manuali caricati: {len(OVERRIDES)}", flush=True)
+                target[nome] = slug.strip("/").split("/")[-1].split("?")[0]   # accetta anche l'URL intero
+
+
+def split_name(name):
+    """'Esposito F.P.' -> ('Esposito', 'fp'); 'Pessina Mas.' -> ('Pessina', 'mas'); 'N'Dicka' -> ("N'Dicka", '')."""
+    clean = name.replace("*", "").strip()
+    toks = clean.split()
+    ini = ""
+    while len(toks) > 1 and (toks[-1].endswith(".") or (len(toks[-1]) <= 2 and toks[-1][0].isupper())):
+        ini = re.sub(r"[^A-Za-z]", "", toks.pop()).lower() + ini
+    return " ".join(toks), ini
 
 
 def slug_candidates(name):
-    """Lista di (slug, rischiosa). Le prime sono le piu' affidabili."""
-    clean = re.sub(r"\*", "", name).strip()
+    """Lista di (slug, sicuro). 'sicuro' = ok anche se la squadra non e' verificabile."""
     out, seen = [], set()
 
-    def add(text, risky=False, raw=False):
-        s = text if raw else make_slug(text)
+    def add(slug, safe=False, raw=False):
+        s = slug if raw else make_slug(slug)
         if s and s not in seen:
             seen.add(s)
-            out.append((s, risky))
+            out.append((s, safe))
 
     if name in OVERRIDES:
-        add(OVERRIDES[name], raw=True)
-    add(clean)
-    add(clean.replace("'", "").replace("’", ""))          # N'Dicka -> ndicka
-    add(re.sub(r"[-'’]", "", clean))                       # Fitz-Jim -> fitzjim, N'Dri -> ndri
+        add(OVERRIDES[name], safe=True, raw=True)
+    if name in CACHE:
+        add(CACHE[name], safe=True, raw=True)
 
-    no_init = re.sub(r"(\s+[A-Za-z]{1,2}\.?)+$", "", clean).strip()   # via "F.P.", "N.", "Je.", "Ro."
-    had_initials = no_init != clean
-    if had_initials and no_init:
-        add(no_init, risky=True)
-        add(no_init.replace("'", "").replace("’", ""), risky=True)
+    clean = name.replace("*", "").strip()
+    sur, ini = split_name(name)
+    add(clean, safe=True)
+    add(clean.replace("'", "").replace("’", ""), safe=True)
+    add(re.sub(r"[-'’]", "", clean), safe=True)
 
-    words = no_init.split()
+    # varianti del solo cognome (base per iniziali e scansione)
+    bases = []
+    for b in (make_slug(sur), make_slug(re.sub(r"['’]", "", sur)), make_slug(re.sub(r"[-'’]", "", sur))):
+        if b and b not in bases:
+            bases.append(b)
+    words = sur.split()
     if len(words) > 1:
-        add(words[-1], risky=True)                         # Zambo Anguissa -> anguissa
-        add(words[0], risky=True)
+        for w in (words[-1], words[0]):
+            b = make_slug(w)
+            if b and b not in bases:
+                bases.append(b)
+
+    # cognome + iniziali del listone, dalla piu' lunga alla piu' corta
+    if ini:
+        for b in bases:
+            for k in range(len(ini), 0, -1):
+                add(f"{b}-{ini[:k]}")
+
+    # cognome da solo
+    for b in bases:
+        add(b)
+
+    # scansione cognome + lettera (le prime due basi, per limitare le richieste)
+    for b in bases[:2]:
+        if ini:
+            for c in string.ascii_lowercase:
+                add(f"{b}-{ini[0]}{c}")
+        else:
+            for c in string.ascii_lowercase:
+                add(f"{b}-{c}")
     return out
 
 
@@ -106,12 +148,20 @@ def norm_team(s):
     return "".join(c for c in s if c.isalpha())
 
 
-def same_team(a, b):
-    """'ROM' e 'ROMA' sono la stessa squadra: confronto sulle prime 3 lettere."""
-    a, b = norm_team(a), norm_team(b)
+def team_ok(page_team, team):
+    """True/False se confrontabile, None se la squadra della pagina non e' nota."""
+    a, b = norm_team(page_team), norm_team(team)
     if not a or not b:
-        return True
-    return a == b or a[:3] == b[:3]
+        return None
+    return a[:3] == b[:3] or a in b or b in a
+
+
+def page_team(html):
+    """Squadra dall'intestazione della pagina ('FROSINONE · CENTROCAMPISTA ...')."""
+    text = re.sub(r"<script.*?</script>|<style.*?</style>", " ", html, flags=re.DOTALL | re.IGNORECASE)
+    text = htmllib.unescape(re.sub(r"<[^>]+>", "\n", text))
+    m = TEAM_RE.search(text)
+    return m.group(1).strip() if m else None
 
 
 def num(v):
@@ -173,14 +223,11 @@ def diag(url, resp):
     title = t.group(1).strip()[:80] if t else None
     print(f"[diag] {url} status={resp.status_code} bytes={len(html)} title={title!r} "
           f"__NEXT_DATA__={'__NEXT_DATA__' in html} __next_f={'__next_f' in html} "
-          f"statCasa={'statCasa' in html} GoalReal={'GoalReal' in html}", file=sys.stderr)
+          f"statCasa={'statCasa' in html} GoalReal={'GoalReal' in html} team={page_team(html)!r}", file=sys.stderr)
 
 
 def build_row(name, team, props):
     """Ritorna (riga, motivo_errore)."""
-    sq = props.get("squadra")
-    if sq and not same_team(sq, team):
-        return None, "squadra diversa (omonimo?)"
     casa, fuori = props.get("statCasa") or {}, props.get("statFuori") or {}
     if not isinstance(casa, dict) or not isinstance(fuori, dict) or not (casa or fuori):
         return None, "statCasa/statFuori assenti o con altro formato"
@@ -196,10 +243,10 @@ def build_row(name, team, props):
 
 def get_data(session, name, team):
     global debug_saved
-    not_found = True
+    any_page = False
     last_reason = None
 
-    for slug, risky in slug_candidates(name):
+    for slug, safe in slug_candidates(name):
         url = BASE + slug
         try:
             resp = session.get(url, timeout=15)
@@ -208,10 +255,10 @@ def get_data(session, name, team):
             return None
         if resp.status_code == 404:
             continue
-        not_found = False
         if resp.status_code != 200:
             record_fail(f"HTTP {resp.status_code}", name)
             return None
+        any_page = True
 
         props, _via = extract_props(resp.text)
         if props is None:
@@ -223,19 +270,29 @@ def get_data(session, name, team):
             last_reason = "nessun JSON con statCasa/statFuori nella pagina"
             continue
 
+        ok = team_ok(props.get("squadra") or page_team(resp.text), team)
+        if ok is False:
+            last_reason = "squadra diversa (omonimo?)"
+            continue
+        if ok is None and not safe:
+            last_reason = "squadra non verificabile sulla variante"
+            continue
+
         row, reason = build_row(name, team, props)
         if row is None:
-            last_reason = reason       # es. omonimo: provo la variante successiva
+            last_reason = reason
             continue
-        if risky:
-            risky_hits.append((name, slug))
+        if ok is None:
+            unverified.append(name)
+        if slug != make_slug(name):
+            found_slugs[name] = slug
         return row
 
-    if not_found:
-        record_fail("pagina non trovata (404): nome/slug diverso", name)
-        missing.append((name, team))
+    if not any_page:
+        record_fail("pagina non trovata (404 su tutte le varianti)", name)
     else:
         record_fail(last_reason or "errore sconosciuto", name)
+    missing.append((name, team))
     return None
 
 
@@ -245,7 +302,9 @@ def main():
     if not os.path.exists(quot):
         print(f"ERRORE: {quot} non trovato. Esegui prima scrape_fantacalcio.py", file=sys.stderr)
         sys.exit(1)
-    load_overrides()
+    load_slug_csv(OVERRIDE_PATH, OVERRIDES)
+    load_slug_csv(CACHE_PATH, CACHE)
+    print(f"Slug manuali: {len(OVERRIDES)}, slug in cache: {len(CACHE)}", flush=True)
     with open(quot, encoding="utf-8") as f:
         players = [{"nome": r["nome"], "squadra": r["squadra"]} for r in csv.DictReader(f) if r.get("nome") and r.get("squadra")]
     print(f"Trovati {len(players)} giocatori. Scarico da PianetaFanta...", flush=True)
@@ -268,14 +327,24 @@ def main():
             time.sleep(0.05)
 
     print(f"Riusciti: {len(results)}/{len(players)}", flush=True)
+    print(f"  squadra verificata sulla pagina: {len(results) - len(unverified)}, non verificabile: {len(unverified)}", flush=True)
+    if len(unverified) > len(results) * 0.5:
+        print("  ATTENZIONE: la squadra quasi mai verificabile, guarda la riga [diag] / data/debug_pianetafanta.html", flush=True)
     for motivo, n in fail.most_common():
         print(f"  falliti per {motivo}: {n}", flush=True)
         print(f"     esempi: {', '.join(examples[motivo])}", flush=True)
 
-    if risky_hits:
-        print(f"  trovati con variante rischiosa (controlla che non siano omonimi): {len(risky_hits)}", flush=True)
-        for nome, slug in sorted(risky_hits):
+    if found_slugs:
+        print(f"  slug scoperti automaticamente: {len(found_slugs)}", flush=True)
+        for nome, slug in sorted(found_slugs.items()):
             print(f"     {nome} -> {BASE}{slug}", flush=True)
+        merged = dict(CACHE)
+        merged.update(found_slugs)
+        with open(CACHE_PATH, "w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow(["nome", "slug"])
+            for nome in sorted(merged):
+                w.writerow([nome, merged[nome]])
 
     if missing:
         missing.sort()
@@ -284,7 +353,7 @@ def main():
             w.writerow(["nome", "slug", "squadra"])
             for nome, squadra in missing:
                 w.writerow([nome, "", squadra])
-        print(f"  Nomi non trovati: {len(missing)} -> compila {MISSING_PATH} e copia le righe in {OVERRIDE_PATH}", flush=True)
+        print(f"  Nomi non risolti: {len(missing)} -> {MISSING_PATH}: compila slug e copia le righe in {OVERRIDE_PATH}", flush=True)
     elif os.path.exists(MISSING_PATH):
         os.remove(MISSING_PATH)
 
