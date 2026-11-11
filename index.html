@@ -42,14 +42,7 @@ a{color:var(--gold);}
 .view.active{display:block;}
 
 /* Barra lega in alto (sticky) */
-.league-topbar{
-  position:static;
-  background:none;
-  padding:16px 0 14px 0;
-  margin:0 -34px 20px -34px;
-  padding-left:34px; padding-right:34px;
-  border-bottom:1px solid var(--line);
-}
+.league-topbar{position:sticky;top:0;z-index:30;background:linear-gradient(180deg, var(--bg) 70%, rgba(18,22,28,.85));padding:16px 0 14px 0;margin:0 -34px 20px -34px;padding-left:34px;padding-right:34px;border-bottom:1px solid var(--line);}
 .league-topbar-inner{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
 .league-topbar-label{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);}
 .league-topbar select{min-width:180px;max-width:280px;padding:7px 10px;font-size:13.5px;}
@@ -65,7 +58,7 @@ h1{font-family:var(--font-head);font-weight:600;font-size:26px;letter-spacing:.3
 .row{display:flex;gap:14px;flex-wrap:wrap;}
 .col{flex:1;min-width:160px;}
 label{display:block;font-size:12px;color:var(--text-dim);margin-bottom:5px;}
-input[type=text], input[type=number], select, textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:8px 10px;color:var(--text);font-size:13.5px;}
+input[type=text], input[type=password], input[type=number], select, textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:8px 10px;color:var(--text);font-size:13.5px;}
 input:focus, select:focus, textarea:focus{outline:none;border-color:var(--gold-dim);}
 textarea{min-height:90px;resize:vertical;font-family:var(--font-mono);font-size:12px;}
 
@@ -93,7 +86,7 @@ tbody tr:hover .sticky-col{background:var(--panel-2);}
 .panel .sticky-col{background:var(--panel);}
 .panel tbody tr:hover .sticky-col{background:var(--panel-2);}
 
-/* Evidenziazione riga squadra attiva nella Panoramica */
+/* Evidenziazione riga squadra attiva */
 .team-row { transition: background .15s; }
 .team-row:hover { background: var(--panel-2); }
 .active-team-row { background-color: rgba(212, 169, 62, 0.08) !important; }
@@ -339,32 +332,6 @@ input[type=time]{background:#fff;color:#000;}
         <div class="btn-row"><button class="btn btn-gold" id="importPasteBtn">Importa da testo</button><span class="hint" id="importStatus" style="margin:0;"></span></div>
       </div>
 
-      <div class="panel">
-        <div class="panel-title">Importa statistiche (stagione corrente e precedente)</div>
-        <p class="hint" style="margin-top:0;">Vai su <a href="https://www.fantacalcio.it/statistiche-serie-a" target="_blank" rel="noopener">fantacalcio.it/statistiche-serie-a</a>, scegli la stagione, esporta/copia la tabella (Nome, Squadra, Pv, Mv, Fm, Gol, Assist, Ammonizioni, Espulsioni...) e caricala qui. I dati vengono abbinati ai giocatori del listone per nome.</p>
-        <div class="row">
-          <div class="col"><label>File statistiche stagione corrente</label><input type="file" id="statsFileCurr" accept=".xlsx,.xls,.csv"></div>
-          <div class="col"><label>File statistiche stagione precedente</label><input type="file" id="statsFilePrev" accept=".xlsx,.xls,.csv"></div>
-        </div>
-        <p class="hint" style="margin-top:0;">Oppure incolla il CSV di una stagione qui sotto:</p>
-        <div class="row">
-          <div class="col"><textarea id="statsPasteCurr" placeholder="Incolla CSV statistiche stagione corrente..."></textarea><div class="btn-row"><button class="btn btn-ghost btn-sm" id="statsPasteCurrBtn">Importa come stagione corrente</button></div></div>
-          <div class="col"><textarea id="statsPastePrev" placeholder="Incolla CSV statistiche stagione precedente..."></textarea><div class="btn-row"><button class="btn btn-ghost btn-sm" id="statsPastePrevBtn">Importa come stagione precedente</button></div></div>
-        </div>
-        <p class="hint" id="statsImportStatus" style="margin-top:0;"></p>
-      </div>
-
-      <div class="panel">
-        <div class="panel-title">Rileva infortunati automaticamente</div>
-        <p class="hint" style="margin-top:0;">Apri <a href="https://www.fantacalcio.it/indisponibili-serie-a" target="_blank" rel="noopener">fantacalcio.it/indisponibili-serie-a</a> o <a href="https://www.sosfanta.com/indisponibili-e-squalificati/tabella-indisponibili-seriea-fantacalcio-asta-infortunati-tempi-recupero-squalificati-diffidati/" target="_blank" rel="noopener">sosfanta.com</a>, seleziona tutto il testo (Ctrl+A, Ctrl+C) e incollalo qui sotto.</p>
-        <textarea id="injuryPasteInput" placeholder="Incolla qui il testo della pagina infortunati..."></textarea>
-        <div class="btn-row">
-          <button class="btn btn-gold" id="detectInjuriesBtn">Rileva e segna infortunati</button>
-          <button class="btn btn-ghost btn-sm" id="clearInjuriesBtn">Azzera tutti gli stati fisici</button>
-          <span class="hint" id="injuryDetectStatus" style="margin:0;"></span>
-        </div>
-      </div>
-
       <div id="listoneEmpty" class="panel" style="display:none;">
         <div class="empty-state"><div class="big">Nessun giocatore importato</div><p>Carica il listone qui sopra per iniziare.</p></div>
       </div>
@@ -492,6 +459,19 @@ input[type=time]{background:#fff;color:#000;}
           </div>
         </div>
         <p class="hint">Ogni lega ha le sue squadre, rose, budget e slot. Puoi creare tutte le leghe che vuoi: il pulsante "Nuova lega" aggiunge una lega in più senza toccare quelle esistenti. Cambia lega dalla barra in alto, visibile in ogni pagina. Listone e statistiche sono comuni a tutte le leghe.</p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Aggiornamento manuale forzato</div>
+        <p class="hint" style="margin-top:0;">Inserisci i tuoi dati GitHub per forzare l'aggiornamento dei dati (inclusi i dettagli PianetaFanta) in qualsiasi momento.</p>
+        <div class="row">
+          <div class="col"><label>Repository (es. mario/fanta-war-room)</label><input type="text" id="ghRepo" placeholder="utente/repository"></div>
+          <div class="col"><label>GitHub Token (Personal Access Token)</label><input type="password" id="ghToken" placeholder="ghp_..."></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-gold" id="forceUpdateBtn">Forza aggiornamento dati</button>
+          <span class="hint" id="forceUpdateStatus" style="margin:0;"></span>
+        </div>
       </div>
 
       <div class="panel">
@@ -804,6 +784,7 @@ function applyImportedPlayers(players){
       if(old.titolaritaManual) p.titolaritaManual=old.titolaritaManual;
       if(old.titolaritaAuto) p.titolaritaAuto=old.titolaritaAuto;
       if(old.probForm) p.probForm=old.probForm;
+      if(old.pfStats) p.pfStats=old.pfStats;
     }
   });
   state.players = players;
@@ -870,10 +851,12 @@ async function autoFetchAndImport(opts){
   const setStatus = m=>{ const s = el('autoFetchStatus'); if(s) s.textContent = m; };
   if(!silent) setStatus('Controllo in corso...');
   let qOk=false, sOk=false, pOk=false, iOk=false;
+  
   try{ const wb = await fetchWorkbook('data/quotazioni.csv'); const players = importFromWorkbook(wb); if(players && players.length){ applyImportedPlayers(players); qOk=true; } }catch(e){ console.warn('auto quotazioni', e); }
   try{ const wb = await fetchWorkbook('data/stats_curr.csv'); handleStatsImport(workbookToRows(wb),'curr','stagione corrente'); sOk=true; }catch(e){ console.warn('auto stats_curr', e); }
   try{ const wb = await fetchWorkbook('data/stats_prev.csv'); handleStatsImport(workbookToRows(wb),'prev','stagione precedente'); pOk=true; }catch(e){ console.warn('auto stats_prev', e); }
   try{ const wb = await fetchWorkbook('data/indisponibili.csv'); const rows = workbookToRows(wb); const parsed = parseIndisponibiliRows(rows); if(parsed){ mergeIndisponibiliIntoPlayers(parsed); iOk=true; } }catch(e){ console.warn('auto indisp', e); }
+  
   try{
     const wbF = await fetchWorkbook('data/formazioni.csv'); const rowsF = workbookToRows(wbF);
     const hdr = rowsF[0].map(normHeader); const iId=hdr.indexOf('ID'), iSt=hdr.indexOf('STATO'), iPr=hdr.indexOf('PROB'), iAg=hdr.indexOf('AGGIORNATO');
@@ -881,6 +864,32 @@ async function autoFetchAndImport(opts){
     for(let i=1;i<rowsF.length;i++){ const pf = playerById(String(rowsF[i][iId])); if(pf) pf.probForm = {stato:rowsF[i][iSt], prob:parseFloat(rowsF[i][iPr])||0, agg:rowsF[i][iAg]}; }
     saveState();
   }catch(e){ console.warn('auto formazioni', e); }
+
+  try{ 
+    const wbPf = await fetchWorkbook('data/stats_pianetafanta.csv'); 
+    const rowsPf = workbookToRows(wbPf);
+    if(rowsPf.length > 1) {
+      const hdrPf = rowsPf[0].map(h => String(h).toUpperCase().trim());
+      const iNome = hdrPf.indexOf('NOME');
+      for(let i=1; i<rowsPf.length; i++){
+        const nome = String(rowsPf[i][iNome] || '').trim();
+        if(!nome) continue;
+        const p = state.players.find(x => normName(x.nome) === normName(nome));
+        if(p) {
+          p.pfStats = {
+            golCasa: parseFloat(rowsPf[i][hdrPf.indexOf('GOLCASA')]) || 0,
+            golFuori: parseFloat(rowsPf[i][hdrPf.indexOf('GOLFUORI')]) || 0,
+            assistCasa: parseFloat(rowsPf[i][hdrPf.indexOf('ASSISTCASA')]) || 0,
+            assistFuori: parseFloat(rowsPf[i][hdrPf.indexOf('ASSISTFUORI')]) || 0,
+            fmCasa: parseFloat(rowsPf[i][hdrPf.indexOf('FMCASA')]) || 0,
+            fmFuori: parseFloat(rowsPf[i][hdrPf.indexOf('FMFUORI')]) || 0
+          };
+        }
+      }
+      saveState();
+    }
+  }catch(e) { console.warn('auto pianetafanta', e); }
+
   if(qOk||sOk||pOk||iOk){ const w = new Date().toLocaleString('it-IT'); setStatus(`Aggiornato automaticamente alle ${w}.`); renderAll(); }
   else if(!silent) setStatus('Nessun dato automatico trovato: importa a mano qui sotto.');
 }
@@ -1220,7 +1229,6 @@ const ROLE_ORDER_PRESETS = {default:['P','D','C','A'], reverse:['A','C','D','P']
 function renderRose(){
   if(state.players.length) marketSuggestions = computeMarketSuggestions();
   
-  // Validazione ID squadra attiva
   if(!activeRosterTeam || !state.teams.find(t=>t.id===activeRosterTeam)) {
     if(state.teams.length) activeRosterTeam = state.teams[0].id;
   }
@@ -1253,7 +1261,6 @@ function renderRose(){
     </tr>`;
   }).join('');
 
-  // Rendi cliccabili le righe della tabella
   el('overviewBody').querySelectorAll('.team-row').forEach(row => {
     row.addEventListener('click', function() {
       const tid = this.dataset.teamId;
@@ -1261,7 +1268,6 @@ function renderRose(){
         activeRosterTeam = tid;
         rosterAddQuery = '';
         renderRose();
-        // Scorri al pannello della rosa per mostrare il risultato
         setTimeout(() => {
           const panel = el('rosterPanel');
           if(panel) panel.scrollIntoView({behavior: 'smooth', block: 'start'});
@@ -1536,17 +1542,6 @@ function pctRank(arr, val){ if(!arr.length) return 0; let i=0; while(i<arr.lengt
 
 function buildRolePlan(role, n, budget, pool, scale, sg){
   if(n <= 0) return [];
-  const wanted = pool.filter(p=> isWatched(p.id) && isAvailable(p)).sort((a,b)=> sg(b)-sg(a)).slice(0, n);
-  const wCost = wanted.reduce((t,p)=> t+sg(p), 0);
-  const rest = pool.filter(p=> !isWatched(p.id));
-  const picked = wanted.map(p=> ({p, kind:'core'}));
-  const nRest = n - wanted.length;
-  if(nRest > 0) buildRolePlanCore(role, nRest, Math.max(nRest, budget - wCost), rest, scale, sg).forEach(x=> picked.push(x));
-  picked.sort((a,b)=> (a.kind===b.kind ? 0 : (a.kind==='core' ? -1 : 1)) || (sg(b.p)-sg(a.p)));
-  return picked;
-}
-function buildRolePlanCore(role, n, budget, pool, scale, sg){
-  if(n <= 0) return [];
   const picked = [];
   const used = new Set();
   const take = p => { picked.push({p, kind:null}); used.add(p.id); return p; };
@@ -1559,7 +1554,6 @@ function buildRolePlanCore(role, n, budget, pool, scale, sg){
   fillCap = Math.max(1, Math.min(fillCapMax, fillCap));
   const fillReserve = fillN * fillCap;
 
-  // 1) PRIMA gli slot per i giocatori in watchlist del ruolo, se disponibili e nel budget
   const wantedInRole = pool.filter(p=> isWatched(p.id) && isAvailable(p));
   let spentOnWanted = 0;
   const maxWanted = Math.min(coreN, wantedInRole.length);
@@ -1576,7 +1570,6 @@ function buildRolePlanCore(role, n, budget, pool, scale, sg){
     spentOnWanted += cost;
   }
 
-  // 2) Poi gli altri slot "core" come da logica originale
   const remainingCore = coreN - picked.length;
   const w = [];
   for(let i=0;i<remainingCore;i++) w.push(remainingCore===1 ? 1 : 1 - 0.5*i/(remainingCore-1));
@@ -1598,7 +1591,6 @@ function buildRolePlanCore(role, n, budget, pool, scale, sg){
     left -= sg(p);
   }
 
-  // 3) Riempitivi
   const fillersNeeded = n - picked.length;
   if(fillersNeeded > 0){
     const cap = Math.max(1, Math.min(fillCapMax, Math.floor((budget - picked.reduce((s,x)=>s+sg(x.p),0)) / fillersNeeded) || 1));
@@ -1930,6 +1922,7 @@ function drawPlayerDetail(){
     else { maxBidText=fmt(mb.value); maxBidCls='gold'; }
   }
   const watchBtn = isWatched(p.id) ? `<button class="btn btn-sm btn-ghost" id="pdWatchBtn">Togli dai puntati di ${escapeHtml((teamById(watchTeamId())||{}).name||'')}</button>` : `<button class="btn btn-sm btn-gold" id="pdWatchBtn">+ Puntalo per ${escapeHtml((teamById(watchTeamId())||{}).name||'')}</button>`;
+  
   const html = `
     <div class="pd-header">
       <div><span class="role-tag role-${p.ruolo}">${p.ruolo}</span><span class="pd-name${nameCls(p)}">${escapeHtml(p.nome)}</span><span class="hint" style="margin:0;">${escapeHtml(p.squadra)}</span> ${watchBadges(p)}</div>
@@ -1941,6 +1934,18 @@ function drawPlayerDetail(){
       <div class="col"><label>Titolarità</label><select id="pdTitolarita" class="status-select" style="width:100%;">${Object.keys(STARTER_LABELS).map(k=>`<option value="${k}" ${k===titVal?'selected':''}>${STARTER_LABELS[k]}</option>`).join('')}</select></div>
       <div class="col" style="flex:0 0 auto;align-self:flex-end;">${watchBtn}</div>
     </div>
+
+    ${p.pfStats ? `
+    <div class="panel" style="margin-bottom:18px;">
+      <div class="panel-title">Statistiche Avanzate (PianetaFanta)</div>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="label">Goal Casa/Fuori</div><div class="value">${p.pfStats.golCasa} / ${p.pfStats.golFuori}</div></div>
+        <div class="stat-box"><div class="label">Assist Casa/Fuori</div><div class="value">${p.pfStats.assistCasa} / ${p.pfStats.assistFuori}</div></div>
+        <div class="stat-box"><div class="label">Fm Casa</div><div class="value">${p.pfStats.fmCasa ? p.pfStats.fmCasa.toFixed(2) : '-'}</div></div>
+        <div class="stat-box"><div class="label">Fm Fuori</div><div class="value">${p.pfStats.fmFuori ? p.pfStats.fmFuori.toFixed(2) : '-'}</div></div>
+      </div>
+    </div>` : ''}
+
     <div class="two-col" style="margin-bottom:18px;">
       <div class="panel" style="margin-bottom:0;"><div class="panel-title">Stagione corrente</div>${statBlockHtml(p.stats && p.stats.curr)}</div>
       <div class="panel" style="margin-bottom:0;"><div class="panel-title">Stagione precedente</div>${statBlockHtml(p.stats && p.stats.prev)}</div>
@@ -2403,6 +2408,50 @@ el('importRosterInput').addEventListener('change', function(e){
   const r = new FileReader();
   r.onload = function(ev){ try{ importRosterJson(JSON.parse(ev.target.result)); }catch(err){ console.error(err); toast('Errore JSON'); } };
   r.readAsText(f); this.value = '';
+});
+
+/* ================= LOGICA FORZA AGGIORNAMENTO GITHUB ================= */
+el('ghRepo').value = localStorage.getItem('fwr_gh_repo') || '';
+el('ghToken').value = localStorage.getItem('fwr_gh_token') || '';
+
+el('ghRepo').addEventListener('change', function(){ localStorage.setItem('fwr_gh_repo', this.value); });
+el('ghToken').addEventListener('change', function(){ localStorage.setItem('fwr_gh_token', this.value); });
+
+el('forceUpdateBtn').addEventListener('click', async function() {
+  const repo = el('ghRepo').value.trim();
+  const token = el('ghToken').value.trim();
+  const status = el('forceUpdateStatus');
+  
+  if (!repo || !token) {
+    status.innerHTML = '<span style="color:var(--red)">Inserisci Repo e Token per continuare.</span>';
+    return;
+  }
+
+  status.innerHTML = '<span style="color:var(--gold)">Invio comando a GitHub...</span>';
+  
+  try {
+    // Usa il nome del file del workflow (è più sicuro del name del workflow)
+    const workflowId = 'update_data.yml';
+    
+    const res = await fetch(`https://api.github.com/repos/${repo}/actions/workflows/${encodeURIComponent(workflowId)}/dispatches`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ ref: 'main' }) // o 'master' se è il tuo branch
+    });
+
+    if (res.ok) {
+      status.innerHTML = '<span style="color:var(--green)">Comando inviato! GitHub sta aggiornando i dati (ci vorranno 2-5 minuti). Ricarica la pagina tra poco per vedere le modifiche.</span>';
+    } else {
+      const err = await res.json();
+      status.innerHTML = `<span style="color:var(--red)">Errore GitHub: ${err.message || res.status}</span>`;
+    }
+  } catch (e) {
+    status.innerHTML = '<span style="color:var(--red)">Errore di rete o CORS.</span>';
+  }
 });
 
 /* ================= INIT ================= */
