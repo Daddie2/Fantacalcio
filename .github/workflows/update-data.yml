@@ -2,12 +2,18 @@ name: Aggiorna dati Fantacalcio
 
 on:
   schedule:
-    # Ogni notte alle 23:00 UTC
+    # Ogni notte alle 23:00 UTC: quotazioni, statistiche, indisponibili, PianetaFanta e formazioni
     - cron: '0 23 * * *'
-  workflow_dispatch: {}   # Questo permette al pulsante HTML di farlo partire manualmente
+    # Venerdi, sabato e domenica ogni 3 ore (8-17 UTC): solo le probabili formazioni di Gazzetta
+    - cron: '0 8,11,14,17 * * 5,6,0'
+  workflow_dispatch: {}   # lancio manuale (anche dal pulsante dell'app): esegue tutto
 
 permissions:
   contents: write
+
+concurrency:
+  group: update-data
+  cancel-in-progress: false
 
 jobs:
   update:
@@ -23,11 +29,17 @@ jobs:
         run: pip install requests beautifulsoup4
 
       - name: Scarica quotazioni e voti da fantacalcio.it
+        if: github.event.schedule != '0 8,11,14,17 * * 5,6,0'
         run: python scripts/scrape_fantacalcio.py
 
       - name: Scarica dati avanzati da PianetaFanta
+        if: github.event.schedule != '0 8,11,14,17 * * 5,6,0'
         run: python scripts/scrape_pianetafanta.py
-        continue-on-error: true   # Se PianetaFanta blocca, il resto continua
+        continue-on-error: true   # se PianetaFanta blocca, il resto continua
+
+      - name: Scarica probabili formazioni da Gazzetta
+        run: python scripts/fetch_formazioni.py
+        continue-on-error: true   # se Gazzetta blocca o cambia pagina, il resto non si ferma
 
       - name: Salva gli HTML di debug (scaricabili dalla pagina del run)
         if: always()
@@ -37,7 +49,7 @@ jobs:
           path: data/debug_*.html
           if-no-files-found: ignore
 
-      - name: Committa se qualcosa è cambiato
+      - name: Committa se qualcosa e cambiato
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
