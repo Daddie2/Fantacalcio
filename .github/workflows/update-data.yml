@@ -2,11 +2,9 @@ name: Aggiorna dati Fantacalcio
 
 on:
   schedule:
-    # Ogni giorno alle 6:00 UTC: quotazioni, statistiche, indisponibili
-    - cron: '0 6 * * *'
-    # Venerdì, sabato e domenica ogni 3 ore (8-17 UTC): aggiorna le probabili formazioni
-    - cron: '0 8,11,14,17 * * 5,6,0'
-  workflow_dispatch: {}   # permette anche di lanciarlo a mano da GitHub
+    # Ogni notte alle 23:00 UTC
+    - cron: '0 23 * * *'
+  workflow_dispatch: {}   # Questo permette al pulsante HTML di farlo partire manualmente
 
 permissions:
   contents: write
@@ -24,12 +22,12 @@ jobs:
       - name: Installa dipendenze
         run: pip install requests beautifulsoup4
 
-      - name: Scarica i file da fantacalcio.it
+      - name: Scarica quotazioni e voti da fantacalcio.it
         run: python scripts/scrape_fantacalcio.py
 
-      - name: Scarica probabili formazioni da Gazzetta
-        run: python scripts/fetch_formazioni.py
-        continue-on-error: true   # se Gazzetta blocca o cambia pagina, il resto non si ferma
+      - name: Scarica dati avanzati da PianetaFanta
+        run: python scripts/scrape_pianetafanta.py
+        continue-on-error: true   # Se PianetaFanta blocca, il resto continua
 
       - name: Salva gli HTML di debug (scaricabili dalla pagina del run)
         if: always()
