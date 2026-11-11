@@ -1,15 +1,18 @@
 """
 Scarica da PianetaFanta le statistiche casa/fuori di ogni giocatore del listone.
-Input : data/quotazioni.csv  (serve prima scrape_fantacalcio.py)
+Input : data/quotazioni.csv       (serve prima scrape_fantacalcio.py)
+        data/slug_override.csv    (opzionale, colonne: nome,slug)
 Output: data/stats_pianetafanta.csv  con le colonne che si aspetta index.html:
         nome, squadra, golcasa, golfuori, assistcasa, assistfuori, ammcasa, ammfuori, fmcasa, fmfuori
+        data/slug_mancanti.csv       giocatori non trovati (nome,slug,squadra): compila la colonna
+                                     slug, poi copia le righe in data/slug_override.csv
 
-Novita' rispetto alla versione precedente:
-- se la pagina non ha __NEXT_DATA__ (Next.js con App Router), cerca "statCasa"/"statFuori"
-  nei blocchi self.__next_f.push(...) o direttamente nell'HTML;
-- alla prima pagina senza dati stampa nel log una riga [diag] (titolo, dimensione, presenza di
-  __NEXT_DATA__ / __next_f / statCasa) e salva l'HTML in data/debug_pianetafanta.html;
-- per ogni motivo di fallimento stampa fino a 12 nomi di esempio.
+Gestione dei nomi che danno 404:
+- override manuale da data/slug_override.csv (ha sempre la precedenza);
+- varianti automatiche: senza asterisco, senza apostrofo (N'Dicka -> ndicka), senza trattini,
+  senza iniziali finali (Esposito F.P. -> esposito), solo ultima/prima parola;
+- le varianti "rischiose" (solo cognome) vengono elencate nel log per un controllo, perche'
+  potrebbero puntare a un omonimo.
 """
 import csv
 import json
@@ -22,6 +25,7 @@ from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
+from urllib3.util.retry import Retry
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
@@ -33,8 +37,14 @@ NEXT_RE = re.compile(r'<script id="__NEXT_DATA__" type="application/json">(.*?)<
 RSC_RE = re.compile(r'self\.__next_f\.push\(\[\d+,"(.*?)"\]\)', re.DOTALL)
 TITLE_RE = re.compile(r"<title[^>]*>(.*?)</title>", re.DOTALL | re.IGNORECASE)
 
+OVERRIDE_PATH = "data/slug_override.csv"
+MISSING_PATH = "data/slug_mancanti.csv"
+
 fail = Counter()                 # motivo -> quanti giocatori
 examples = defaultdict(list)     # motivo -> alcuni nomi di esempio
+missing = []                     # (nome, squadra) con 404 su tutte le varianti
+risky_hits = []                  # (nome, slug usato) trovati con una variante rischiosa
+OVERRIDES = {}
 debug_saved = False
 
 
@@ -50,10 +60,50 @@ def make_slug(name):
     return re.sub(r"[^a-z0-9]+", "-", s).strip("-")
 
 
+def load_overrides():
+    if not os.path.exists(OVERRIDE_PATH):
+        return
+    with open(OVERRIDE_PATH, encoding="utf-8") as f:
+        for r in csv.DictReader(f):
+            nome, slug = (r.get("nome") or "").strip(), (r.get("slug") or "").strip()
+            if nome and slug:
+                OVERRIDES[nome] = slug.strip("/").split("/")[-1]   # accetta anche l'URL intero
+    print(f"Override manuali caricati: {len(OVERRIDES)}", flush=True)
+
+
+def slug_candidates(name):
+    """Lista di (slug, rischiosa). Le prime sono le piu' affidabili."""
+    clean = re.sub(r"\*", "", name).strip()
+    out, seen = [], set()
+
+    def add(text, risky=False, raw=False):
+        s = text if raw else make_slug(text)
+        if s and s not in seen:
+            seen.add(s)
+            out.append((s, risky))
+
+    if name in OVERRIDES:
+        add(OVERRIDES[name], raw=True)
+    add(clean)
+    add(clean.replace("'", "").replace("’", ""))          # N'Dicka -> ndicka
+    add(re.sub(r"[-'’]", "", clean))                       # Fitz-Jim -> fitzjim, N'Dri -> ndri
+
+    no_init = re.sub(r"(\s+[A-Za-z]{1,2}\.?)+$", "", clean).strip()   # via "F.P.", "N.", "Je.", "Ro."
+    had_initials = no_init != clean
+    if had_initials and no_init:
+        add(no_init, risky=True)
+        add(no_init.replace("'", "").replace("’", ""), risky=True)
+
+    words = no_init.split()
+    if len(words) > 1:
+        add(words[-1], risky=True)                         # Zambo Anguissa -> anguissa
+        add(words[0], risky=True)
+    return out
+
+
 def norm_team(s):
     s = unicodedata.normalize("NFD", str(s or "").upper())
-    s = "".join(c for c in s if c.isalpha())
-    return s
+    return "".join(c for c in s if c.isalpha())
 
 
 def same_team(a, b):
@@ -101,7 +151,6 @@ def extract_props(html):
         except ValueError:
             pass
 
-    # Next.js App Router: i dati stanno nei blocchi self.__next_f.push([1,"..."])
     chunks = []
     for c in RSC_RE.findall(html):
         try:
@@ -127,39 +176,14 @@ def diag(url, resp):
           f"statCasa={'statCasa' in html} GoalReal={'GoalReal' in html}", file=sys.stderr)
 
 
-def get_data(session, name, team):
-    global debug_saved
-    url = BASE + make_slug(name)
-    try:
-        resp = session.get(url, timeout=15)
-    except requests.RequestException:
-        record_fail("errore di rete", name)
-        return None
-    if resp.status_code == 404:
-        record_fail("pagina non trovata (404): nome/slug diverso", name)
-        return None
-    if resp.status_code != 200:
-        record_fail(f"HTTP {resp.status_code}", name)
-        return None
-
-    props, via = extract_props(resp.text)
-    if props is None:
-        if not debug_saved:
-            debug_saved = True
-            with open("data/debug_pianetafanta.html", "w", encoding="utf-8") as f:
-                f.write(resp.text)
-            diag(url, resp)
-        record_fail("nessun JSON con statCasa/statFuori nella pagina", name)
-        return None
-
+def build_row(name, team, props):
+    """Ritorna (riga, motivo_errore)."""
     sq = props.get("squadra")
     if sq and not same_team(sq, team):
-        record_fail("squadra diversa (omonimo?)", name)
-        return None
+        return None, "squadra diversa (omonimo?)"
     casa, fuori = props.get("statCasa") or {}, props.get("statFuori") or {}
     if not isinstance(casa, dict) or not isinstance(fuori, dict) or not (casa or fuori):
-        record_fail("statCasa/statFuori assenti o con altro formato", name)
-        return None
+        return None, "statCasa/statFuori assenti o con altro formato"
     fm = lambda d: round(num(d.get("MFG")), 2) if d.get("MFG") else ""
     return {
         "nome": name, "squadra": team,
@@ -167,7 +191,52 @@ def get_data(session, name, team):
         "assistcasa": casa.get("Assist", 0), "assistfuori": fuori.get("Assist", 0),
         "ammcasa": casa.get("Amm", 0), "ammfuori": fuori.get("Amm", 0),
         "fmcasa": fm(casa), "fmfuori": fm(fuori),
-    }
+    }, None
+
+
+def get_data(session, name, team):
+    global debug_saved
+    not_found = True
+    last_reason = None
+
+    for slug, risky in slug_candidates(name):
+        url = BASE + slug
+        try:
+            resp = session.get(url, timeout=15)
+        except requests.RequestException:
+            record_fail("errore di rete", name)
+            return None
+        if resp.status_code == 404:
+            continue
+        not_found = False
+        if resp.status_code != 200:
+            record_fail(f"HTTP {resp.status_code}", name)
+            return None
+
+        props, _via = extract_props(resp.text)
+        if props is None:
+            if not debug_saved:
+                debug_saved = True
+                with open("data/debug_pianetafanta.html", "w", encoding="utf-8") as f:
+                    f.write(resp.text)
+                diag(url, resp)
+            last_reason = "nessun JSON con statCasa/statFuori nella pagina"
+            continue
+
+        row, reason = build_row(name, team, props)
+        if row is None:
+            last_reason = reason       # es. omonimo: provo la variante successiva
+            continue
+        if risky:
+            risky_hits.append((name, slug))
+        return row
+
+    if not_found:
+        record_fail("pagina non trovata (404): nome/slug diverso", name)
+        missing.append((name, team))
+    else:
+        record_fail(last_reason or "errore sconosciuto", name)
+    return None
 
 
 def main():
@@ -176,13 +245,14 @@ def main():
     if not os.path.exists(quot):
         print(f"ERRORE: {quot} non trovato. Esegui prima scrape_fantacalcio.py", file=sys.stderr)
         sys.exit(1)
+    load_overrides()
     with open(quot, encoding="utf-8") as f:
         players = [{"nome": r["nome"], "squadra": r["squadra"]} for r in csv.DictReader(f) if r.get("nome") and r.get("squadra")]
     print(f"Trovati {len(players)} giocatori. Scarico da PianetaFanta...", flush=True)
 
     session = requests.Session()
     session.headers.update(HEADERS)
-    adapter = requests.adapters.HTTPAdapter(max_retries=requests.adapters.Retry(
+    adapter = requests.adapters.HTTPAdapter(max_retries=Retry(
         total=2, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504]))
     session.mount("https://", adapter)
 
@@ -201,6 +271,23 @@ def main():
     for motivo, n in fail.most_common():
         print(f"  falliti per {motivo}: {n}", flush=True)
         print(f"     esempi: {', '.join(examples[motivo])}", flush=True)
+
+    if risky_hits:
+        print(f"  trovati con variante rischiosa (controlla che non siano omonimi): {len(risky_hits)}", flush=True)
+        for nome, slug in sorted(risky_hits):
+            print(f"     {nome} -> {BASE}{slug}", flush=True)
+
+    if missing:
+        missing.sort()
+        with open(MISSING_PATH, "w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow(["nome", "slug", "squadra"])
+            for nome, squadra in missing:
+                w.writerow([nome, "", squadra])
+        print(f"  Nomi non trovati: {len(missing)} -> compila {MISSING_PATH} e copia le righe in {OVERRIDE_PATH}", flush=True)
+    elif os.path.exists(MISSING_PATH):
+        os.remove(MISSING_PATH)
+
     if not results:
         print("ATTENZIONE: nessun dato estratto. Guarda la riga [diag] e data/debug_pianetafanta.html.", file=sys.stderr)
         sys.exit(1)
