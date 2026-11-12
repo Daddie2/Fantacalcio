@@ -2021,6 +2021,8 @@ function keyStatsBoxes(p){
                      rows.length ? rows.filter(r=> r.v!==null && !(r.gs>0)).length : null);
     out += box('Gol subiti', show(gs));
     out += box('Porta inviolata', show(cs), cs>0?'green':'');
+    const rp = first(pfNum(p,['rigori parati']), rows.length?sum('rp'):null, cur.rp);
+    out += box('Rigori parati', show(rp), rp>0?'green':'');
   }
   return out;
 }
