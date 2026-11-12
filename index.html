@@ -245,6 +245,23 @@ input[type=time]{background:#fff;color:#000;}
 .pp .sw-badge{margin:2px 0 0;}
 .league-topbar{position:static !important;}
 .badge-contest{cursor:pointer;}
+/* Tooltip acronimi (hover su PC, pressione lunga su telefono) */
+#acTip{position:fixed;z-index:400;max-width:260px;display:none;background:#0d1015;color:var(--text);border:1px solid var(--gold-dim);border-radius:6px;padding:8px 11px;font-size:12px;line-height:1.45;font-weight:400;font-family:inherit;text-align:left;white-space:normal;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.5);}
+.ac{border-bottom:1px dotted var(--text-faint);cursor:help;}
+[data-tip], .ac, .role-tag, .stat-box .label{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
+
+/* Tabelle larghe: scroll orizzontale visibile + header fisso */
+.tbl-scroll{overflow:auto;max-height:calc(100vh - 150px);border:1px solid var(--line);border-radius:6px;scrollbar-width:thin;scrollbar-color:var(--gold-dim) var(--panel-2);}
+.tbl-scroll::-webkit-scrollbar{height:12px;width:12px;}
+.tbl-scroll::-webkit-scrollbar-track{background:var(--panel-2);}
+.tbl-scroll::-webkit-scrollbar-thumb{background:var(--gold-dim);border-radius:6px;border:2px solid var(--panel-2);}
+.tbl-scroll thead th{position:sticky;top:0;background:var(--bg);z-index:4;}
+.tbl-scroll thead th.sticky-col{z-index:6;left:0;}
+.tbl-scroll tbody td{white-space:nowrap;}
+.tbl-scroll tbody td:first-child{white-space:normal;min-width:170px;}
+.tbl-scroll td .btn-sm{margin-left:4px;}
+body:has(#view-listone.active) .content{max-width:none;}
+
 .gchart{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:6px;}
 .gchart svg{display:block;width:100%;min-width:640px;height:auto;touch-action:pan-x pan-y;}
 .g-hit{cursor:pointer;-webkit-tap-highlight-color:transparent;}
@@ -412,21 +429,21 @@ tr[data-g]{cursor:pointer;}
           <input type="checkbox" id="toggleStatCols">
           <label for="toggleStatCols" style="margin:0;">Mostra colonne statistiche (Pv/Mv/Fm stagione corrente e precedente)</label>
         </div>
-        <div style="overflow-x:auto;">
+        <div class="tbl-scroll">
         <table>
           <thead>
             <tr id="listoneHeadRow">
-              <th class="sticky-col sortable" data-sort="nome">Giocatore<span class="sort-arrow" data-sort-arrow="nome"></span></th>
-              <th class="sortable" data-sort="squadra">Squadra<span class="sort-arrow" data-sort-arrow="squadra"></span></th>
-              <th class="num sortable" data-sort="qta">Qt.<span class="sort-arrow" data-sort-arrow="qta"></span></th>
-              <th class="num sortable" data-sort="fvm">FVM<span class="sort-arrow" data-sort-arrow="fvm"></span></th>
-              <th class="num sortable" data-sort="sugg">FVM a tuo budget<span class="sort-arrow" data-sort-arrow="sugg"></span></th>
-              <th class="stat-col num sortable" data-stat-col data-sort="fm_curr">Pv/Mv/Fm (corr.)<span class="sort-arrow" data-sort-arrow="fm_curr"></span></th>
-              <th class="stat-col num sortable" data-stat-col data-sort="fm_prev">Mv/Fm (prec.)<span class="sort-arrow" data-sort-arrow="fm_prev"></span></th>
-              <th class="stat-col" data-stat-col>Titolarità</th>
-              <th>Stato fisico</th>
-              <th>Disponibilità</th>
-              <th>Assegna</th>
+              <th class="sticky-col sortable" data-tip="Nome del giocatore e ruolo (P portiere, D difensore, C centrocampista, A attaccante). Tocca per ordinare." data-sort="nome">Giocatore<span class="sort-arrow" data-sort-arrow="nome"></span></th>
+              <th class="sortable" data-tip="Squadra di Serie A in cui gioca. Tocca per ordinare." data-sort="squadra">Squadra<span class="sort-arrow" data-sort-arrow="squadra"></span></th>
+              <th class="num sortable" data-tip="Quotazione: prezzo di listino del giocatore. Tocca per ordinare." data-sort="qta">Qt.<span class="sort-arrow" data-sort-arrow="qta"></span></th>
+              <th class="num sortable" data-tip="FVM, Fanta Valore di Mercato: valore indicativo del giocatore secondo il Listone. Tocca per ordinare." data-sort="fvm">FVM<span class="sort-arrow" data-sort-arrow="fvm"></span></th>
+              <th class="num sortable" data-tip="Il FVM riscalato sul budget che hai impostato: quanto varrebbe in crediti per te. Tocca per ordinare." data-sort="sugg">FVM a tuo budget<span class="sort-arrow" data-sort-arrow="sugg"></span></th>
+              <th class="stat-col num sortable" data-stat-col data-tip="Stagione corrente. Pv = partite a voto, Mv = media voto, Fm = fantamedia (voto + bonus/malus). Tocca per ordinare per Fm." data-sort="fm_curr">Pv/Mv/Fm (corr.)<span class="sort-arrow" data-sort-arrow="fm_curr"></span></th>
+              <th class="stat-col num sortable" data-stat-col data-tip="Stagione precedente. Mv = media voto, Fm = fantamedia (voto + bonus/malus). Tocca per ordinare per Fm." data-sort="fm_prev">Mv/Fm (prec.)<span class="sort-arrow" data-sort-arrow="fm_prev"></span></th>
+              <th class="stat-col" data-stat-col data-tip="Quanto è probabile che giochi: Titolare, Ballottaggio/Secondo o Panchinaro. (auto) = stimato dall’app dalle statistiche.">Titolarità</th>
+              <th data-tip="Se è infortunato o disponibile. Puoi cambiarlo tu dal menu.">Stato fisico</th>
+              <th data-tip="Libero = nessuno l’ha ancora preso. Altrimenti vedi la squadra e il prezzo pagato.">Disponibilità</th>
+              <th data-tip="Assegna il giocatore a una squadra: scegli squadra, prezzo e premi OK.">Assegna</th>
             </tr>
           </thead>
           <tbody id="listoneBody"></tbody>
@@ -669,12 +686,72 @@ function watchMap(){
 function getWatchlist(tid){ tid = tid || watchTeamId(); if(!tid) return []; const m = watchMap(); if(!Array.isArray(m[tid])) m[tid] = []; return m[tid]; }
 function isWatched(id, tid){ return getWatchlist(tid).indexOf(id) !== -1; }
 function watchersOf(id){ const m = watchMap(); return state.teams.filter(t=> Array.isArray(m[t.id]) && m[t.id].indexOf(id) !== -1); }
+/* ================= TOOLTIP ACRONIMI ================= */
+const ACR = {
+  'Pv':'Partite a voto: in quante partite il giocatore ha preso un voto (cioè è sceso in campo ed è stato valutato).',
+  'Mv':'Media voto: media dei voti presi in pagella, senza bonus e malus.',
+  'Fm':'Fantamedia: media dei fantavoti, cioè voto + bonus/malus (gol, assist, ammonizioni, ecc.).',
+  'Fm Casa':'Fantamedia nelle partite giocate in casa.',
+  'Fm Fuori':'Fantamedia nelle partite giocate in trasferta.',
+  'Assist Casa/Fuori':'Assist fatti in casa / fuori casa.',
+  'FVM':'Fanta Valore di Mercato: valore indicativo del giocatore secondo il Listone.',
+  'FVM a tuo budget':'Il FVM riscalato sul budget che hai impostato: quanto varrebbe in crediti per te.',
+  'Qt.':'Quotazione: prezzo di listino del giocatore.',
+  'Quotazione':'Prezzo di listino del giocatore.',
+  'Consigliato':'Prezzo d\u2019asta consigliato dall\u2019app.'
+};
+const ROLE_TIPS = {P:'Portiere',D:'Difensore',C:'Centrocampista',A:'Attaccante'};
+function ac(k){ const t=ACR[k]; return t ? '<span class="ac" data-tip="'+escapeAttr(t)+'">'+k+'</span>' : k; }
+(function(){
+  let tip=null, cur=null, timer=null, hideT=null, sx=0, sy=0, shown=false, lastTouch=0, suppressUntil=0;
+  const SEL='[data-tip], .role-tag, .stat-box .label';
+  function tipText(n){ if(n.dataset && n.dataset.tip) return n.dataset.tip; const t=(n.textContent||'').trim(); return n.classList.contains('role-tag') ? (ROLE_TIPS[t]||'') : (ACR[t]||''); }
+  function target(e){ const n = e.target && e.target.closest ? e.target.closest(SEL) : null; return (n && tipText(n)) ? n : null; }
+  function show(n){
+    if(!tip){ tip=document.createElement('div'); tip.id='acTip'; document.body.appendChild(tip); }
+    tip.textContent = tipText(n); tip.style.display='block'; cur=n;
+    const r=n.getBoundingClientRect(), w=tip.offsetWidth, h=tip.offsetHeight;
+    let x=r.left+r.width/2-w/2; x=Math.max(8, Math.min(x, window.innerWidth-w-8));
+    let y=r.top-h-10; if(y<8) y=r.bottom+10;
+    tip.style.left=x+'px'; tip.style.top=y+'px';
+  }
+  function hide(){ if(tip) tip.style.display='none'; cur=null; }
+  // PC: passando col mouse
+  document.addEventListener('mouseover', function(e){
+    if(Date.now()-lastTouch<800) return;
+    const n=target(e); if(n){ if(n!==cur) show(n); } else hide();
+  });
+  document.addEventListener('mouseleave', hide);
+  // Telefono: tieni premuto = spiegazione, tocco veloce = azione normale
+  document.addEventListener('touchstart', function(e){
+    lastTouch=Date.now(); clearTimeout(timer); clearTimeout(hideT); hide(); shown=false;
+    const n=target(e); if(!n || !e.touches[0]) return;
+    sx=e.touches[0].clientX; sy=e.touches[0].clientY;
+    timer=setTimeout(function(){ shown=true; show(n); if(navigator.vibrate) try{navigator.vibrate(15);}catch(_){} }, 450);
+  }, {passive:true});
+  document.addEventListener('touchmove', function(e){
+    const t=e.touches[0]; if(!t) return;
+    if(Math.abs(t.clientX-sx)>10 || Math.abs(t.clientY-sy)>10){ clearTimeout(timer); if(shown){ hide(); shown=false; } }
+  }, {passive:true});
+  function end(e){
+    lastTouch=Date.now(); clearTimeout(timer);
+    if(shown){ suppressUntil=Date.now()+700; if(e.cancelable) e.preventDefault(); hideT=setTimeout(hide,3500); shown=false; }
+  }
+  document.addEventListener('touchend', end, {passive:false});
+  document.addEventListener('touchcancel', end, {passive:false});
+  // dopo una pressione lunga non far partire il click (niente ordinamento/azione)
+  document.addEventListener('click', function(e){
+    if(Date.now()<suppressUntil){ e.stopImmediatePropagation(); e.preventDefault(); }
+  }, true);
+  // niente menu "tasto destro"/selezione testo da pressione lunga sugli acronimi
+  document.addEventListener('contextmenu', function(e){ if(target(e) && Date.now()-lastTouch<1500) e.preventDefault(); });
+  window.addEventListener('scroll', hide, true);
+})();
+
 function contestBadge(p, mine){
   const me = watchTeamId(); const o = watchersOf(p.id).filter(t=> t.id!==me);
   if(!o.length) return '';
-  const names = o.map(t=> t.name).join(', ');
-  const lab = o.length<=2 ? names : o.length+' squadre';
-  return ' <span class="badge badge-contest" data-contest="'+escapeAttr(p.id)+'" title="Clicca per vedere tutte le squadre che lo puntano ('+escapeAttr(names)+')">'+(mine?'contesa con ':'puntato da ')+escapeHtml(lab)+' ▾</span>';
+  return ' <span class="badge badge-contest" data-contest="'+escapeAttr(p.id)+'" title="Clicca per vedere quali squadre lo puntano">'+(mine?'contesa':'puntato')+' ▾</span>';
 }
 function watchBadges(p){
   const mine = isWatched(p.id);
@@ -1126,8 +1203,8 @@ function renderAstaResults(){
   if(!list.length){ container.innerHTML = '<div class="sr-row"><span class="sr-meta">Nessun giocatore trovato con questi filtri.</span></div>'; return; }
   container.innerHTML = list.map(p=>{
     const sc = p.stats && p.stats.curr, sp = p.stats && p.stats.prev;
-    const cp=[]; if(sc){ if(sc.pv!==undefined) cp.push('Pv '+fmt(sc.pv)); if(sc.mv!==undefined) cp.push('Mv '+sc.mv.toFixed(2)); if(sc.fm!==undefined) cp.push('Fm '+sc.fm.toFixed(2)); }
-    const pp=[]; if(sp){ if(sp.mv!==undefined) pp.push('Mv '+sp.mv.toFixed(2)); if(sp.fm!==undefined) pp.push('Fm '+sp.fm.toFixed(2)); }
+    const cp=[]; if(sc){ if(sc.pv!==undefined) cp.push(ac('Pv')+' '+fmt(sc.pv)); if(sc.mv!==undefined) cp.push(ac('Mv')+' '+sc.mv.toFixed(2)); if(sc.fm!==undefined) cp.push(ac('Fm')+' '+sc.fm.toFixed(2)); }
+    const pp=[]; if(sp){ if(sp.mv!==undefined) pp.push(ac('Mv')+' '+sp.mv.toFixed(2)); if(sp.fm!==undefined) pp.push(ac('Fm')+' '+sp.fm.toFixed(2)); }
     const statsLine = 'Corrente: '+(cp.length?cp.join(' &middot; '):'&mdash;')+' &middot; Precedente: '+(pp.length?pp.join(' &middot; '):'&mdash;');
     const st = p.status||'ok';
     const badges = (st!=='ok' ? ` ${statusBadge(p)}` : '') + ` ${titolaritaBadge(p,true)}` + (watchBadges(p));
@@ -1136,7 +1213,7 @@ function renderAstaResults(){
         <span class="role-tag role-${p.ruolo}">${p.ruolo}</span>
         <span class="sr-name${nameCls(p)}">&nbsp;${escapeHtml(p.nome)}</span>${badges}
         <button class="btn btn-sm btn-ghost" data-detail="${p.id}" style="margin-left:8px;padding:1px 8px;">i</button>
-        <div class="sr-meta">${escapeHtml(p.squadra)} &middot; Qt. ${fmt(p.qta)} &middot; FVM ${fmt(p.fvm)}</div>
+        <div class="sr-meta">${escapeHtml(p.squadra)} &middot; ${ac('Qt.')} ${fmt(p.qta)} &middot; ${ac('FVM')} ${fmt(p.fvm)}</div>
         <div class="sr-meta">${statsLine}</div>
       </div>
       <div class="sr-suggest">~ ${fmt(marketSuggestions[p.id]||p.qta||0)} cr.</div>
@@ -1211,8 +1288,8 @@ el('quickBudget').addEventListener('change', function(){
 });
 function applyStatColsVisibility(){ document.querySelectorAll('[data-stat-col]').forEach(e=> e.style.display = showStatCols?'':'none'); }
 el('toggleStatCols').addEventListener('change', function(){ showStatCols=this.checked; applyStatColsVisibility(); drawListoneTable(); });
-function statCellCurr(p){ const s=p.stats && p.stats.curr; if(!s) return '<span class="hint" style="margin:0;">&mdash;</span>'; const a=[]; if(s.pv!==undefined) a.push('Pv '+fmt(s.pv)); if(s.mv!==undefined) a.push('Mv '+s.mv.toFixed(2)); if(s.fm!==undefined) a.push('Fm '+s.fm.toFixed(2)); return a.length?a.join(' &middot; '):'<span class="hint" style="margin:0;">&mdash;</span>'; }
-function statCellPrev(p){ const s=p.stats && p.stats.prev; if(!s) return '<span class="hint" style="margin:0;">&mdash;</span>'; const a=[]; if(s.mv!==undefined) a.push('Mv '+s.mv.toFixed(2)); if(s.fm!==undefined) a.push('Fm '+s.fm.toFixed(2)); return a.length?a.join(' &middot; '):'<span class="hint" style="margin:0;">&mdash;</span>'; }
+function statCellCurr(p){ const s=p.stats && p.stats.curr; if(!s) return '<span class="hint" style="margin:0;">&mdash;</span>'; const a=[]; if(s.pv!==undefined) a.push(ac('Pv')+' '+fmt(s.pv)); if(s.mv!==undefined) a.push(ac('Mv')+' '+s.mv.toFixed(2)); if(s.fm!==undefined) a.push(ac('Fm')+' '+s.fm.toFixed(2)); return a.length?a.join(' &middot; '):'<span class="hint" style="margin:0;">&mdash;</span>'; }
+function statCellPrev(p){ const s=p.stats && p.stats.prev; if(!s) return '<span class="hint" style="margin:0;">&mdash;</span>'; const a=[]; if(s.mv!==undefined) a.push(ac('Mv')+' '+s.mv.toFixed(2)); if(s.fm!==undefined) a.push(ac('Fm')+' '+s.fm.toFixed(2)); return a.length?a.join(' &middot; '):'<span class="hint" style="margin:0;">&mdash;</span>'; }
 function statusBadge(p){ const st=p.status||'ok'; const cls = st==='infortunato'?'badge-infortunato':st==='rotto'?'badge-rotto':'badge-ok'; const title = p.statusNote?` title="${escapeHtml(p.statusNote)}"`:''; return `<span class="badge ${cls}"${title}>${STATUS_LABELS[st]}</span>`; }
 function titolaritaBadge(p, compact){ if(!p.titolarita) return compact?'':'<span class="hint" style="margin:0;">&mdash;</span>'; const cls = p.titolarita==='titolare'?'badge-titolare':p.titolarita==='secondo'?'badge-secondo':'badge-panchinaro'; if(compact) return `<span class="badge ${cls}">${STARTER_LABELS[p.titolarita]}</span>`; const src = p.titolaritaManual?' (manuale)':(p.titolaritaAuto?' (auto)':''); return `<span class="badge ${cls}">${STARTER_LABELS[p.titolarita]}</span><span class="hint" style="margin:0;">${src}</span>`; }
 
@@ -1512,7 +1589,7 @@ function renderRosterAddResults(){
         <span class="role-tag role-${p.ruolo}">${p.ruolo}</span>
         <span class="sr-name player-link${nameCls(p)}" data-detail="${p.id}">&nbsp;${escapeHtml(p.nome)}</span>
         ${p.status && p.status!=='ok' ? statusBadge(p) : ''}${watchBadges(p)}
-        <div class="sr-meta">${escapeHtml(p.squadra)} &middot; Qt. ${fmt(p.qta)} &middot; FVM ${fmt(p.fvm)}</div>
+        <div class="sr-meta">${escapeHtml(p.squadra)} &middot; ${ac('Qt.')} ${fmt(p.qta)} &middot; ${ac('FVM')} ${fmt(p.fvm)}</div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;">${controls}</div>
     </div>`;
@@ -1592,7 +1669,7 @@ el('watchSearch').addEventListener('input', function(){
       <div>
         <span class="role-tag role-${p.ruolo}">${p.ruolo}</span>
         <span class="sr-name">&nbsp;${escapeHtml(p.nome)}</span>
-        <div class="sr-meta">${escapeHtml(p.squadra)} &middot; Qt. ${fmt(p.qta)} &middot; FVM ${fmt(p.fvm)} &middot; ~${fmt(marketSuggestions[p.id]||p.qta||0)} cr.${contestBadge(p,false)}</div>
+        <div class="sr-meta">${escapeHtml(p.squadra)} &middot; ${ac('Qt.')} ${fmt(p.qta)} &middot; ${ac('FVM')} ${fmt(p.fvm)} &middot; ~${fmt(marketSuggestions[p.id]||p.qta||0)} cr.${contestBadge(p,false)}</div>
       </div>
       <button class="btn btn-sm btn-gold" data-wl-add="${p.id}">+ Puntalo</button>
     </div>`).join('');
@@ -2129,7 +2206,7 @@ function drawPlayerDetail(){
       </div>
       <div class="panel" style="margin-bottom:0;">
         <div class="panel-title">Possibili alternative</div>
-        ${alternatives.length ? '<ul class="roster-list">' + alternatives.map(a=>`<li><span class="roster-name player-link${nameCls(a)}" data-detail="${a.id}">${escapeHtml(a.nome)} <span class="hint" style="margin:0;">(${escapeHtml(a.squadra)})</span></span><span class="hint" style="margin:0;">Qt. ${fmt(a.qta)} &middot; Consigliato <b style="color:var(--gold);">${fmt(marketSuggestions[a.id]||a.qta||0)}</b> cr.</span></li>`).join('') + '</ul>' : '<p class="hint">Nessuna alternativa libera.</p>'}
+        ${alternatives.length ? '<ul class="roster-list">' + alternatives.map(a=>`<li><span class="roster-name player-link${nameCls(a)}" data-detail="${a.id}">${escapeHtml(a.nome)} <span class="hint" style="margin:0;">(${escapeHtml(a.squadra)})</span></span><span class="hint" style="margin:0;">${ac('Qt.')} ${fmt(a.qta)} &middot; ${ac('Consigliato')} <b style="color:var(--gold);">${fmt(marketSuggestions[a.id]||a.qta||0)}</b> cr.</span></li>`).join('') + '</ul>' : '<p class="hint">Nessuna alternativa libera.</p>'}
       </div>
     </div>`;
   el('playerDetailBody').innerHTML = html;
