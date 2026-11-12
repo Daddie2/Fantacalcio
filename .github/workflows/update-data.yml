@@ -18,6 +18,7 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -28,9 +29,14 @@ jobs:
       - name: Installa dipendenze
         run: pip install requests beautifulsoup4
 
-      - name: Scarica quotazioni e voti da fantacalcio.it
+      - name: Scarica quotazioni, indisponibili e voti da fantacalcio.it
+        id: fc
         if: github.event.schedule != '0 8,11,14,17 * * 5,6,0'
         run: python scripts/scrape_fantacalcio.py
+        # Anche se questo step fallisce, gli step dopo (PianetaFanta, formazioni
+        # e soprattutto il COMMIT) devono girare: i CSV scaricati con successo
+        # vanno salvati comunque. Il run viene poi segnato rosso dall'ultimo step.
+        continue-on-error: true
 
       - name: Scarica dati avanzati da PianetaFanta
         if: github.event.schedule != '0 8,11,14,17 * * 5,6,0'
@@ -54,6 +60,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Committa se qualcosa e cambiato
+        if: ${{ !cancelled() }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -67,4 +74,12 @@ jobs:
             git pull --rebase -X theirs origin main && git push && exit 0
             echo "Push fallito, riprovo ($i/3)..."; sleep 5
           done
+          exit 1
+
+      # Dopo il commit: se lo scraper di fantacalcio.it ha avuto problemi il run
+      # risulta rosso (e GitHub ti manda la mail) invece di passare inosservato.
+      - name: Segnala errori dello scraper fantacalcio.it
+        if: ${{ !cancelled() && steps.fc.outcome == 'failure' }}
+        run: |
+          echo "::error::Lo scraper di fantacalcio.it ha avuto errori: apri il log dello step 'Scarica quotazioni, indisponibili e voti' per i dettagli."
           exit 1
