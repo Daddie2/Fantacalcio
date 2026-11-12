@@ -1,14 +1,20 @@
 """
-Scarica quotazioni, statistiche e indisponibili da fantacalcio.it.
+Scarica quotazioni, statistiche, voti e indisponibili da fantacalcio.it.
+
+Ogni fase e' isolata: se una fallisce (anche con un'eccezione) le altre
+girano comunque, e i CSV delle fasi riuscite vengono salvati. Alla fine lo
+script esce con codice 1 se una fase CRITICA e' fallita, cosi' il run su
+GitHub risulta rosso invece di fallire in silenzio.
 """
 import os
 import sys
 import re
 import csv
 import time
+import traceback
 import requests
 from datetime import date
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString, Tag, Comment
 
 HEADERS = {
     "User-Agent": (
@@ -18,6 +24,8 @@ HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "it-IT,it;q=0.9,en;q=0.8",
 }
+SESSION = requests.Session()
+SESSION.headers.update(HEADERS)
 
 URLS = {
     "quotazioni": "https://www.fantacalcio.it/quotazioni-fantacalcio",
@@ -57,23 +65,41 @@ def previous_season_label():
     return f"{start_year}-{end_short:02d}"
 
 
-
-def fetch_page(url):
-    """Scarica una pagina HTML, con diagnostica su status/dimensione/blocchi."""
-    try:
-        resp = requests.get(url, headers=HEADERS, timeout=30)
-        print(f"   -> {url}: status={resp.status_code}, bytes={len(resp.content)}", file=sys.stderr)
-        resp.raise_for_status()
-
-        text_lower = resp.text.lower()
-        hits = [m for m in BLOCK_MARKERS if m in text_lower]
-        if hits:
-            print(f"   SOSPETTO BLOCCO/CHALLENGE su {url}: marker trovati={hits}", file=sys.stderr)
-
-        return resp.text
-    except requests.RequestException as e:
-        print(f"ERRORE scaricando {url}: {e}", file=sys.stderr)
-        return None
+def fetch_page(url, retries=3):
+    """
+    Scarica una pagina HTML con diagnostica su status/dimensione/blocchi.
+    Riprova su errori di rete, 403, 429 e 5xx (i runner di GitHub a volte
+    vengono rallentati o respinti); non riprova sugli altri 4xx (es. 404).
+    """
+    last_err = None
+    for attempt in range(1, retries + 1):
+        try:
+            resp = SESSION.get(url, timeout=30)
+            print(f"   -> {url}: status={resp.status_code}, bytes={len(resp.content)} "
+                  f"(tentativo {attempt}/{retries})", file=sys.stderr)
+            if resp.status_code in (403, 429) or resp.status_code >= 500:
+                last_err = f"HTTP {resp.status_code}"
+                time.sleep(2 * attempt)
+                continue
+            if resp.status_code >= 400:
+                last_err = f"HTTP {resp.status_code}"
+                break
+            # Senza charset nell'header requests assume ISO-8859-1 e rovina
+            # gli accenti (es. 'Konè'), che poi non combaciano piu' col listone.
+            if "charset" not in (resp.headers.get("Content-Type") or "").lower():
+                resp.encoding = "utf-8"
+            text = resp.text
+            text_lower = text.lower()
+            hits = [m for m in BLOCK_MARKERS if m in text_lower]
+            if hits:
+                print(f"   SOSPETTO BLOCCO/CHALLENGE su {url}: marker trovati={hits}", file=sys.stderr)
+            return text
+        except requests.RequestException as e:
+            last_err = str(e)
+            print(f"   errore di rete su {url} (tentativo {attempt}/{retries}): {e}", file=sys.stderr)
+            time.sleep(2 * attempt)
+    print(f"ERRORE scaricando {url}: {last_err}", file=sys.stderr)
+    return None
 
 
 def clean_number(val):
@@ -227,6 +253,16 @@ def parse_quotazioni(html):
     return players
 
 
+STAT_ALIASES = {
+    'PV': 'pv', 'PRESENZE': 'pv', 'MV': 'mv', 'FM': 'fm', 'FANTAMEDIA': 'fm',
+    'GF': 'gf', 'GOL': 'gf', 'GS': 'gs', 'RP': 'rp', 'RC': 'rc',
+    'R+': 'rpos', 'R-': 'rneg', 'ASS': 'ass', 'ASSIST': 'ass',
+    'AMM': 'amm', 'ESP': 'esp', 'AU': 'au',
+}
+STAT_FIELDS = ('pv', 'mv', 'fm', 'gf', 'gs', 'rp', 'rc', 'rpos', 'rneg', 'ass', 'amm', 'esp', 'au')
+STATS_CSV_HEADERS = ['nome', 'squadra'] + list(STAT_FIELDS)
+
+
 def parse_statistiche(html):
     """Estrae le statistiche dalla tabella di fantacalcio.it."""
     table, headers = extract_from_table(html, ['PV', 'MV', 'FANTAMEDIA', 'PRESENZE'])
@@ -277,69 +313,211 @@ def parse_statistiche(html):
     return stats
 
 
-def parse_indisponibili(html):
-    """
-    Estrae i calciatori indisponibili (infortunati + squalificati), con
-    squadra e dettaglio (causa e tempi di rientro, testo libero così come
-    pubblicato dal sito - non lo spezzo in campi separati "causa"/"data"
-    perché il sito scrive tutto in prosa libera con formulazioni non
-    standardizzate, es. "da metà novembre", "recuperabile da inizio
-    ottobre": una regex sarebbe troppo fragile).
+# ---------------------------------------------------------------------------
+# INDISPONIBILI
+# ---------------------------------------------------------------------------
+# La pagina e' organizzata per squadra: stemma + nome squadra, poi tre blocchi
+# "Infortunati / Squalificati / Diffidati", ogni giocatore con il nome in
+# grassetto e sotto il testo libero della redazione. Non esiste archivio
+# storico: la pagina mostra solo la situazione ATTUALE.
+# I diffidati non vengono inclusi (sono ancora disponibili).
+#
+# Per non dipendere da un'unica struttura HTML ci sono DUE parser
+# indipendenti (uno guidato dai tag, uno dal testo); si usa quello che
+# estrae piu' record. Se nessuno dei due trova abbastanza dati la fase
+# fallisce in modo rumoroso e il CSV precedente resta com'e'.
 
-    ATTENZIONE: questa pagina mostra solo la situazione ATTUALE. Non
-    esiste un archivio storico degli indisponibili per stagioni passate
-    su fantacalcio.it (a differenza delle statistiche), quindi non c'è
-    parametro stagione da gestire qui.
+CATEGORY_LABELS = {'infortunati', 'squalificati', 'diffidati'}
+SECTION_END_RE = re.compile(
+    r'^(indisponibili della serie a|squalificati della serie a|'
+    r'infortunati della serie a|prossimo turno|classifica)\s*$', re.I)
+KNOWN_TEAMS_FALLBACK = {
+    'Atalanta', 'Bologna', 'Cagliari', 'Como', 'Cremonese', 'Empoli', 'Fiorentina',
+    'Frosinone', 'Genoa', 'Hellas Verona', 'Verona', 'Inter', 'Juventus', 'Lazio',
+    'Lecce', 'Milan', 'Monza', 'Napoli', 'Parma', 'Pisa', 'Roma', 'Salernitana',
+    'Sampdoria', 'Sassuolo', 'Spezia', 'Torino', 'Udinese', 'Venezia',
+}
+NAME_PARTICLES = {'de', 'di', 'da', 'del', 'della', 'dal', 'van', 'von', 'der', 'den',
+                  'dos', 'la', 'le', 'el', 'al', 'ben', 'ter', 'ten', 'mc'}
 
-    I diffidati non vengono inclusi: sono ancora disponibili, solo a
-    rischio squalifica alla prossima ammonizione.
+
+def _norm_label(text):
+    return re.sub(r'\s+', ' ', text or '').strip().strip('-:•– ').lower()
+
+
+def _known_team_names(soup):
+    names = set()
+    for img in soup.find_all('img'):
+        label = (img.get('alt') or '').strip()
+        if label.lower().startswith('stemma'):
+            n = label[len('stemma'):].strip(' :-')
+            if n:
+                names.add(n)
+    return names or set(KNOWN_TEAMS_FALLBACK)
+
+
+def _detail_after(tag):
     """
-    soup = BeautifulSoup(html, 'html.parser')
+    Testo che segue il nome del giocatore (causa e tempi di rientro), senza
+    sconfinare nel giocatore successivo. Se il nome e' avvolto in un
+    contenitore (<p>), sale di un livello alla volta (max 3).
+    """
+    node = tag
+    for _ in range(3):
+        parts = []
+        for sib in node.next_siblings:
+            if isinstance(sib, Comment):
+                continue
+            if isinstance(sib, Tag):
+                if (sib.name in ('strong', 'b', 'li', 'ul', 'ol', 'img', 'h2', 'h3', 'h4', 'h5', 'h6')
+                        or sib.find(['strong', 'b', 'img'])):
+                    break
+                parts.append(sib.get_text(' ', strip=True))
+            elif isinstance(sib, NavigableString):
+                parts.append(str(sib).strip())
+        text = re.sub(r'\s+', ' ', ' '.join(p for p in parts if p)).strip(' :-–')
+        if text:
+            return text
+        parent = node.parent
+        if parent is None or parent.name in ('ul', 'ol', 'body', 'html', 'section', 'article', 'main'):
+            break
+        node = parent
+    return ''
+
+
+def _parse_indisponibili_tags(soup, default_category='infortunati'):
+    """Parser a tag: stemma -> squadra, <a>/<strong> di categoria, <strong> = giocatore."""
     records = []
     current_team = None
     current_category = None
-    category_labels = {'infortunati', 'squalificati', 'diffidati'}
 
-    for tag in soup.find_all(['img', 'a', 'strong', 'b']):
+    for tag in soup.find_all(['img', 'a', 'strong', 'b', 'h2', 'h3', 'h4', 'h5', 'h6']):
         if tag.name == 'img':
-            alt = (tag.get('alt') or '').strip()
-            if alt.lower().startswith('stemma'):
-                current_team = alt[len('Stemma'):].strip() or alt
-                current_category = 'infortunati'  # ogni squadra riparte da qui
+            label = (tag.get('alt') or tag.get('title') or '').strip()
+            if label.lower().startswith('stemma'):
+                current_team = label[len('stemma'):].strip(' :-') or label
+                current_category = default_category  # ogni squadra riparte da qui
             continue
 
         text = tag.get_text(strip=True)
-        text_lower = text.lower().strip('- ')
+        low = _norm_label(text)
 
-        if tag.name == 'a' and 'infortunati' in text_lower:
-            current_category = 'infortunati'
+        if tag.name in ('h2', 'h3', 'h4', 'h5', 'h6'):
+            if records and SECTION_END_RE.match(text.strip()):
+                break  # finita la parte per squadre: SEO, prossimo turno, classifica
+            if low in CATEGORY_LABELS:
+                current_category = low
             continue
 
-        if text_lower in category_labels:
-            current_category = text_lower
+        if tag.name == 'a':
+            if len(low) <= 20 and low in CATEGORY_LABELS:
+                current_category = low
             continue
 
-        if tag.name in ('strong', 'b') and current_team and current_category in ('infortunati', 'squalificati'):
-            if not text or text == 'Nessuno' or len(text) <= 1:
+        # strong / b
+        if low in CATEGORY_LABELS:
+            current_category = low
+            continue
+        if current_team and current_category in ('infortunati', 'squalificati'):
+            if not text or low == 'nessuno' or len(text) <= 1 or len(text) > 40:
                 continue
-
-            dettaglio = ''
-            parent = tag.find_parent(['li', 'p', 'div'])
-            if parent:
-                full_text = parent.get_text(' ', strip=True)
-                dettaglio = full_text[len(text):].strip(' :-') if full_text.startswith(text) else full_text
-
             records.append({
                 'nome': text,
-                'squadra': current_team or '',
+                'squadra': current_team,
                 'categoria': current_category,
-                'dettaglio': dettaglio,
+                'dettaglio': _detail_after(tag),
             })
+    return records
 
-    if not records:
-        print("ATTENZIONE: nessun indisponibile estratto, struttura pagina cambiata", file=sys.stderr)
 
-    # Rimuove eventuali duplicati esatti mantenendo l'ordine di apparizione
+def _looks_like_name(s):
+    """True per stringhe tipo 'Kristensen T.', 'Pellegrini Lo.', 'De Silvestri'."""
+    if not s or len(s) > 35 or ',' in s or any(ch.isdigit() for ch in s):
+        return False
+    words = s.split()
+    if not 1 <= len(words) <= 4:
+        return False
+    for w in words:
+        if w.lower() in NAME_PARTICLES:
+            continue
+        if not w[0].isupper():
+            return False
+    return True
+
+
+def _parse_indisponibili_text(soup, team_names, default_category='infortunati'):
+    """
+    Parser a testo: linearizza la pagina e segue la sequenza
+    squadra -> 'Infortunati' -> (nome, descrizione)* -> 'Squalificati' ...
+    Non dipende da tag, classi o alt delle immagini.
+    """
+    raw = soup.get_text('\n').split('\n')
+    lines = [re.sub(r'\s+', ' ', l).strip() for l in raw]
+    lines = [l for l in lines if l]
+    n = len(lines)
+    names_l = {t.lower(): t for t in team_names}
+
+    def is_label(k):
+        return k < n and _norm_label(lines[k]) in CATEGORY_LABELS
+
+    def is_team(k):
+        return k < n and _norm_label(lines[k]) in names_l
+
+    def starts_player(k):
+        return (k + 1 < n and _looks_like_name(lines[k]) and not is_label(k) and not is_team(k)
+                and _norm_label(lines[k]) != 'nessuno'
+                and not is_label(k + 1) and not is_team(k + 1) and len(lines[k + 1]) >= 20)
+
+    records = []
+    team = None
+    cat = None
+    i = 0
+    while i < n:
+        line = lines[i]
+        low = _norm_label(line)
+        if records and SECTION_END_RE.match(line):
+            break
+        if low in names_l and is_label(i + 1):
+            team = names_l[low]
+            cat = default_category
+            i += 1
+            continue
+        if low in CATEGORY_LABELS:
+            cat = low
+            i += 1
+            continue
+        if team and cat in ('infortunati', 'squalificati') and starts_player(i):
+            parts = [lines[i + 1]]
+            j = i + 2
+            while (j < n and not is_label(j) and not is_team(j)
+                   and not starts_player(j) and not SECTION_END_RE.match(lines[j])):
+                parts.append(lines[j])
+                j += 1
+            records.append({
+                'nome': line, 'squadra': team, 'categoria': cat,
+                'dettaglio': ' '.join(parts).strip(),
+            })
+            i = j
+            continue
+        i += 1
+    return records
+
+
+def parse_indisponibili(html):
+    """Estrae infortunati + squalificati (con squadra e testo della redazione)."""
+    soup = BeautifulSoup(html, 'html.parser')
+    teams = _known_team_names(soup)
+    by_tags = _parse_indisponibili_tags(soup)
+    by_text = _parse_indisponibili_text(soup, teams)
+    print(f"   indisponibili: {len(by_tags)} record dal parser a tag, "
+          f"{len(by_text)} dal parser a testo ({len(teams)} squadre note)", file=sys.stderr)
+    # Si sceglie il parser che riconosce piu' squadre diverse (segno che
+    # attribuisce bene i giocatori), a parita' quello con piu' record.
+    def score(rs):
+        return (len({r['squadra'] for r in rs}), len(rs))
+    records = by_tags if score(by_tags) >= score(by_text) else by_text
+
+    # Rimuove duplicati esatti mantenendo l'ordine di apparizione
     seen = set()
     unique_records = []
     for r in records:
@@ -348,6 +526,11 @@ def parse_indisponibili(html):
             seen.add(key)
             unique_records.append(r)
 
+    n_teams = len({r['squadra'] for r in unique_records})
+    n_inj = sum(1 for r in unique_records if r['categoria'] == 'infortunati')
+    n_sq = sum(1 for r in unique_records if r['categoria'] == 'squalificati')
+    print(f"   indisponibili scelti: {len(unique_records)} ({n_inj} infortunati, "
+          f"{n_sq} squalificati) su {n_teams} squadre", file=sys.stderr)
     return unique_records
 
 
@@ -365,15 +548,6 @@ def save_debug_html(html, path):
     with open(path, 'w', encoding='utf-8') as f:
         f.write(html)
 
-
-STAT_ALIASES = {
-    'PV': 'pv', 'PRESENZE': 'pv', 'MV': 'mv', 'FM': 'fm', 'FANTAMEDIA': 'fm',
-    'GF': 'gf', 'GOL': 'gf', 'GS': 'gs', 'RP': 'rp', 'RC': 'rc',
-    'R+': 'rpos', 'R-': 'rneg', 'ASS': 'ass', 'ASSIST': 'ass',
-    'AMM': 'amm', 'ESP': 'esp', 'AU': 'au',
-}
-STAT_FIELDS = ('pv', 'mv', 'fm', 'gf', 'gs', 'rp', 'rc', 'rpos', 'rneg', 'ass', 'amm', 'esp', 'au')
-STATS_CSV_HEADERS = ['nome', 'squadra'] + list(STAT_FIELDS)
 
 # Voti ufficiali per singola giornata (una pagina per giornata).
 VOTI_URL_TEMPLATE = "https://www.fantacalcio.it/voti-fantacalcio-serie-a/{season}/{giornata}"
@@ -452,7 +626,7 @@ def scrape_voti_giornate():
     season = current_season_label()
     all_rows, found, missing = [], 0, 0
     for g in range(1, 39):
-        html = fetch_page(VOTI_URL_TEMPLATE.format(season=season, giornata=g))
+        html = fetch_page(VOTI_URL_TEMPLATE.format(season=season, giornata=g), retries=1)
         if html and g == 1:
             save_debug_html(html, "data/debug_voti.html")
         rows = parse_voti_giornata(html, g) if html else []
@@ -467,102 +641,147 @@ def scrape_voti_giornate():
         time.sleep(0.5)
     if save_csv(all_rows, "data/voti_giornate.csv", VOTI_CSV_HEADERS):
         print(f"OK: data/voti_giornate.csv ({len(all_rows)} righe, {found} giornate)")
-    else:
-        print("ATTENZIONE: nessun voto di giornata estratto, vedi data/debug_voti.html "
-              "(URL/struttura pagina da verificare)", file=sys.stderr)
+        return True
+    print("ATTENZIONE: nessun voto di giornata estratto, vedi data/debug_voti.html "
+          "(URL/struttura pagina da verificare)", file=sys.stderr)
+    return False
 
 
-def main():
-    os.makedirs("data", exist_ok=True)
-    ok = True
+# ---------------------------------------------------------------------------
+# FASI (ognuna isolata dalle altre)
+# ---------------------------------------------------------------------------
 
+def stage_indisponibili():
+    print("Scarico indisponibili...")
+    html = fetch_page(URLS["indisponibili"])
+    if not html:
+        return False
+    save_debug_html(html, "data/debug_indisponibili.html")
+    injured = parse_indisponibili(html)
+    n_teams = len({r['squadra'] for r in injured})
+    if len(injured) < 5 or n_teams < 3:
+        print(f"ERRORE: estratti solo {len(injured)} indisponibili su {n_teams} squadre: "
+              f"struttura pagina cambiata? data/indisponibili.csv NON aggiornato "
+              f"(resta la versione precedente).", file=sys.stderr)
+        m = re.search(r'id="team-\d+"', html)
+        start = m.start() if m else max(html.find('Infortunati') - 300, 0)
+        print("   --- estratto HTML per diagnosi ---", file=sys.stderr)
+        print(html[start:start + 1500], file=sys.stderr)
+        print("   --- fine estratto ---", file=sys.stderr)
+        return False
+    headers = ['nome', 'squadra', 'categoria', 'dettaglio']
+    if save_csv(injured, "data/indisponibili.csv", headers):
+        print(f"OK: data/indisponibili.csv ({len(injured)} giocatori)")
+        return True
+    print("ERRORE: impossibile salvare indisponibili.csv", file=sys.stderr)
+    return False
+
+
+def stage_quotazioni():
     print("Scarico quotazioni...")
     html = fetch_page(URLS["quotazioni"])
-    if html:
-        save_debug_html(html, "data/debug_quotazioni.html")
-        players = parse_quotazioni(html)
-        if players:
-            headers = ['id', 'ruolo', 'nome', 'squadra', 'qta', 'fvm']
-            if save_csv(players, "data/quotazioni.csv", headers):
-                print(f"OK: data/quotazioni.csv ({len(players)} giocatori)")
-                n_unknown = sum(1 for p in players if p['ruolo'] == '?')
-                if n_unknown:
-                    print(f"   ATTENZIONE: ruolo non riconosciuto per {n_unknown} giocatori "
-                          f"(vedi commento in extract_ruolo)", file=sys.stderr)
-            else:
-                print("ERRORE: impossibile salvare quotazioni.csv", file=sys.stderr)
-                ok = False
-        else:
-            print("ERRORE: nessun giocatore estratto dalle quotazioni", file=sys.stderr)
-            print("   HTML salvato in data/debug_quotazioni.html per analisi", file=sys.stderr)
-            ok = False
-    else:
-        ok = False
+    if not html:
+        return False
+    save_debug_html(html, "data/debug_quotazioni.html")
+    players = parse_quotazioni(html)
+    if not players:
+        print("ERRORE: nessun giocatore estratto dalle quotazioni", file=sys.stderr)
+        print("   HTML salvato in data/debug_quotazioni.html per analisi", file=sys.stderr)
+        return False
+    headers = ['id', 'ruolo', 'nome', 'squadra', 'qta', 'fvm']
+    if not save_csv(players, "data/quotazioni.csv", headers):
+        print("ERRORE: impossibile salvare quotazioni.csv", file=sys.stderr)
+        return False
+    print(f"OK: data/quotazioni.csv ({len(players)} giocatori)")
+    n_unknown = sum(1 for p in players if p['ruolo'] == '?')
+    if n_unknown:
+        print(f"   ATTENZIONE: ruolo non riconosciuto per {n_unknown} giocatori "
+              f"(vedi commento in extract_ruolo)", file=sys.stderr)
+    return True
 
+
+def stage_statistiche():
     print("Scarico statistiche...")
     html = fetch_page(URLS["statistiche"])
-    if html:
-        save_debug_html(html, "data/debug_statistiche.html")
-        stats = parse_statistiche(html)
-        if stats:
-            headers = STATS_CSV_HEADERS
-            if save_csv(stats, "data/stats_curr.csv", headers):
-                print(f"OK: data/stats_curr.csv ({len(stats)} giocatori)")
-            else:
-                print("ERRORE: impossibile salvare stats_curr.csv", file=sys.stderr)
-                ok = False
-        else:
-            print("ERRORE: nessuna statistica estratta", file=sys.stderr)
-            print("   HTML salvato in data/debug_statistiche.html per analisi", file=sys.stderr)
-            ok = False
-    else:
-        ok = False
+    if not html:
+        return False
+    save_debug_html(html, "data/debug_statistiche.html")
+    stats = parse_statistiche(html)
+    if not stats:
+        print("ERRORE: nessuna statistica estratta", file=sys.stderr)
+        print("   HTML salvato in data/debug_statistiche.html per analisi", file=sys.stderr)
+        return False
+    if not save_csv(stats, "data/stats_curr.csv", STATS_CSV_HEADERS):
+        print("ERRORE: impossibile salvare stats_curr.csv", file=sys.stderr)
+        return False
+    print(f"OK: data/stats_curr.csv ({len(stats)} giocatori)")
+    return True
 
-    # 2b. Statistiche stagione precedente: dati storici, non cambiano più,
+
+def stage_stats_prev():
+    # Statistiche stagione precedente: dati storici, non cambiano più,
     # quindi si scaricano una sola volta e poi si salta se già presenti.
     prev_path = "data/stats_prev.csv"
     if os.path.exists(prev_path) and csv_has_column(prev_path, 'gf'):
         print(f"Statistiche stagione precedente già presenti in {prev_path}, salto il download.")
-    else:
-        prev_season = previous_season_label()
-        print(f"Statistiche stagione precedente mancanti, scarico {prev_season}...")
-        prev_url = STATS_SEASON_URL_TEMPLATE.format(season=prev_season)
-        html_prev = fetch_page(prev_url)
-        if html_prev:
-            save_debug_html(html_prev, "data/debug_statistiche_prev.html")
-            stats_prev = parse_statistiche(html_prev)
-            if stats_prev:
-                headers = STATS_CSV_HEADERS
-                if save_csv(stats_prev, prev_path, headers):
-                    print(f"OK: {prev_path} ({len(stats_prev)} giocatori, stagione {prev_season})")
-                else:
-                    print(f"ERRORE: impossibile salvare {prev_path}", file=sys.stderr)
-            else:
-                print(f"ERRORE: nessuna statistica estratta per la stagione {prev_season} "
-                      f"(controlla che l'URL/formato stagione sia corretto: {prev_url})", file=sys.stderr)
-        # Non blocchiamo l'intero run per un fallimento sul backfill storico:
-        # è un'informazione "nice to have", non i dati live dell'asta.
+        return True
+    prev_season = previous_season_label()
+    print(f"Statistiche stagione precedente mancanti, scarico {prev_season}...")
+    prev_url = STATS_SEASON_URL_TEMPLATE.format(season=prev_season)
+    html_prev = fetch_page(prev_url)
+    if not html_prev:
+        return False
+    save_debug_html(html_prev, "data/debug_statistiche_prev.html")
+    stats_prev = parse_statistiche(html_prev)
+    if not stats_prev:
+        print(f"ERRORE: nessuna statistica estratta per la stagione {prev_season} "
+              f"(controlla che l'URL/formato stagione sia corretto: {prev_url})", file=sys.stderr)
+        return False
+    if not save_csv(stats_prev, prev_path, STATS_CSV_HEADERS):
+        print(f"ERRORE: impossibile salvare {prev_path}", file=sys.stderr)
+        return False
+    print(f"OK: {prev_path} ({len(stats_prev)} giocatori, stagione {prev_season})")
+    return True
 
+
+def stage_voti():
     print("Scarico voti per giornata...")
-    scrape_voti_giornate()
+    return scrape_voti_giornate()
 
-    print("Scarico indisponibili...")
-    html = fetch_page(URLS["indisponibili"])
-    if html:
-        save_debug_html(html, "data/debug_indisponibili.html")
-        injured = parse_indisponibili(html)
-        if injured:
-            headers = ['nome', 'squadra', 'categoria', 'dettaglio']
-            if save_csv(injured, "data/indisponibili.csv", headers):
-                print(f"OK: data/indisponibili.csv ({len(injured)} giocatori)")
-            else:
-                print("ERRORE: impossibile salvare indisponibili.csv", file=sys.stderr)
 
+def run_stage(label, fn, critical, failures, warnings):
+    try:
+        ok = fn()
+    except Exception:
+        print(f"ECCEZIONE nella fase '{label}':", file=sys.stderr)
+        traceback.print_exc()
+        ok = False
     if not ok:
-        print("ERRORE: alcuni file non sono stati scaricati/estratti correttamente", file=sys.stderr)
+        (failures if critical else warnings).append(label)
+
+
+def main():
+    os.makedirs("data", exist_ok=True)
+    failures, warnings = [], []
+
+    # Gli indisponibili cambiano ogni giorno: prima di tutto, cosi' nessun
+    # problema nelle altre fasi puo' impedirne l'aggiornamento.
+    run_stage("indisponibili", stage_indisponibili, True, failures, warnings)
+    time.sleep(1)
+    run_stage("quotazioni", stage_quotazioni, True, failures, warnings)
+    time.sleep(1)
+    run_stage("statistiche", stage_statistiche, True, failures, warnings)
+    time.sleep(1)
+    # Dati "nice to have": un loro fallimento non fa fallire il run.
+    run_stage("statistiche stagione precedente", stage_stats_prev, False, failures, warnings)
+    run_stage("voti per giornata", stage_voti, False, failures, warnings)
+
+    if warnings:
+        print(f"ATTENZIONE: fasi non critiche fallite: {', '.join(warnings)}", file=sys.stderr)
+    if failures:
+        print(f"ERRORE: fasi critiche fallite: {', '.join(failures)}", file=sys.stderr)
         sys.exit(1)
-    else:
-        print("Tutti i dati scaricati con successo.")
+    print("Tutti i dati scaricati con successo.")
 
 
 if __name__ == "__main__":
