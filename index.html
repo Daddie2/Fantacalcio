@@ -614,6 +614,7 @@ const STATUS_LABELS = {ok:'OK', infortunato:'Infortunato ora'};
 const STARTER_LABELS = {titolare:'Titolare', secondo:'Ballottaggio / Secondo', panchinaro:'Panchinaro'};
 let showStatCols = false;
 const giornateById = {};
+let giornateMaxG = 0;
 
 function defaultTeams(){ const t=[]; for(let i=1;i<=10;i++) t.push({id:'t'+i+'_'+Math.random().toString(36).slice(2,7), name:'Squadra '+i, budget:1000, roster:[]}); return t; }
 function defaultState(){ return {teams: defaultTeams(), slots:{P:3,D:8,C:8,A:6}, players:[], importedAt:null}; }
@@ -974,6 +975,7 @@ async function autoFetchAndImport(opts){
       (giornateById[t.id] = giornateById[t.id] || []).push(e);
     }
     Object.keys(giornateById).forEach(k=> giornateById[k].sort((a,b)=> a.g-b.g));
+    giornateMaxG = 0; Object.keys(giornateById).forEach(k=> giornateById[k].forEach(r=>{ if(r.g>giornateMaxG) giornateMaxG=r.g; }));
   }catch(e){ console.warn('auto giornate', e); }
   if(qOk||sOk||pOk||iOk){ const w = new Date().toLocaleString('it-IT'); setStatus(`Aggiornato automaticamente alle ${w}.`); renderAll(); }
   else if(!silent) setStatus('Nessun dato automatico trovato: importa a mano qui sotto.');
@@ -2346,14 +2348,46 @@ const MODULES = ['3-4-3','3-5-2','4-3-3','4-4-2','4-5-1','5-3-2','5-4-1'];
 const START_PROB = {titolare:0.8, secondo:0.4, panchinaro:0.1};
 let lineupTeamId = null;
 let lineupTeamSet = new Set();
+/* Tutti i dati arrivano da fantacalcio.it: statistiche stagione corrente/precedente, voti per giornata (forma recente) e quotazioni.
+   Le probabili formazioni (Gazzetta) restano la prima fonte per la probabilità di giocare. */
+let _qCache = null;
+function qPct(p){
+  const q = p.qta || p.fvm; if(!(q>0)) return null;
+  const key = state.players.length + ':' + (state.importedAt||'');
+  if(!_qCache || _qCache.key!==key){
+    const by = {P:[],D:[],C:[],A:[]};
+    state.players.forEach(x=>{ const v = x.qta || x.fvm; if(v>0 && by[x.ruolo]) by[x.ruolo].push(v); });
+    Object.keys(by).forEach(k=> by[k].sort((a,b)=> a-b));
+    _qCache = {key, by};
+  }
+  const arr = _qCache.by[p.ruolo]; return (arr && arr.length) ? pctRank(arr, q) : null;
+}
+/* valore di partenza se un giocatore non ha statistiche: base per ruolo, spostata al massimo di ±0,5 dalla quotazione */
+function priorFm(p){ const base = p.ruolo==='P' ? 5.5 : 6, pc = qPct(p); return pc===null ? base : base + (pc-0.5); }
+/* forma recente: ultime 6 partite a voto, pesate di più le più vicine */
+function recentForm(p){
+  const rows = giornateById[p.id]; if(!rows || !rows.length) return null;
+  const pl = rows.filter(r=> r.v!==null && r.fv!==null).slice(-6); if(!pl.length) return null;
+  let sw=0, sv=0, sf=0;
+  pl.forEach((r,i)=>{ const w = Math.pow(0.8, pl.length-1-i); sw+=w; sv+=w*r.v; sf+=w*r.fv; });
+  return {v:sv/sw, fv:sf/sw, n:pl.length};
+}
+function withForm(season, recent, n, prior){
+  if(recent===null || recent===undefined) return season;
+  if(season===null) return (recent*n + prior*2)/(n+2);
+  const w = Math.min(0.4, 0.08*n);
+  return season*(1-w) + recent*w;
+}
 function baseFm(p){
-  const c = p.stats && p.stats.curr, v = p.stats && p.stats.prev;
-  const pvC = (c && c.pv) || 0, fmC = c && c.fm, fmP = v && v.fm;
-  if(fmC && pvC>=3 && fmP){ const w = Math.min(1, pvC/8); return fmC*w + fmP*(1-w); }
-  if(fmC && pvC>=3) return fmC;
-  if(fmP) return fmP;
-  if(fmC) return fmC;
-  return p.ruolo==='P' ? 5.5 : 6;
+  const r = recentForm(p), prior = priorFm(p);
+  const x = withForm(blendStat(p,'fm'), r && r.fv, r ? r.n : 0, prior);
+  return x!==null ? x : prior;
+}
+/* quota delle ultime 5 giornate di campionato giocate a voto; null se i dati non bastano */
+function recentPresence(p){
+  const rows = giornateById[p.id]; if(!rows || !rows.length || giornateMaxG<3) return null;
+  const n = Math.min(5, giornateMaxG);
+  return rows.filter(r=> r.g>giornateMaxG-5 && r.v!==null).length / n;
 }
 function playProb(p, est){
   if(p.status==='infortunato' || p.status==='rotto') return 0;
@@ -2361,7 +2395,9 @@ function playProb(p, est){
     if(p.probForm) return Math.max(0, Math.min(1, p.probForm.prob/100));
     if(lineupTeamSet.has(p.squadra)) return 0.1;
   }
-  return START_PROB[p.titolarita]!==undefined ? START_PROB[p.titolarita] : 0.5;
+  const base = START_PROB[p.titolarita]!==undefined ? START_PROB[p.titolarita] : 0.5;
+  const rate = p.titolaritaManual ? null : recentPresence(p);
+  return rate===null ? base : Math.max(0.05, Math.min(0.95, 0.5*base + 0.5*rate));
 }
 let lineupView = state.lineupView || 'campo';
 function blendStat(p, f){
@@ -2373,8 +2409,8 @@ function blendStat(p, f){
   if(a) return a;
   return null;
 }
-function baseMv(p){ const x = blendStat(p,'mv'); return x!==null ? x : 6; }
-function bonusMalus(p){ const f = blendStat(p,'fm'), m = blendStat(p,'mv'); return (f!==null && m!==null) ? f - m : null; }
+function baseMv(p){ const r = recentForm(p); const x = withForm(blendStat(p,'mv'), r && r.v, r ? r.n : 0, 6); return x!==null ? x : 6; }
+function bonusMalus(p){ const f = blendStat(p,'fm'), m = blendStat(p,'mv'); if((f===null || m===null) && !recentForm(p)) return null; return baseFm(p) - baseMv(p); }
 function bmBadge(p){ const d = bonusMalus(p); if(d===null) return '<span class="bm bm-na" title="Nessuna statistica">n.d.</span>'; const cls = d>=0.15?'bm-up':d<=-0.15?'bm-down':'bm-flat'; const lab = d>=0.15?'bonus':d<=-0.15?'malus':'neutro'; return `<span class="bm ${cls}" title="Fm − Mv">${d>0?'+':''}${d.toFixed(2)} ${lab}</span>`; }
 const MOD_DIFESA = [[7,6],[6.5,3],[6,1]];
 function getModDif(){ const lg = activeLeague(); if(!lg.modDifesa) lg.modDifesa = {on:false}; return lg.modDifesa; }
