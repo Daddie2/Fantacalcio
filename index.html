@@ -2161,7 +2161,7 @@ function drawPlayerDetail(){
     else if(mb.status==='ruolo_pieno') maxBidText='Ruolo pieno';
     else { maxBidText=fmt(mb.value); maxBidCls='gold'; }
   }
-  const watchBtn = isWatched(p.id) ? `<button class="btn btn-sm btn-ghost" id="pdWatchBtn">Togli dai puntati di ${escapeHtml((teamById(watchTeamId())||{}).name||'')}</button>` : `<button class="btn btn-sm btn-gold" id="pdWatchBtn">+ Puntalo per ${escapeHtml((teamById(watchTeamId())||{}).name||'')}</button>`;
+  const watchBtn = isWatched(p.id) ? `<button class="btn btn-ghost" id="pdWatchBtn">Togli dai puntati</button>` : `<button class="btn btn-gold" id="pdWatchBtn">+ Puntalo</button>`;
   
   const html = `
     <div class="pd-header">
@@ -2172,7 +2172,10 @@ function drawPlayerDetail(){
     <div class="row" style="margin-bottom:14px;">
       <div class="col"><label>Stato fisico</label><select id="pdStatus" class="status-select" style="width:100%;">${Object.keys(STATUS_LABELS).map(k=>`<option value="${k}" ${k===statoVal?'selected':''}>${STATUS_LABELS[k]}</option>`).join('')}</select></div>
       <div class="col"><label>Titolarità</label><select id="pdTitolarita" class="status-select" style="width:100%;">${Object.keys(STARTER_LABELS).map(k=>`<option value="${k}" ${k===titVal?'selected':''}>${STARTER_LABELS[k]}</option>`).join('')}</select></div>
-      <div class="col" style="flex:0 0 auto;align-self:flex-end;">${watchBtn}</div>
+    </div>
+    <div class="row" style="margin-bottom:14px;align-items:flex-end;">
+      <div class="col"><label>Squadra per cui puntare</label><select id="pdTeamSelect" class="status-select" style="width:100%;">${teamSelHtml}</select></div>
+      <div class="col" style="flex:0 0 auto;">${watchBtn}</div>
     </div>
 
     ${giornatePanelHtml(p)}
@@ -2202,7 +2205,7 @@ function drawPlayerDetail(){
           <div class="stat-box"><div class="label">Consigliato</div><div class="value gold">${fmt(suggestedPrice)}</div></div>
           <div class="stat-box"><div class="label">Massimo spendibile</div><div class="value ${maxBidCls}">${maxBidText}</div></div>
         </div>
-        ${owner?`<p class="hint">Già preso da ${escapeHtml(owner.team.name)} per ${fmt(owner.price)} cr.</p>`:`<div class="row" style="margin-top:12px;"><div class="col" style="max-width:220px;"><label>Squadra (massimo e puntati)</label><select id="pdTeamSelect" class="mini-select" style="width:100%;">${teamSelHtml}</select></div></div>`}
+        ${owner?`<p class="hint">Già preso da ${escapeHtml(owner.team.name)} per ${fmt(owner.price)} cr.</p>`:`<div class="row" style="margin-top:12px;"><div class="col" style="max-width:220px;"><label>Squadra (massimo e puntati)</label><select id="pdTeamSelect2" class="mini-select" style="width:100%;">${teamSelHtml}</select></div></div>`}
       </div>
       <div class="panel" style="margin-bottom:0;">
         <div class="panel-title">Possibili alternative</div>
@@ -2220,8 +2223,10 @@ function drawPlayerDetail(){
     drawPlayerDetail(); renderAll();
   });
   el('playerDetailBody').querySelectorAll('[data-detail]').forEach(l=> l.addEventListener('click', function(){ openPlayerDetail(this.dataset.detail); }));
-  const ts = el('pdTeamSelect');
-  if(ts) ts.addEventListener('change', function(){ myTeamId=this.value; drawPlayerDetail(); });
+  ['pdTeamSelect','pdTeamSelect2'].forEach(function(id){
+    const ts = el(id);
+    if(ts) ts.addEventListener('change', function(){ myTeamId=this.value; drawPlayerDetail(); renderAll(); });
+  });
 }
 
 /* ================= GIORNATE, GRAFICI, CONTESE ================= */
