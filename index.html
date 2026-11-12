@@ -1067,6 +1067,7 @@ function switchView(view){
   document.querySelectorAll('#nav button').forEach(b=> b.classList.toggle('active', b.dataset.view===view));
   document.querySelectorAll('.view').forEach(v=> v.classList.remove('active'));
   el('view-'+view).classList.add('active');
+  try{ localStorage.setItem('fwr_view', view); }catch(e){}
   if(view==='rose') renderRose();
   if(view==='formazioni') renderLineups();
   if(view==='consigli') renderConsigli();
@@ -2776,6 +2777,7 @@ function renderAll(){
 }
 renderSetup();
 renderAll();
+try{ const lv = localStorage.getItem('fwr_view'); if(lv && document.getElementById('view-'+lv)) switchView(lv); }catch(e){}
 
 })();
 </script>
