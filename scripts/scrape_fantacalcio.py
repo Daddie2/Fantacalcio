@@ -5,6 +5,7 @@ import os
 import sys
 import re
 import csv
+import time
 import requests
 from datetime import date
 from bs4 import BeautifulSoup
@@ -239,12 +240,8 @@ def parse_statistiche(html):
         h_clean = h.upper().replace(' ', '').replace('.', '')
         if h_clean in ('SQ', 'SQUADRA', 'TEAM') and squadra_idx is None:
             squadra_idx = i
-        elif h_clean == 'PV' and 'pv' not in col_map:
-            col_map['pv'] = i
-        elif h_clean == 'MV' and 'mv' not in col_map:
-            col_map['mv'] = i
-        elif h_clean == 'FM' and 'fm' not in col_map:
-            col_map['fm'] = i
+        elif STAT_ALIASES.get(h_clean) and STAT_ALIASES[h_clean] not in col_map:
+            col_map[STAT_ALIASES[h_clean]] = i
 
     if squadra_idx is None or squadra_idx == 0:
         print("ATTENZIONE: colonna 'Sq' non trovata nella tabella statistiche", file=sys.stderr)
@@ -252,6 +249,7 @@ def parse_statistiche(html):
 
     col_map['squadra'] = squadra_idx
     col_map['nome'] = squadra_idx - 1
+    print(f"   colonne statistiche riconosciute: {sorted(k for k in col_map)}", file=sys.stderr)
 
     stats = []
     rows = table.find_all('tr')[1:]
@@ -270,7 +268,7 @@ def parse_statistiche(html):
             'nome': nome,
             'squadra': row_data[col_map['squadra']] if col_map['squadra'] < len(row_data) else '',
         }
-        for field in ('pv', 'mv', 'fm'):
+        for field in STAT_FIELDS:
             idx = col_map.get(field)
             entry[field] = clean_number(row_data[idx]) if idx is not None and idx < len(row_data) else 0
 
@@ -368,6 +366,112 @@ def save_debug_html(html, path):
         f.write(html)
 
 
+STAT_ALIASES = {
+    'PV': 'pv', 'PRESENZE': 'pv', 'MV': 'mv', 'FM': 'fm', 'FANTAMEDIA': 'fm',
+    'GF': 'gf', 'GOL': 'gf', 'GS': 'gs', 'RP': 'rp', 'RC': 'rc',
+    'R+': 'rpos', 'R-': 'rneg', 'ASS': 'ass', 'ASSIST': 'ass',
+    'AMM': 'amm', 'ESP': 'esp', 'AU': 'au',
+}
+STAT_FIELDS = ('pv', 'mv', 'fm', 'gf', 'gs', 'rp', 'rc', 'rpos', 'rneg', 'ass', 'amm', 'esp', 'au')
+STATS_CSV_HEADERS = ['nome', 'squadra'] + list(STAT_FIELDS)
+
+# Voti ufficiali per singola giornata (una pagina per giornata).
+VOTI_URL_TEMPLATE = "https://www.fantacalcio.it/voti-fantacalcio-serie-a/{season}/{giornata}"
+VOTI_ALIASES = {
+    'VOTO': 'voto', 'V': 'voto', 'FV': 'fantavoto', 'FANTAVOTO': 'fantavoto',
+    'GF': 'gf', 'GOL': 'gf', 'GS': 'gs', 'RP': 'rp', 'RC': 'rc',
+    'R+': 'rpos', 'R-': 'rneg', 'ASS': 'ass', 'AMM': 'amm', 'ESP': 'esp', 'AU': 'au',
+}
+VOTI_FIELDS = ('voto', 'fantavoto', 'gf', 'gs', 'rp', 'rc', 'rpos', 'rneg', 'ass', 'amm', 'esp', 'au')
+VOTI_CSV_HEADERS = ['nome', 'squadra', 'giornata'] + list(VOTI_FIELDS)
+
+
+def csv_has_column(path, col):
+    try:
+        with open(path, encoding='utf-8') as f:
+            return col in f.readline().strip().split(',')
+    except OSError:
+        return False
+
+
+def parse_voti_giornata(html, giornata):
+    """Estrae voto, fantavoto ed eventi (gol, assist, amm...) di una giornata.
+    Parser guidato dagli header, come per le statistiche: cerca ogni tabella
+    che abbia una colonna 'Voto'. Se manca la colonna Fantavoto lo calcola
+    con i bonus/malus standard (gol +3, assist +1, amm -0.5, esp -1,
+    rigore parato +3, rigore sbagliato -3, autogol -2; esclusi gol subiti)."""
+    soup = BeautifulSoup(html, 'html.parser')
+    out = []
+    for table in soup.find_all('table'):
+        rows = table.find_all('tr')
+        if not rows:
+            continue
+        cmap = {}
+        for i, h in enumerate(build_header_labels(rows[0])):
+            k = VOTI_ALIASES.get(h.upper().replace(' ', '').replace('.', ''))
+            if k and k not in cmap:
+                cmap[k] = i
+        if 'voto' not in cmap:
+            continue
+        heading = table.find_previous(['h2', 'h3', 'h4'])
+        squadra = heading.get_text(strip=True) if heading else ''
+        for row in rows[1:]:
+            cells = row.find_all(['td', 'th'])
+            texts = [c.get_text(strip=True) for c in cells]
+            nome = ''
+            for t in texts:
+                if len(re.findall(r'[A-Za-z\u00c0-\u00ff]', t)) >= 3 and not re.fullmatch(r'[\d.,\-+ ]+', t):
+                    nome = t
+                    break
+
+            def val(k):
+                i = cmap.get(k)
+                if i is None or i >= len(texts):
+                    return None
+                try:
+                    return float(texts[i].replace(',', '.'))
+                except ValueError:
+                    return None
+
+            voto = val('voto')
+            if not nome or voto is None:
+                continue
+            e = {k: (val(k) or 0) for k in VOTI_FIELDS if k not in ('voto', 'fantavoto')}
+            fv = val('fantavoto')
+            if fv is None:
+                fv = (voto + 3 * e['gf'] + e['ass'] - 0.5 * e['amm'] - e['esp']
+                      + 3 * e['rp'] - 3 * e['rneg'] - 2 * e['au'])
+            e.update({'nome': nome, 'squadra': squadra, 'giornata': giornata, 'voto': voto, 'fantavoto': fv})
+            out.append(e)
+    return out
+
+
+def scrape_voti_giornate():
+    """Scarica i voti di tutte le giornate giocate -> data/voti_giornate.csv.
+    Non blocca il run se fallisce: e' un dato aggiuntivo."""
+    season = current_season_label()
+    all_rows, found, missing = [], 0, 0
+    for g in range(1, 39):
+        html = fetch_page(VOTI_URL_TEMPLATE.format(season=season, giornata=g))
+        if html and g == 1:
+            save_debug_html(html, "data/debug_voti.html")
+        rows = parse_voti_giornata(html, g) if html else []
+        if rows:
+            all_rows.extend(rows)
+            found += 1
+            missing = 0
+        else:
+            missing += 1
+            if (found and missing >= 2) or (not found and missing >= 3):
+                break
+        time.sleep(0.5)
+    if save_csv(all_rows, "data/voti_giornate.csv", VOTI_CSV_HEADERS):
+        print(f"OK: data/voti_giornate.csv ({len(all_rows)} righe, {found} giornate)")
+    else:
+        print("ATTENZIONE: nessun voto di giornata estratto, vedi data/debug_voti.html "
+              "(URL/struttura pagina da verificare)", file=sys.stderr)
+
+
 def main():
     os.makedirs("data", exist_ok=True)
     ok = True
@@ -401,7 +505,7 @@ def main():
         save_debug_html(html, "data/debug_statistiche.html")
         stats = parse_statistiche(html)
         if stats:
-            headers = ['nome', 'squadra', 'pv', 'mv', 'fm']
+            headers = STATS_CSV_HEADERS
             if save_csv(stats, "data/stats_curr.csv", headers):
                 print(f"OK: data/stats_curr.csv ({len(stats)} giocatori)")
             else:
@@ -417,7 +521,7 @@ def main():
     # 2b. Statistiche stagione precedente: dati storici, non cambiano più,
     # quindi si scaricano una sola volta e poi si salta se già presenti.
     prev_path = "data/stats_prev.csv"
-    if os.path.exists(prev_path):
+    if os.path.exists(prev_path) and csv_has_column(prev_path, 'gf'):
         print(f"Statistiche stagione precedente già presenti in {prev_path}, salto il download.")
     else:
         prev_season = previous_season_label()
@@ -428,7 +532,7 @@ def main():
             save_debug_html(html_prev, "data/debug_statistiche_prev.html")
             stats_prev = parse_statistiche(html_prev)
             if stats_prev:
-                headers = ['nome', 'squadra', 'pv', 'mv', 'fm']
+                headers = STATS_CSV_HEADERS
                 if save_csv(stats_prev, prev_path, headers):
                     print(f"OK: {prev_path} ({len(stats_prev)} giocatori, stagione {prev_season})")
                 else:
@@ -438,6 +542,9 @@ def main():
                       f"(controlla che l'URL/formato stagione sia corretto: {prev_url})", file=sys.stderr)
         # Non blocchiamo l'intero run per un fallimento sul backfill storico:
         # è un'informazione "nice to have", non i dati live dell'asta.
+
+    print("Scarico voti per giornata...")
+    scrape_voti_giornate()
 
     print("Scarico indisponibili...")
     html = fetch_page(URLS["indisponibili"])
