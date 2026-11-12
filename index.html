@@ -2183,11 +2183,11 @@ function chartVoti(rows){
   return '<div class="gchart"><svg viewBox="0 0 '+W+' '+H+'">'+s+gAxisX(L,bw,H-7,N)+gHit(L,bw,N,H)+'</svg></div>';
 }
 function chartBonus(rows){
-  const W=G_W,H=210,L=G_L,T=20,B=24,N=38,bw=(W-L-4)/N, by={};
+  const W=G_W,H=226,L=G_L,T=20,B=24,BP=18,N=38,bw=(W-L-4)/N, by={};
   rows.forEach(r=>{ by[r.g]=r; });
   const bs = rows.filter(r=> r.b!==null).map(r=> r.b);
   const hi = Math.max.apply(null,[3].concat(bs)), lo = Math.min.apply(null,[-1].concat(bs));
-  const y = v=> T+(H-T-B)*(1-(v-lo)/(hi-lo)), y0 = y(0);
+  const y = v=> T+(H-T-B-BP)*(1-(v-lo)/(hi-lo)), y0 = y(0);
   let s = gSel(L,bw,N,H) + '<line x1="'+L+'" x2="'+W+'" y1="'+y0+'" y2="'+y0+'" stroke="var(--line)"/>';
   for(let g=1; g<=N; g++){
     const r = by[g], cx = L+(g-1)*bw+bw/2;
