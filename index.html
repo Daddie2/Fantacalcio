@@ -2550,7 +2550,7 @@ function roundHeaderHtml(){
   const rn = roundNow(), rs = roundList(), sel = selRound();
   let html = '';
   if(rn.live) html += `<p class="hint" style="margin:0 0 8px;">Giornata ${rn.live.n} in corso.</p>`;
-  if(rn.next){ const ms = rn.next.start - new Date(); html += `<div class="panel next-box"><div><div class="label">Prossima giornata</div><div class="nb-title">${rn.next.n}ª giornata</div><div class="hint" style="margin:2px 0 0;">Primo fischio: ${escapeHtml(fmtKick(rn.next.start))}${rn.next.approx?' (data indicativa)':''}</div></div><div class="nb-count" id="nextCount" data-t="${rn.next.start.getTime()}">${fmtLeft(ms)}</div></div>`; }
+  if(rn.next){ const tgt = (sel && sel.start > new Date()) ? sel : rn.next, ms = tgt.start - new Date(); html += `<div class="panel next-box"><div><div class="label">${tgt.n===rn.next.n?'Prossima giornata':'Giornata selezionata'}</div><div class="nb-title">${tgt.n}ª giornata</div><div class="hint" style="margin:2px 0 0;">Primo fischio: ${escapeHtml(fmtKick(tgt.start))}${tgt.approx?' (data indicativa)':''}</div></div><div class="nb-count" id="nextCount" data-t="${tgt.start.getTime()}">${fmtLeft(ms)}</div></div>`; }
   if(rn.def){
     const list = rs.filter(r=> r.n>=rn.def.n).slice(0,8);
     html += `<div class="team-tabs" style="margin-bottom:10px;">` + list.map(r=>`<button data-lg="${r.n}" class="${sel && r.n===sel.n?'active':''}">${r.n}ª</button>`).join('') + `</div>`;
@@ -2576,7 +2576,7 @@ function renderLineups(){
   const L = bestLineup(team);
   curSw = L ? L.sw : null;
   const agg = (state.players.find(p=>p.probForm) || {}).probForm;
-  let html = lineupTeamSet.size ? `<p class="hint" style="margin-top:0;">Probabili formazioni aggiornate: ${escapeHtml((agg && agg.agg) || 'n.d.')}.</p>` : `<p class="hint" style="margin-top:0;">Nessuna probabile formazione caricata: stima da titolarità e statistiche.</p>`;
+  let html = lineupEst() ? '' : (lineupTeamSet.size ? `<p class="hint" style="margin-top:0;">Probabili formazioni aggiornate: ${escapeHtml((agg && agg.agg) || 'n.d.')}.</p>` : `<p class="hint" style="margin-top:0;">Nessuna probabile formazione caricata: stima da titolarità e statistiche.</p>`);
   html += roundHeaderHtml();
   const md = getModDif(); const so = getSwitchOpt();
   html += `<div class="switch-row">
