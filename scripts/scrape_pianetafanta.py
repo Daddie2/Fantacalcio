@@ -1,14 +1,28 @@
+#!/usr/bin/env python3
 """
-Scarica quotazioni, statistiche e indisponibili da fantacalcio.it.
-"""
-import os
-import sys
-import re
-import csv
-import requests
-from datetime import date
-from bs4 import BeautifulSoup
+Scarica da pianetafanta.it le statistiche di ogni giocatore:
+generale, casa, fuori e forma (ultime 3/5/10 giornate).
 
+I dati stanno gia' nella pagina di ogni giocatore, dentro il blocco JSON di Next.js
+(chiavi statGen, statCasa, statFuori, forma3, forma5, forma10): non serve cliccare nulla.
+Voti e fantamedia NON vengono presi da qui: restano quelli di fantacalcio.it.
+
+Output: data/stats_pianetafanta.csv (statistiche avanzate) e data/voti_giornate.csv (voti per giornata).
+Nome e squadra sono quelli di fantacalcio.it (data/quotazioni.csv), cosi' la pagina abbina i giocatori.
+Va lanciato DOPO scrape_fantacalcio.py. Salvalo come scripts/scrape_pianetafanta.py.
+"""
+import csv
+import json
+import os
+import re
+import sys
+import time
+import unicodedata
+from datetime import date, datetime, timezone
+
+import requests
+
+BASE = "https://www.pianetafanta.it"
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -17,445 +31,272 @@ HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "it-IT,it;q=0.9,en;q=0.8",
 }
+DELAY = 0.8        # pausa tra una richiesta e l'altra (siamo educati col sito)
+MIN_ROWS = 100     # sotto questa soglia non sovrascrivo il CSV esistente
+PF_OUT = "data/stats_pianetafanta.csv"   # letto da index.html (Statistiche Avanzate)
 
-URLS = {
-    "quotazioni": "https://www.fantacalcio.it/quotazioni-fantacalcio",
-    "statistiche": "https://www.fantacalcio.it/statistiche-serie-a",
-    "indisponibili": "https://www.fantacalcio.it/indisponibili-serie-a",
-}
+SCOPES = (("g", "statGen"), ("c", "statCasa"), ("f", "statFuori"),
+          ("f3", "forma3"), ("f5", "forma5"), ("f10", "forma10"))
+FIELDS = (("pv", "PresenzeVoto"), ("tit", "Titolare"), ("sost", "Sostituito"),
+          ("sub", "Subentrato"), ("min", "Minuti"), ("amm", "Amm"), ("esp", "Esp"),
+          ("gf", "GoalReal"), ("gs", "GoalSub"), ("ass", "Assist"), ("au", "Autorete"),
+          ("rt", "RigoreTra"), ("rs", "RigoreSba"), ("rp", "RigorePar"), ("rsub", "RigoreSub"))
+SCOPE_LABEL = {"g": "generale", "c": "casa", "f": "fuori", "f3": "forma 3", "f5": "forma 5", "f10": "forma 10"}
+FIELD_LABEL = {"pv": "presenze con voto", "tit": "titolare", "sost": "sostituito", "sub": "subentrato",
+               "min": "minuti", "amm": "ammonizioni", "esp": "espulsioni", "gf": "gol", "gs": "gol subiti",
+               "ass": "assist", "au": "autogol", "rt": "rigori segnati", "rs": "rigori sbagliati",
+               "rp": "rigori parati", "rsub": "rigori subiti"}
+PF_COLUMNS = (["nome", "squadra", "golcasa", "golfuori", "assistcasa", "assistfuori", "fmcasa", "fmfuori",
+               "aggiornato", "pf_generale_presenze", "pf_generale_giornate"]
+              + [f"pf_{SCOPE_LABEL[s]}_{FIELD_LABEL[f]}" for s, _ in SCOPES for f, _ in FIELDS])
 
-# Template per le pagine di statistiche di una stagione specifica (storiche).
-# La pagina statistiche-serie-a "semplice" (in URLS sopra) punta invece
-# sempre da sola alla stagione IN CORSO, senza bisogno di specificarla.
-STATS_SEASON_URL_TEMPLATE = "https://www.fantacalcio.it/statistiche-serie-a/{season}/italia"
-
-BLOCK_MARKERS = [
-    "captcha", "attention required", "access denied",
-    "just a moment", "checking your browser", "are you human",
-]
+SLUG_RE = re.compile(r"giocatori/([a-z0-9][a-z0-9\-]*)")
+PUSH_RE = re.compile(r'self\.__next_f\.push\(\[1,"((?:[^"\\]|\\.)*)"\]\)')
 
 
-def current_season_label():
-    """
-    Calcola l'etichetta stagione corrente nel formato usato dal sito
-    (es. '2026-27'). La Serie A parte convenzionalmente ad agosto: se
-    siamo tra luglio e dicembre la stagione è annoCorrente-annoProssimo,
-    altrimenti annoScorso-annoCorrente.
-    """
+def season_label():
     today = date.today()
-    start_year = today.year if today.month >= 7 else today.year - 1
-    end_short = (start_year + 1) % 100
-    return f"{start_year}-{end_short:02d}"
+    start = today.year if today.month >= 7 else today.year - 1
+    return f"{start}_{start + 1}"
 
 
-def previous_season_label():
-    """Etichetta della stagione precedente a quella corrente, stesso formato."""
-    today = date.today()
-    start_year = (today.year if today.month >= 7 else today.year - 1) - 1
-    end_short = (start_year + 1) % 100
-    return f"{start_year}-{end_short:02d}"
-
-
-
-def fetch_page(url):
-    """Scarica una pagina HTML, con diagnostica su status/dimensione/blocchi."""
-    try:
-        resp = requests.get(url, headers=HEADERS, timeout=30)
-        print(f"   -> {url}: status={resp.status_code}, bytes={len(resp.content)}", file=sys.stderr)
-        resp.raise_for_status()
-
-        text_lower = resp.text.lower()
-        hits = [m for m in BLOCK_MARKERS if m in text_lower]
-        if hits:
-            print(f"   SOSPETTO BLOCCO/CHALLENGE su {url}: marker trovati={hits}", file=sys.stderr)
-
-        return resp.text
-    except requests.RequestException as e:
-        print(f"ERRORE scaricando {url}: {e}", file=sys.stderr)
-        return None
-
-
-def clean_number(val):
-    """Pulisce un valore numerico da stringa (es. '1.234,5' -> 1234.5)."""
-    if not val:
-        return 0
-    clean = re.sub(r'[^\d,.\-]', '', str(val))
-    if ',' in clean and '.' in clean:
-        clean = clean.replace('.', '').replace(',', '.')
-    else:
-        clean = clean.replace(',', '.')
-    try:
-        return float(clean)
-    except ValueError:
-        return 0
-
-
-def build_header_labels(header_row):
-    """
-    Espande gli header rispettando gli attributi colspan.
-
-    Su fantacalcio.it la cella header 'Calciatore' copre con colspan le
-    colonne icona (checkbox/preferiti/ruolo) + la colonna nome. Se non
-    espandiamo il colspan, l'indice degli header non corrisponde più
-    all'indice delle celle nelle righe dati (che invece sono tutte celle
-    singole), e ogni colonna dopo 'Calciatore' risulta disallineata.
-    """
-    labels = []
-    for cell in header_row.find_all(['th', 'td']):
+def get(url, tries=3):
+    for i in range(tries):
         try:
-            colspan = int(cell.get('colspan', 1))
-        except (TypeError, ValueError):
-            colspan = 1
-        text = cell.get_text(strip=True)
-        labels.extend([text] * max(colspan, 1))
-    return labels
+            r = requests.get(url, headers=HEADERS, timeout=30)
+            if r.status_code == 200:
+                return r.text
+            print(f"   {url}: status {r.status_code}", file=sys.stderr)
+            if r.status_code == 404:
+                return None
+        except requests.RequestException as e:
+            print(f"   {url}: {e}", file=sys.stderr)
+        time.sleep(2 * (i + 1))
+    return None
 
 
-def extract_from_table(html, required_keywords):
-    """Trova la tabella giusta cercando keyword negli header (espansi per colspan)."""
-    soup = BeautifulSoup(html, 'html.parser')
-    tables = soup.find_all('table')
-
-    for table in tables:
-        header_row = table.find('tr')
-        if not header_row:
-            continue
-        headers = build_header_labels(header_row)
-        header_text = ' '.join(headers).upper()
-        if any(k in header_text for k in required_keywords):
-            return table, headers
-
-    return None, None
+def slugs_in(text):
+    return set(SLUG_RE.findall(text or ""))
 
 
-def extract_ruolo(row):
-    """
-    Estrae il ruolo Classic (P/D/C/A) da una riga della tabella quotazioni.
-
-    Fonte esatta, verificata sull'HTML reale del sito: l'attributo
-    data-filter-role-classic sul <tr> stesso, es.
-    <tr ... data-filter-role-classic="c" ...>. Non serve interpretare
-    icone o classi CSS.
-    """
-    valid = {'P', 'D', 'C', 'A'}
-
-    val = (row.get('data-filter-role-classic') or '').strip().upper()
-    if val in valid:
-        return val
-
-    # Fallback se l'attributo sparisse: data-value dello span dentro
-    # <th class="player-role-classic">
-    classic_th = row.find(class_='player-role-classic')
-    if classic_th:
-        span = classic_th.find('span', class_='role')
-        if span:
-            val2 = (span.get('data-value') or '').strip().upper()
-            if val2 in valid:
-                return val2
-
-    return '?'
+def collect_slugs():
+    """Elenco dei giocatori: pagina quotazioni + classifiche per ruolo (unione)."""
+    slugs = set()
+    for r in ("", "P", "D", "C", "T", "A"):
+        url = BASE + "/quotazioni-fantacalcio" + (f"?ruolo={r}" if r else "")
+        found = slugs_in(get(url))
+        print(f"Quotazioni {r or 'base'}: {len(found)} giocatori", file=sys.stderr)
+        slugs |= found
+        time.sleep(DELAY)
+    season = season_label()
+    for r in ("P", "D", "C", "A"):
+        for p in range(1, 80):
+            url = (f"{BASE}/statistiche-fantacalcio/classifica?tipo=medie-voto"
+                   f"&s={season}&t=0&dir=DESC&p={p}&ruolo={r}")
+            found = slugs_in(get(url))
+            if not found or not (found - slugs):
+                break
+            slugs |= found
+            time.sleep(DELAY)
+        print(f"Dopo classifica {r}: {len(slugs)} giocatori in totale", file=sys.stderr)
+    return sorted(slugs)
 
 
-def parse_quotazioni(html):
-    """Estrae le quotazioni dalla tabella reale di fantacalcio.it."""
-    table, headers = extract_from_table(html, ['CALCIATORE', 'FVM', 'QUOTAZ'])
-    if not table:
-        print("ATTENZIONE: tabella quotazioni non trovata, struttura pagina cambiata", file=sys.stderr)
-        return []
-
-    # QI/QA/FVM compaiono due volte (Classic + Mantra): prendiamo la prima
-    # occorrenza di ciascuno = Classic. Il nome giocatore non si trova per
-    # testo header (la cella 'Calciatore' ha colspan su più colonne): è
-    # sempre la colonna immediatamente prima di 'Sq'.
-    col_map = {}
-    seen = {'qi': False, 'qta': False, 'fvm': False}
-    squadra_idx = None
-    for i, h in enumerate(headers):
-        h_clean = h.upper().replace(' ', '').replace('.', '').replace('/', '')
-        if h_clean in ('SQ', 'SQUADRA', 'TEAM') and squadra_idx is None:
-            squadra_idx = i
-        elif h_clean == 'QI' and not seen['qi']:
-            col_map['qi'] = i
-            seen['qi'] = True
-        elif h_clean == 'QA' and not seen['qta']:
-            col_map['qta'] = i
-            seen['qta'] = True
-        elif 'FVM' in h_clean and not seen['fvm']:
-            col_map['fvm'] = i
-            seen['fvm'] = True
-
-    if squadra_idx is None or squadra_idx == 0:
-        print("ATTENZIONE: colonna 'Sq' non trovata nella tabella quotazioni", file=sys.stderr)
-        return []
-
-    col_map['squadra'] = squadra_idx
-    col_map['nome'] = squadra_idx - 1
-
-    players = []
-    rows = table.find_all('tr')[1:]
-    for row in rows:
-        cols = row.find_all(['td', 'th'])
-        row_data = [c.get_text(strip=True) for c in cols]
-
-        nome_idx = col_map['nome']
-        if nome_idx >= len(row_data):
-            continue
-        nome = row_data[nome_idx]
-        if not nome or len(nome) < 2:
-            continue
-
-        squadra = row_data[col_map['squadra']] if col_map['squadra'] < len(row_data) else ''
-
-        qta_idx = col_map.get('qta')
-        qta = clean_number(row_data[qta_idx]) if qta_idx is not None and qta_idx < len(row_data) else 0
-
-        fvm_idx = col_map.get('fvm')
-        fvm = clean_number(row_data[fvm_idx]) if fvm_idx is not None and fvm_idx < len(row_data) else 0
-
-        ruolo = extract_ruolo(row)
-
-        players.append({
-            'id': f"p_{nome.lower().replace(' ', '_').replace('.', '')}",
-            'ruolo': ruolo,
-            'nome': nome,
-            'squadra': squadra,
-            'qta': qta,
-            'fvm': fvm
-        })
-
-    return players
+def extract_props(html):
+    """Estrae l'oggetto con statGen/statCasa/... dal flusso Next.js della pagina."""
+    chunks = []
+    for m in PUSH_RE.finditer(html):
+        try:
+            chunks.append(json.loads('"' + m.group(1) + '"'))
+        except ValueError:
+            pass
+    blob = "".join(chunks)
+    i = blob.find('"statGen"')
+    if i < 0:
+        return None
+    start = blob.rfind('{"nome":', 0, i)
+    if start < 0:
+        return None
+    try:
+        obj, _ = json.JSONDecoder().raw_decode(blob, start)
+    except ValueError:
+        return None
+    return obj
 
 
-def parse_statistiche(html):
-    """Estrae le statistiche dalla tabella di fantacalcio.it."""
-    table, headers = extract_from_table(html, ['PV', 'MV', 'FANTAMEDIA', 'PRESENZE'])
-    if not table:
-        print("ATTENZIONE: tabella statistiche non trovata, struttura pagina cambiata", file=sys.stderr)
-        return []
-
-    col_map = {}
-    squadra_idx = None
-    for i, h in enumerate(headers):
-        h_clean = h.upper().replace(' ', '').replace('.', '')
-        if h_clean in ('SQ', 'SQUADRA', 'TEAM') and squadra_idx is None:
-            squadra_idx = i
-        elif h_clean == 'PV' and 'pv' not in col_map:
-            col_map['pv'] = i
-        elif h_clean == 'MV' and 'mv' not in col_map:
-            col_map['mv'] = i
-        elif h_clean == 'FM' and 'fm' not in col_map:
-            col_map['fm'] = i
-
-    if squadra_idx is None or squadra_idx == 0:
-        print("ATTENZIONE: colonna 'Sq' non trovata nella tabella statistiche", file=sys.stderr)
-        return []
-
-    col_map['squadra'] = squadra_idx
-    col_map['nome'] = squadra_idx - 1
-
-    stats = []
-    rows = table.find_all('tr')[1:]
-    for row in rows:
-        cols = row.find_all(['td', 'th'])
-        row_data = [c.get_text(strip=True) for c in cols]
-
-        nome_idx = col_map['nome']
-        if nome_idx >= len(row_data):
-            continue
-        nome = row_data[nome_idx]
-        if not nome or len(nome) < 2:
-            continue
-
-        entry = {
-            'nome': nome,
-            'squadra': row_data[col_map['squadra']] if col_map['squadra'] < len(row_data) else '',
-        }
-        for field in ('pv', 'mv', 'fm'):
-            idx = col_map.get(field)
-            entry[field] = clean_number(row_data[idx]) if idx is not None and idx < len(row_data) else 0
-
-        stats.append(entry)
-
-    return stats
+def clean(v):
+    if isinstance(v, float):
+        return round(v, 2)
+    return v
 
 
-def parse_indisponibili(html):
-    """
-    Estrae i calciatori indisponibili (infortunati + squalificati), con
-    squadra e dettaglio (causa e tempi di rientro, testo libero così come
-    pubblicato dal sito - non lo spezzo in campi separati "causa"/"data"
-    perché il sito scrive tutto in prosa libera con formulazioni non
-    standardizzate, es. "da metà novembre", "recuperabile da inizio
-    ottobre": una regex sarebbe troppo fragile).
-
-    ATTENZIONE: questa pagina mostra solo la situazione ATTUALE. Non
-    esiste un archivio storico degli indisponibili per stagioni passate
-    su fantacalcio.it (a differenza delle statistiche), quindi non c'è
-    parametro stagione da gestire qui.
-
-    I diffidati non vengono inclusi: sono ancora disponibili, solo a
-    rischio squalifica alla prossima ammonizione.
-    """
-    soup = BeautifulSoup(html, 'html.parser')
-    records = []
-    current_team = None
-    current_category = None
-    category_labels = {'infortunati', 'squalificati', 'diffidati'}
-
-    for tag in soup.find_all(['img', 'a', 'strong', 'b']):
-        if tag.name == 'img':
-            alt = (tag.get('alt') or '').strip()
-            if alt.lower().startswith('stemma'):
-                current_team = alt[len('Stemma'):].strip() or alt
-                current_category = 'infortunati'  # ogni squadra riparte da qui
-            continue
-
-        text = tag.get_text(strip=True)
-        text_lower = text.lower().strip('- ')
-
-        if tag.name == 'a' and 'infortunati' in text_lower:
-            current_category = 'infortunati'
-            continue
-
-        if text_lower in category_labels:
-            current_category = text_lower
-            continue
-
-        if tag.name in ('strong', 'b') and current_team and current_category in ('infortunati', 'squalificati'):
-            if not text or text == 'Nessuno' or len(text) <= 1:
-                continue
-
-            dettaglio = ''
-            parent = tag.find_parent(['li', 'p', 'div'])
-            if parent:
-                full_text = parent.get_text(' ', strip=True)
-                dettaglio = full_text[len(text):].strip(' :-') if full_text.startswith(text) else full_text
-
-            records.append({
-                'nome': text,
-                'squadra': current_team or '',
-                'categoria': current_category,
-                'dettaglio': dettaglio,
-            })
-
-    if not records:
-        print("ATTENZIONE: nessun indisponibile estratto, struttura pagina cambiata", file=sys.stderr)
-
-    # Rimuove eventuali duplicati esatti mantenendo l'ordine di apparizione
-    seen = set()
-    unique_records = []
-    for r in records:
-        key = (r['nome'], r['squadra'], r['categoria'])
-        if key not in seen:
-            seen.add(key)
-            unique_records.append(r)
-
-    return unique_records
+def build_row(slug, obj, stamp):
+    row = {
+        "slug": slug,
+        "nome": obj.get("nome", ""),
+        "squadra": obj.get("squadra", ""),
+        "ruolo": obj.get("ruolo", ""),
+        "giornate": obj.get("giornataMax", ""),
+        "aggiornato": stamp,
+        "g_pres": clean((obj.get("statGen") or {}).get("Presenze", "")),
+    }
+    for s, key in SCOPES:
+        block = obj.get(key) or {}
+        for f, src in FIELDS:
+            v = block.get(src)
+            row[f"{s}_{f}"] = "" if v is None else clean(v)
+    return row
 
 
-def save_csv(data, path, headers):
-    if not data:
+VOTI_COLUMNS = ["nome", "squadra", "giornata", "voto", "fantavoto", "gf", "gs", "rp", "rc",
+                "rpos", "rneg", "ass", "amm", "esp", "au"]
+VOTI_OUT = "data/voti_giornate.csv"
+
+
+def norm(s):
+    s = unicodedata.normalize("NFD", str(s or ""))
+    s = "".join(c for c in s if unicodedata.category(c) != "Mn")
+    return re.sub(r"[^A-Z0-9]+", " ", s.upper()).strip()
+
+
+def load_quotazioni(path="data/quotazioni.csv"):
+    """Giocatori di fantacalcio.it (scritti dallo script precedente), per squadra (prime 3 lettere)."""
+    index = {}
+    try:
+        with open(path, encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                index.setdefault(norm(r.get("squadra"))[:3], []).append(r)
+    except OSError:
+        pass
+    return index
+
+
+def same_name(a, b):
+    ta, tb = norm(a).split(), norm(b).split()
+    ca, cb = [t for t in ta if len(t) > 1], [t for t in tb if len(t) > 1]
+    if not ca or not cb:
         return False
-    with open(path, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=headers)
-        writer.writeheader()
-        writer.writerows(data)
-    return True
+    if not (all(t in cb for t in ca) or all(t in ca for t in cb)):
+        return False
+    ia, ib = [t for t in ta if len(t) == 1], [t for t in tb if len(t) == 1]
+    return not (ia and ib and ia[0] != ib[0])
 
 
-def save_debug_html(html, path):
-    with open(path, 'w', encoding='utf-8') as f:
-        f.write(html)
+def match_quotazione(index, obj):
+    ruolo = str(obj.get("ruolo", "")).upper()
+    ruolo = "C" if ruolo == "T" else ruolo
+    cands = [q for q in index.get(norm(obj.get("squadra"))[:3], [])
+             if same_name(q.get("nome"), obj.get("nome"))]
+    if len(cands) > 1:
+        cands = [q for q in cands if q.get("ruolo") == ruolo] or cands
+    return cands[0] if len(cands) == 1 else None
+
+
+def num(v):
+    return v if isinstance(v, (int, float)) else 0
+
+
+def build_voti(q, obj):
+    """Voti e bonus per giornata, dal blocco 'andamento' della pagina giocatore.
+    voto = media delle tre testate; fantavoto = media dei tre fantavoti."""
+    out = []
+    for a in obj.get("andamento") or []:
+        if a.get("VotoSiNo") != 1:
+            continue
+        voto = a.get("MediaVoto3")
+        if not isinstance(voto, (int, float)):
+            voto = a.get("MediaVoto2")
+        if not isinstance(voto, (int, float)) or voto <= 0:
+            continue
+        fvs = [a.get(k) for k in ("VotoFanta", "VotoFantaC", "VotoFantaT") if isinstance(a.get(k), (int, float))]
+        fv = round(sum(fvs) / len(fvs), 2) if fvs else voto
+        tra, sba = num(a.get("RigoreTra")), num(a.get("RigoreSba"))
+        out.append({
+            "nome": q["nome"], "squadra": q["squadra"], "giornata": a.get("Giornata"),
+            "voto": round(voto, 2), "fantavoto": fv,
+            "gf": num(a.get("GoalReal")), "gs": num(a.get("GoalSub")), "rp": num(a.get("RigorePar")),
+            "rc": tra + sba, "rpos": tra, "rneg": sba,
+            "ass": num(a.get("Assist")), "amm": num(a.get("Amm")), "esp": num(a.get("Esp")),
+            "au": num(a.get("Autorete")),
+        })
+    return out
+
+
+def build_pf_row(q, obj, stamp):
+    """Riga per index.html: colonne fisse (gol/assist/fm casa-fuori) + pf_* con tutti gli altri dati."""
+    casa, fuori, gen = (obj.get(k) or {} for k in ("statCasa", "statFuori", "statGen"))
+
+    def n(v):
+        return "" if v is None else clean(v)
+
+    row = {
+        "nome": q["nome"], "squadra": q["squadra"],
+        "golcasa": n(casa.get("GoalReal")), "golfuori": n(fuori.get("GoalReal")),
+        "assistcasa": n(casa.get("Assist")), "assistfuori": n(fuori.get("Assist")),
+        "fmcasa": n(casa.get("MFG")), "fmfuori": n(fuori.get("MFG")),
+        "aggiornato": stamp,
+        "pf_generale_presenze": n(gen.get("Presenze")), "pf_generale_giornate": n(obj.get("giornataMax")),
+    }
+    for s, key in SCOPES:
+        block = obj.get(key) or {}
+        for f, src in FIELDS:
+            row[f"pf_{SCOPE_LABEL[s]}_{FIELD_LABEL[f]}"] = n(block.get(src))
+    return row
 
 
 def main():
     os.makedirs("data", exist_ok=True)
-    ok = True
-
-    print("Scarico quotazioni...")
-    html = fetch_page(URLS["quotazioni"])
-    if html:
-        save_debug_html(html, "data/debug_quotazioni.html")
-        players = parse_quotazioni(html)
-        if players:
-            headers = ['id', 'ruolo', 'nome', 'squadra', 'qta', 'fvm']
-            if save_csv(players, "data/quotazioni.csv", headers):
-                print(f"OK: data/quotazioni.csv ({len(players)} giocatori)")
-                n_unknown = sum(1 for p in players if p['ruolo'] == '?')
-                if n_unknown:
-                    print(f"   ATTENZIONE: ruolo non riconosciuto per {n_unknown} giocatori "
-                          f"(vedi commento in extract_ruolo)", file=sys.stderr)
-            else:
-                print("ERRORE: impossibile salvare quotazioni.csv", file=sys.stderr)
-                ok = False
-        else:
-            print("ERRORE: nessun giocatore estratto dalle quotazioni", file=sys.stderr)
-            print("   HTML salvato in data/debug_quotazioni.html per analisi", file=sys.stderr)
-            ok = False
-    else:
-        ok = False
-
-    print("Scarico statistiche...")
-    html = fetch_page(URLS["statistiche"])
-    if html:
-        save_debug_html(html, "data/debug_statistiche.html")
-        stats = parse_statistiche(html)
-        if stats:
-            headers = ['nome', 'squadra', 'pv', 'mv', 'fm']
-            if save_csv(stats, "data/stats_curr.csv", headers):
-                print(f"OK: data/stats_curr.csv ({len(stats)} giocatori)")
-            else:
-                print("ERRORE: impossibile salvare stats_curr.csv", file=sys.stderr)
-                ok = False
-        else:
-            print("ERRORE: nessuna statistica estratta", file=sys.stderr)
-            print("   HTML salvato in data/debug_statistiche.html per analisi", file=sys.stderr)
-            ok = False
-    else:
-        ok = False
-
-    # 2b. Statistiche stagione precedente: dati storici, non cambiano più,
-    # quindi si scaricano una sola volta e poi si salta se già presenti.
-    prev_path = "data/stats_prev.csv"
-    if os.path.exists(prev_path):
-        print(f"Statistiche stagione precedente già presenti in {prev_path}, salto il download.")
-    else:
-        prev_season = previous_season_label()
-        print(f"Statistiche stagione precedente mancanti, scarico {prev_season}...")
-        prev_url = STATS_SEASON_URL_TEMPLATE.format(season=prev_season)
-        html_prev = fetch_page(prev_url)
-        if html_prev:
-            save_debug_html(html_prev, "data/debug_statistiche_prev.html")
-            stats_prev = parse_statistiche(html_prev)
-            if stats_prev:
-                headers = ['nome', 'squadra', 'pv', 'mv', 'fm']
-                if save_csv(stats_prev, prev_path, headers):
-                    print(f"OK: {prev_path} ({len(stats_prev)} giocatori, stagione {prev_season})")
-                else:
-                    print(f"ERRORE: impossibile salvare {prev_path}", file=sys.stderr)
-            else:
-                print(f"ERRORE: nessuna statistica estratta per la stagione {prev_season} "
-                      f"(controlla che l'URL/formato stagione sia corretto: {prev_url})", file=sys.stderr)
-        # Non blocchiamo l'intero run per un fallimento sul backfill storico:
-        # è un'informazione "nice to have", non i dati live dell'asta.
-
-    print("Scarico indisponibili...")
-    html = fetch_page(URLS["indisponibili"])
-    if html:
-        save_debug_html(html, "data/debug_indisponibili.html")
-        injured = parse_indisponibili(html)
-        if injured:
-            headers = ['nome', 'squadra', 'categoria', 'dettaglio']
-            if save_csv(injured, "data/indisponibili.csv", headers):
-                print(f"OK: data/indisponibili.csv ({len(injured)} giocatori)")
-            else:
-                print("ERRORE: impossibile salvare indisponibili.csv", file=sys.stderr)
-
-    if not ok:
-        print("ERRORE: alcuni file non sono stati scaricati/estratti correttamente", file=sys.stderr)
+    slugs = collect_slugs()
+    print(f"Trovati {len(slugs)} giocatori da scaricare")
+    if len(slugs) < MIN_ROWS:
+        print("ERRORE: troppo pochi giocatori trovati, struttura del sito cambiata?", file=sys.stderr)
         sys.exit(1)
+
+    stamp = datetime.now(timezone.utc).strftime("%d/%m %H:%M UTC")
+    rows, failed = [], 0
+    qindex, voti_rows, pf_rows, abbinati = load_quotazioni(), [], [], 0
+    for i, slug in enumerate(slugs, 1):
+        html = get(f"{BASE}/giocatori/{slug}")
+        obj = extract_props(html) if html else None
+        if not obj:
+            failed += 1
+            if failed == 1 and html:
+                with open("data/debug_pianeta.html", "w", encoding="utf-8") as f:
+                    f.write(html)
+            continue
+        rows.append(build_row(slug, obj, stamp))
+        q = match_quotazione(qindex, obj)
+        if q:
+            abbinati += 1
+            pf_rows.append(build_pf_row(q, obj, stamp))
+            voti_rows.extend(build_voti(q, obj))
+        if i % 50 == 0:
+            print(f"   {i}/{len(slugs)} (errori: {failed})")
+        time.sleep(DELAY)
+
+    if len(rows) < MIN_ROWS or failed > len(slugs) * 0.3:
+        print(f"ERRORE: solo {len(rows)} giocatori letti, {failed} falliti: non sovrascrivo i CSV",
+              file=sys.stderr)
+        sys.exit(1)
+
+    if len(pf_rows) >= MIN_ROWS:
+        with open(PF_OUT, "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=PF_COLUMNS)
+            w.writeheader()
+            w.writerows(pf_rows)
+        print(f"OK: {PF_OUT} ({len(pf_rows)} giocatori abbinati a fantacalcio.it, {failed} pagine non lette)")
     else:
-        print("Tutti i dati scaricati con successo.")
+        print(f"ERRORE: solo {len(pf_rows)} giocatori abbinati: manca data/quotazioni.csv?", file=sys.stderr)
+        sys.exit(1)
+    if abbinati >= MIN_ROWS and voti_rows:
+        with open(VOTI_OUT, "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=VOTI_COLUMNS)
+            w.writeheader()
+            w.writerows(voti_rows)
+        print(f"OK: {VOTI_OUT} ({len(voti_rows)} righe, {abbinati} giocatori abbinati a fantacalcio.it)")
+    else:
+        print(f"ATTENZIONE: voti per giornata non scritti (abbinati {abbinati}): manca data/quotazioni.csv?",
+              file=sys.stderr)
 
 
 if __name__ == "__main__":
