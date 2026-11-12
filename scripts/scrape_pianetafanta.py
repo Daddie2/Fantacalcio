@@ -10,14 +10,23 @@ Voti e fantamedia NON vengono presi da qui: restano quelli di fantacalcio.it.
 Output: data/stats_pianetafanta.csv (statistiche avanzate) e data/voti_giornate.csv (voti per giornata).
 Nome e squadra sono quelli di fantacalcio.it (data/quotazioni.csv), cosi' la pagina abbina i giocatori.
 Va lanciato DOPO scrape_fantacalcio.py. Salvalo come scripts/scrape_pianetafanta.py.
+
+Versione veloce:
+  - download dei giocatori in parallelo (WORKERS thread, una Session per thread)
+  - raccolta slug in parallelo (pagine quotazioni + un thread per ruolo di classifica)
+  - cache degli slug in data/slugs.txt (rinnovata ogni SLUGS_MAX_AGE_H ore;
+    FORCE_SLUGS=1 per forzare la raccolta). Ricordati di committare anche data/slugs.txt.
+  - WORKERS e DELAY regolabili da variabile d'ambiente (PF_WORKERS, PF_DELAY).
 """
 import csv
 import json
 import os
 import re
 import sys
+import threading
 import time
 import unicodedata
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timezone
 
 import requests
@@ -31,9 +40,13 @@ HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "it-IT,it;q=0.9,en;q=0.8",
 }
-DELAY = 0.8        # pausa tra una richiesta e l'altra (siamo educati col sito)
+WORKERS = int(os.environ.get("PF_WORKERS", "6"))     # richieste in parallelo
+DELAY = float(os.environ.get("PF_DELAY", "0.3"))     # pausa per worker tra una richiesta e l'altra
 MIN_ROWS = 100     # sotto questa soglia non sovrascrivo il CSV esistente
 PF_OUT = "data/stats_pianetafanta.csv"   # letto da index.html (Statistiche Avanzate)
+SLUGS_FILE = "data/slugs.txt"
+SLUGS_MAX_AGE_H = 24 * 7                 # la lista giocatori cambia raramente
+MAX_RANK_PAGES = 80
 
 SCOPES = (("g", "statGen"), ("c", "statCasa"), ("f", "statFuori"),
           ("f3", "forma3"), ("f5", "forma5"), ("f10", "forma10"))
@@ -53,6 +66,18 @@ PF_COLUMNS = (["nome", "squadra", "golcasa", "golfuori", "assistcasa", "assistfu
 SLUG_RE = re.compile(r"giocatori/([a-z0-9][a-z0-9\-]*)")
 PUSH_RE = re.compile(r'self\.__next_f\.push\(\[1,"((?:[^"\\]|\\.)*)"\]\)')
 
+_local = threading.local()
+
+
+def session():
+    """Una Session per thread: riusa la connessione TLS senza condividere stato tra thread."""
+    s = getattr(_local, "s", None)
+    if s is None:
+        s = requests.Session()
+        s.headers.update(HEADERS)
+        _local.s = s
+    return s
+
 
 def season_label():
     today = date.today()
@@ -63,12 +88,15 @@ def season_label():
 def get(url, tries=3):
     for i in range(tries):
         try:
-            r = requests.get(url, headers=HEADERS, timeout=30)
+            r = session().get(url, timeout=30)
             if r.status_code == 200:
                 return r.text
             print(f"   {url}: status {r.status_code}", file=sys.stderr)
             if r.status_code == 404:
                 return None
+            if r.status_code in (429, 403, 503):
+                time.sleep(5 * (i + 1))   # il sito ci sta limitando: rallento
+                continue
         except requests.RequestException as e:
             print(f"   {url}: {e}", file=sys.stderr)
         time.sleep(2 * (i + 1))
@@ -79,27 +107,70 @@ def slugs_in(text):
     return set(SLUG_RE.findall(text or ""))
 
 
-def collect_slugs():
-    """Elenco dei giocatori: pagina quotazioni + classifiche per ruolo (unione)."""
+def _fetch_quotazioni_page(r):
+    url = BASE + "/quotazioni-fantacalcio" + (f"?ruolo={r}" if r else "")
+    found = slugs_in(get(url))
+    print(f"Quotazioni {r or 'base'}: {len(found)} giocatori", file=sys.stderr)
+    time.sleep(DELAY)
+    return found
+
+
+def _fetch_ranking_role(args):
+    """Scorre le pagine di classifica di un ruolo (in serie: ogni pagina dipende dalla precedente)."""
+    r, season = args
     slugs = set()
-    for r in ("", "P", "D", "C", "T", "A"):
-        url = BASE + "/quotazioni-fantacalcio" + (f"?ruolo={r}" if r else "")
+    for p in range(1, MAX_RANK_PAGES):
+        url = (f"{BASE}/statistiche-fantacalcio/classifica?tipo=medie-voto"
+               f"&s={season}&t=0&dir=DESC&p={p}&ruolo={r}")
         found = slugs_in(get(url))
-        print(f"Quotazioni {r or 'base'}: {len(found)} giocatori", file=sys.stderr)
+        if not found or not (found - slugs):
+            break
         slugs |= found
         time.sleep(DELAY)
-    season = season_label()
-    for r in ("P", "D", "C", "A"):
-        for p in range(1, 80):
-            url = (f"{BASE}/statistiche-fantacalcio/classifica?tipo=medie-voto"
-                   f"&s={season}&t=0&dir=DESC&p={p}&ruolo={r}")
-            found = slugs_in(get(url))
-            if not found or not (found - slugs):
-                break
+    print(f"Classifica {r}: {len(slugs)} giocatori", file=sys.stderr)
+    return slugs
+
+
+def load_cached_slugs():
+    """La data di generazione sta nella prima riga del file ('# generated: <epoch>'):
+    la data di modifica non e' affidabile, dopo un checkout in Actions e' sempre 'adesso'."""
+    if os.environ.get("FORCE_SLUGS") == "1" or not os.path.exists(SLUGS_FILE):
+        return None
+    with open(SLUGS_FILE, encoding="utf-8") as f:
+        lines = [l.strip() for l in f if l.strip()]
+    if not lines or not lines[0].startswith("# generated:"):
+        return None
+    try:
+        age_h = (time.time() - float(lines[0].split(":", 1)[1])) / 3600
+    except ValueError:
+        return None
+    slugs = sorted({l for l in lines[1:] if not l.startswith("#")})
+    if age_h > SLUGS_MAX_AGE_H or len(slugs) < MIN_ROWS:
+        return None
+    print(f"Slug da cache ({SLUGS_FILE}, {age_h:.0f} h fa): {len(slugs)} giocatori", file=sys.stderr)
+    return slugs
+
+
+def collect_slugs():
+    """Elenco dei giocatori: pagina quotazioni + classifiche per ruolo (unione), in parallelo."""
+    cached = load_cached_slugs()
+    if cached:
+        return cached
+
+    slugs = set()
+    with ThreadPoolExecutor(max_workers=WORKERS) as ex:
+        for found in ex.map(_fetch_quotazioni_page, ("", "P", "D", "C", "T", "A")):
             slugs |= found
-            time.sleep(DELAY)
-        print(f"Dopo classifica {r}: {len(slugs)} giocatori in totale", file=sys.stderr)
-    return sorted(slugs)
+        season = season_label()
+        for found in ex.map(_fetch_ranking_role, [(r, season) for r in ("P", "D", "C", "A")]):
+            slugs |= found
+    print(f"Slug raccolti: {len(slugs)} giocatori in totale", file=sys.stderr)
+
+    result = sorted(slugs)
+    if len(result) >= MIN_ROWS:
+        with open(SLUGS_FILE, "w", encoding="utf-8") as f:
+            f.write(f"# generated: {time.time():.0f}\n" + "\n".join(result) + "\n")
+    return result
 
 
 def extract_props(html):
@@ -244,10 +315,19 @@ def build_pf_row(q, obj, stamp):
     return row
 
 
+def fetch_player(slug):
+    """Eseguito nei thread: scarica e fa il parsing JSON (la parte pesante), niente stato condiviso."""
+    html = get(f"{BASE}/giocatori/{slug}")
+    obj = extract_props(html) if html else None
+    time.sleep(DELAY)
+    return slug, html, obj
+
+
 def main():
+    t0 = time.time()
     os.makedirs("data", exist_ok=True)
     slugs = collect_slugs()
-    print(f"Trovati {len(slugs)} giocatori da scaricare")
+    print(f"Trovati {len(slugs)} giocatori da scaricare ({time.time() - t0:.0f}s)")
     if len(slugs) < MIN_ROWS:
         print("ERRORE: troppo pochi giocatori trovati, struttura del sito cambiata?", file=sys.stderr)
         sys.exit(1)
@@ -255,24 +335,25 @@ def main():
     stamp = datetime.now(timezone.utc).strftime("%d/%m %H:%M UTC")
     rows, failed = [], 0
     qindex, voti_rows, pf_rows, abbinati = load_quotazioni(), [], [], 0
-    for i, slug in enumerate(slugs, 1):
-        html = get(f"{BASE}/giocatori/{slug}")
-        obj = extract_props(html) if html else None
-        if not obj:
-            failed += 1
-            if failed == 1 and html:
-                with open("data/debug_pianeta.html", "w", encoding="utf-8") as f:
-                    f.write(html)
-            continue
-        rows.append(build_row(slug, obj, stamp))
-        q = match_quotazione(qindex, obj)
-        if q:
-            abbinati += 1
-            pf_rows.append(build_pf_row(q, obj, stamp))
-            voti_rows.extend(build_voti(q, obj))
-        if i % 50 == 0:
-            print(f"   {i}/{len(slugs)} (errori: {failed})")
-        time.sleep(DELAY)
+    debug_saved = False
+
+    with ThreadPoolExecutor(max_workers=WORKERS) as ex:
+        for i, (slug, html, obj) in enumerate(ex.map(fetch_player, slugs), 1):
+            if not obj:
+                failed += 1
+                if not debug_saved and html:
+                    with open("data/debug_pianeta.html", "w", encoding="utf-8") as f:
+                        f.write(html)
+                    debug_saved = True
+            else:
+                rows.append(build_row(slug, obj, stamp))
+                q = match_quotazione(qindex, obj)
+                if q:
+                    abbinati += 1
+                    pf_rows.append(build_pf_row(q, obj, stamp))
+                    voti_rows.extend(build_voti(q, obj))
+            if i % 50 == 0:
+                print(f"   {i}/{len(slugs)} (errori: {failed}, {time.time() - t0:.0f}s)")
 
     if len(rows) < MIN_ROWS or failed > len(slugs) * 0.3:
         print(f"ERRORE: solo {len(rows)} giocatori letti, {failed} falliti: non sovrascrivo i CSV",
@@ -297,6 +378,7 @@ def main():
     else:
         print(f"ATTENZIONE: voti per giornata non scritti (abbinati {abbinati}): manca data/quotazioni.csv?",
               file=sys.stderr)
+    print(f"Completato in {time.time() - t0:.0f}s")
 
 
 if __name__ == "__main__":
