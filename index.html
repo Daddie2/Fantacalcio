@@ -1301,7 +1301,7 @@ el('assignConfirm').addEventListener('click', function(){
   if(isNaN(price) || price<1){ toast('Prezzo non valido'); return; }
   const rem = team.budget - spentByTeam(team);
   if(price>rem && !confirm(`${team.name} ha solo ${fmt(rem)} crediti. Assegnare comunque?`)) return;
-  team.roster.push({playerId:p.id, price});
+  team.roster.push({playerId:p.id, price, at:Date.now()});
   saveState();
   selectedPlayerId=null; el('assignBox').style.display='none'; el('astaSearch').value='';
   toast(`${p.nome} assegnato a ${team.name} per ${fmt(price)} crediti`);
@@ -1309,10 +1309,12 @@ el('assignConfirm').addEventListener('click', function(){
 });
 function renderAstaLog(){
   const entries = [];
-  state.teams.forEach(t=> t.roster.forEach(r=>{ const p = playerById(r.playerId); if(p) entries.push({team:t.name, name:p.nome, ruolo:p.ruolo, price:r.price}); }));
+  state.teams.forEach(t=> t.roster.forEach(r=>{ const p = playerById(r.playerId); if(p) entries.push({team:t.name, name:p.nome, ruolo:p.ruolo, price:r.price, id:p.id, cls:nameCls(p), at:r.at||0, seq:entries.length}); }));
   const container = el('astaLog');
   if(!entries.length){ container.innerHTML = '<li><span class="hint">Nessuna assegnazione ancora.</span></li>'; return; }
-  container.innerHTML = entries.slice(-15).reverse().map(e=>`<li><span><span class="role-tag role-${e.ruolo}">${e.ruolo}</span> ${escapeHtml(e.name)} &rarr; ${escapeHtml(e.team)}</span><span class="roster-price">${fmt(e.price)} cr.</span></li>`).join('');
+  entries.sort((a,b)=> (a.at-b.at) || (a.seq-b.seq));
+  container.innerHTML = entries.slice(-15).reverse().map(e=>`<li><span><span class="role-tag role-${e.ruolo}">${e.ruolo}</span> <span class="player-link${e.cls}" data-detail="${escapeAttr(e.id)}">${escapeHtml(e.name)}</span> &rarr; ${escapeHtml(e.team)}</span><span class="roster-price">${fmt(e.price)} cr.</span></li>`).join('');
+  container.querySelectorAll('[data-detail]').forEach(n=> n.addEventListener('click', function(){ openPlayerDetail(this.dataset.detail); }));
 }
 
 /* ================= LISTONE ================= */
@@ -1438,7 +1440,7 @@ function drawListoneTable(){
     if(isNaN(price) || price<1){ toast('Prezzo non valido'); return; }
     const rem = team.budget - spentByTeam(team);
     if(price>rem && !confirm(`${team.name} ha ${fmt(rem)} crediti. Assegnare?`)) return;
-    team.roster.push({playerId:pid, price});
+    team.roster.push({playerId:pid, price, at:Date.now()});
     saveState(); toast(`${p.nome} &rarr; ${team.name}`); renderAll();
   }));
   el('listoneBody').querySelectorAll('[data-unassign]').forEach(b=> b.addEventListener('click', function(){
@@ -1667,7 +1669,7 @@ function drawRosterPanel(){
     if(isNaN(np) || np<1){ toast('Prezzo non valido'); return; }
     const newTeam = teamById(ntid); if(!newTeam) return;
     const entry = team.roster.find(r=>r.playerId===pid); if(!entry) return;
-    if(ntid!==team.id){ team.roster = team.roster.filter(r=>r.playerId!==pid); newTeam.roster.push({playerId:pid, price:np}); activeRosterTeam=ntid; }
+    if(ntid!==team.id){ team.roster = team.roster.filter(r=>r.playerId!==pid); newTeam.roster.push({playerId:pid, price:np, at:entry.at}); activeRosterTeam=ntid; }
     else entry.price=np;
     rosterEditingId=null; saveState(); toast('Aggiornato'); renderAll();
   }));
@@ -1725,7 +1727,7 @@ function renderRosterAddResults(){
     if(!team || !p || isNaN(price) || price<1){ toast('Prezzo non valido'); return; }
     const rem = team.budget - spentByTeam(team);
     if(price>rem && !confirm(`${team.name} ha ${fmt(rem)} crediti. Assegnare?`)) return;
-    team.roster.push({playerId:pid, price});
+    team.roster.push({playerId:pid, price, at:Date.now()});
     saveState(); toast(`${p.nome} &rarr; ${team.name}`); renderAll();
   }));
 }
@@ -2401,8 +2403,9 @@ function drawPlayerDetail(){
       if(same){
         const r = newTeam.roster.find(r=> r.playerId===p.id); if(r) r.price = price;
       } else {
+        const oldEntry = owner.team.roster.find(r=> r.playerId===p.id);
         owner.team.roster = owner.team.roster.filter(r=> r.playerId!==p.id);
-        newTeam.roster.push({playerId:p.id, price});
+        newTeam.roster.push({playerId:p.id, price, at:oldEntry && oldEntry.at});
       }
       pdEditOwner = false; saveState(); toast('Acquisto aggiornato'); drawPlayerDetail(); renderAll();
     });
@@ -2416,7 +2419,7 @@ function drawPlayerDetail(){
     if(ownerOf(p.id)) return;
     const rem = team.budget - spentByTeam(team);
     if(price>rem && !confirm(team.name + ' ha ' + fmt(rem) + ' crediti. Assegnare?')) return;
-    team.roster.push({playerId:p.id, price});
+    team.roster.push({playerId:p.id, price, at:Date.now()});
     saveState(); toast(p.nome + ' → ' + team.name); drawPlayerDetail(); renderAll();
   });
   const wb = el('pdWatchBtn');
