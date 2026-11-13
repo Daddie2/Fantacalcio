@@ -414,9 +414,9 @@ tr[data-g]{cursor:pointer;}
               <th class="num sortable" data-tip="Il FVM riscalato sul budget che hai impostato: quanto varrebbe in crediti per te. Tocca per ordinare." data-sort="sugg">FVM a tuo budget<span class="sort-arrow" data-sort-arrow="sugg"></span></th>
               <th class="stat-col num sortable" data-stat-col data-tip="Stagione corrente. Pv = partite a voto, Mv = media voto, Fm = fantamedia (voto + bonus/malus). Tocca per ordinare per Fm." data-sort="fm_curr">Pv/Mv/Fm (corr.)<span class="sort-arrow" data-sort-arrow="fm_curr"></span></th>
               <th class="stat-col num sortable" data-stat-col data-tip="Stagione precedente. Mv = media voto, Fm = fantamedia (voto + bonus/malus). Tocca per ordinare per Fm." data-sort="fm_prev">Mv/Fm (prec.)<span class="sort-arrow" data-sort-arrow="fm_prev"></span></th>
-              <th class="stat-col" data-stat-col data-tip="Quanto è probabile che giochi: Titolare, Ballottaggio/Secondo o Panchinaro. (auto) = stimato dall’app dalle statistiche.">Titolarità</th>
-              <th data-tip="Se è infortunato o disponibile. Puoi cambiarlo tu dal menu.">Stato fisico</th>
-              <th data-tip="Libero = nessuno l’ha ancora preso. Altrimenti vedi la squadra e il prezzo pagato.">Disponibilità</th>
+              <th class="stat-col sortable" data-stat-col data-tip="Quanto è probabile che giochi: Titolare, Ballottaggio/Secondo o Panchinaro. (auto) = stimato dall’app dalle statistiche. Tocca per ordinare (prima i titolari)." data-sort="titolarita">Titolarità<span class="sort-arrow" data-sort-arrow="titolarita"></span></th>
+              <th class="sortable" data-tip="Se è infortunato o disponibile. Puoi cambiarlo tu dal menu. Tocca per ordinare (prima i disponibili)." data-sort="stato">Stato fisico<span class="sort-arrow" data-sort-arrow="stato"></span></th>
+              <th class="sortable" data-tip="Libero = nessuno l’ha ancora preso. Altrimenti vedi la squadra e il prezzo pagato. Tocca per ordinare (prima i liberi, poi per squadra)." data-sort="dispo">Disponibilità<span class="sort-arrow" data-sort-arrow="dispo"></span></th>
               <th data-tip="Assegna il giocatore a una squadra: scegli squadra, prezzo e premi OK.">Assegna</th>
             </tr>
           </thead>
@@ -1372,6 +1372,22 @@ function drawListoneTable(){
     list.sort((a,b)=>{
       if(k==='nome') return a.nome.toLowerCase().localeCompare(b.nome.toLowerCase())*d;
       if(k==='squadra') return a.squadra.toLowerCase().localeCompare(b.squadra.toLowerCase())*d;
+      if(k==='titolarita'){
+        const TR = {titolare:0, secondo:1, panchinaro:2};
+        const ra = a.titolarita in TR ? TR[a.titolarita] : 3, rb = b.titolarita in TR ? TR[b.titolarita] : 3;
+        return ((ra-rb)*d) || a.nome.localeCompare(b.nome);
+      }
+      if(k==='stato'){
+        const SK = Object.keys(STATUS_LABELS);
+        const ia = SK.indexOf(a.status||'ok'), ib = SK.indexOf(b.status||'ok');
+        return ((ia-ib)*d) || a.nome.localeCompare(b.nome);
+      }
+      if(k==='dispo'){
+        const fa = a.owner ? 1 : 0, fb = b.owner ? 1 : 0;
+        if(fa!==fb) return (fa-fb)*d;
+        if(a.owner) return (a.owner.team.name.localeCompare(b.owner.team.name) || (b.owner.price-a.owner.price))*d || a.nome.localeCompare(b.nome);
+        return a.nome.localeCompare(b.nome);
+      }
       let av=0, bv=0;
       if(k==='qta'){ av=a.qta||0; bv=b.qta||0; }
       else if(k==='fvm'){ av=a.fvm||0; bv=b.fvm||0; }
