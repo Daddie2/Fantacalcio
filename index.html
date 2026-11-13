@@ -270,7 +270,7 @@ input[type=time]{background:#fff;color:#000;}
 .badge-contest{cursor:pointer;}
 .badge-watch[data-contest]{cursor:pointer;}
 .ar-wrap{display:flex;gap:8px;overflow:auto;max-height:80vh;align-items:flex-start;-webkit-overflow-scrolling:touch;padding-bottom:6px;}
-.ar-team{flex:1 1 0;min-width:150px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;}
+.ar-team{flex:1 1 0;min-width:162px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;}
 .ar-head{position:sticky;top:0;z-index:1;background:var(--panel-2);padding:8px 8px 6px;border-bottom:1px solid var(--line);border-radius:6px 6px 0 0;}
 .ar-name{font-family:var(--font-head);font-size:14px;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ar-cred{font-family:var(--font-mono);color:var(--gold);font-weight:600;font-size:15px;margin:2px 0 5px;}
@@ -283,10 +283,12 @@ input[type=time]{background:#fff;color:#000;}
 .ar-list li{display:flex;align-items:center;gap:5px;padding:3px 0;font-size:12.5px;border-bottom:1px solid var(--line-soft);}
 .ar-list li:last-child{border-bottom:none;}
 .ar-list .player-link{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ar-list li.ar-grp{justify-content:space-between;margin-top:8px;padding:3px 6px;border-bottom:none;border-radius:3px;font-size:11px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;}
+.ar-list li.ar-grp:first-child{margin-top:2px;}
 .ar-list .ar-price{font-family:var(--font-mono);font-size:11px;color:var(--text-dim);}
 .ar-list .role-tag{width:16px;height:16px;line-height:16px;font-size:10px;flex:0 0 auto;}
 .ar-empty{padding:8px;color:var(--text-faint);font-size:12px;}
-@media(max-width:700px){.ar-team{flex:0 0 160px;}}
+@media(max-width:700px){.ar-team{flex:0 0 172px;}}
 /* Tooltip acronimi (hover su PC, pressione lunga su telefono) */
 #acTip{position:fixed;z-index:400;max-width:260px;display:none;background:#0d1015;color:var(--text);border:1px solid var(--gold-dim);border-radius:6px;padding:8px 11px;font-size:12px;line-height:1.45;font-weight:400;font-family:inherit;text-align:left;white-space:normal;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.5);}
 .ac{border-bottom:1px dotted var(--text-faint);cursor:help;}
@@ -1344,9 +1346,14 @@ function renderAstaRoses(){
       const n = items.filter(x=>x.p.ruolo===r).length, sl = state.slots[r]||0;
       return `<span class="${sl && n>=sl ? 'full' : ''}">${r} ${n}/${sl}</span>`;
     }).join('');
-    const list = items.length ? items.map(x=>`<li><span class="role-tag role-${x.p.ruolo}">${x.p.ruolo}</span><span class="player-link${nameCls(x.p)}" data-detail="${escapeAttr(x.p.id)}" title="${escapeAttr(x.p.nome)}">${escapeHtml(x.p.nome)}</span><span class="ar-price">${fmt(x.price)}</span></li>`).join('')
-      : '<li class="ar-empty">Nessun giocatore</li>';
-    return `<div class="ar-team"><div class="ar-head"><div class="ar-name" title="${escapeAttr(t.name)}">${escapeHtml(t.name)}</div><div class="ar-cred">${fmt(rem)} <small>cr. rimasti</small></div><div class="ar-max">${missing ? 'rilancio max <b>'+fmt(maxBid)+'</b> &middot; '+missing+(missing===1?' slot':' slot')+' da riempire' : 'rosa completa'}</div><div class="ar-counts">${counts}</div></div><ul class="ar-list">${list}</ul></div>`;
+    const RL = {P:'Portieri', D:'Difesa', C:'Centrocampo', A:'Attacco'};
+    const list = roles.map(r=>{
+      const grp = items.filter(x=>x.p.ruolo===r), sl = state.slots[r]||0, sp = grp.reduce((a,x)=> a + (x.price||0), 0);
+      const head = `<li class="ar-grp role-${r}"><span>${RL[r]}</span><span>${grp.length}/${sl} &middot; ${fmt(sp)} cr.</span></li>`;
+      return head + grp.map(x=>`<li><span class="role-tag role-${x.p.ruolo}">${x.p.ruolo}</span><span class="player-link${nameCls(x.p)}" data-detail="${escapeAttr(x.p.id)}" title="${escapeAttr(x.p.nome)}">${escapeHtml(x.p.nome)}</span><span class="ar-price">${fmt(x.price)}</span></li>`).join('');
+    }).join('');
+    const spentTot = spentByTeam(t);
+    return `<div class="ar-team"><div class="ar-head"><div class="ar-name" title="${escapeAttr(t.name)}">${escapeHtml(t.name)}</div><div class="ar-cred">${fmt(rem)} <small>cr. rimasti</small></div><div class="ar-max">speso <b>${fmt(spentTot)}</b> &middot; ${missing ? 'rilancio max <b>'+fmt(maxBid)+'</b>' : 'rosa completa'}</div><div class="ar-counts">${counts}</div></div><ul class="ar-list">${list}</ul></div>`;
   }).join('');
   box.querySelectorAll('[data-detail]').forEach(n=> n.addEventListener('click', function(){ openPlayerDetail(this.dataset.detail); }));
 }
