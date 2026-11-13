@@ -1664,8 +1664,9 @@ function drawRosterPanel(){
       <div class="stat-box"><div class="label">Media rosa (tutti i ruoli)</div><div class="value gold">${avgAll}</div><div class="hint" style="margin:4px 0 0;">${team.roster.length} giocatori</div></div>
     </div>
     ${overRoles.length ? `<div class="role-over-box"><b>Attenzione, hai speso troppo</b> in: ${overRoles.map(r=> `${ROLE_LABELS[r]} (${fmt(spentByRole[r])} su una fascia di ${fmt(band[r].lo)}&ndash;${fmt(band[r].hi)}${band[r].missing ? ', con ancora '+band[r].missing+' slot da riempire' : ''})`).join('; ')}.<div class="hint" style="margin:6px 0 0;">Fasce dal consiglio di Fantacalcio.it per l'asta a chiamata con rosa da 25: i crediti in più qui vanno recuperati sugli altri reparti.</div></div>` : ''}`;
+  let addBlock = '';
   if(state.players.length){
-    html += `<hr class="section-divider">
+    addBlock = `<hr class="section-divider">
     <div class="panel-title">Aggiungi giocatore a ${escapeHtml(team.name)}</div>
     <input type="text" id="rosterAddSearch" class="search-big" style="margin-bottom:10px;" placeholder="Cerca un giocatore libero...">
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
@@ -1725,6 +1726,7 @@ function drawRosterPanel(){
         </span></li>`;
     }).join('') + '</ul>';
   });
+  html += addBlock;
   el('rosterPanel').innerHTML = html;
   el('rosterRoleFilterSel').value = rosterRoleFilter;
   el('rosterRoleFilterSel').addEventListener('change', function(){ rosterRoleFilter=this.value; drawRosterPanel(); });
