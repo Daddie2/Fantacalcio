@@ -269,6 +269,24 @@ input[type=time]{background:#fff;color:#000;}
 
 .badge-contest{cursor:pointer;}
 .badge-watch[data-contest]{cursor:pointer;}
+.ar-wrap{display:flex;gap:8px;overflow:auto;max-height:80vh;align-items:flex-start;-webkit-overflow-scrolling:touch;padding-bottom:6px;}
+.ar-team{flex:1 1 0;min-width:150px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;}
+.ar-head{position:sticky;top:0;z-index:1;background:var(--panel-2);padding:8px 8px 6px;border-bottom:1px solid var(--line);border-radius:6px 6px 0 0;}
+.ar-name{font-family:var(--font-head);font-size:14px;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ar-cred{font-family:var(--font-mono);color:var(--gold);font-weight:600;font-size:15px;margin:2px 0 5px;}
+.ar-cred small{color:var(--text-dim);font-weight:400;font-size:11px;}
+.ar-max{font-size:11px;color:var(--text-dim);margin:-2px 0 6px;line-height:1.3;}
+.ar-max b{font-family:var(--font-mono);color:var(--text);}
+.ar-counts{display:grid;grid-template-columns:1fr 1fr;gap:3px 6px;font-family:var(--font-mono);font-size:11px;color:var(--text-dim);}
+.ar-counts span.full{color:var(--green);}
+.ar-list{list-style:none;margin:0;padding:4px 8px 8px;}
+.ar-list li{display:flex;align-items:center;gap:5px;padding:3px 0;font-size:12.5px;border-bottom:1px solid var(--line-soft);}
+.ar-list li:last-child{border-bottom:none;}
+.ar-list .player-link{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ar-list .ar-price{font-family:var(--font-mono);font-size:11px;color:var(--text-dim);}
+.ar-list .role-tag{width:16px;height:16px;line-height:16px;font-size:10px;flex:0 0 auto;}
+.ar-empty{padding:8px;color:var(--text-faint);font-size:12px;}
+@media(max-width:700px){.ar-team{flex:0 0 160px;}}
 /* Tooltip acronimi (hover su PC, pressione lunga su telefono) */
 #acTip{position:fixed;z-index:400;max-width:260px;display:none;background:#0d1015;color:var(--text);border:1px solid var(--gold-dim);border-radius:6px;padding:8px 11px;font-size:12px;line-height:1.45;font-weight:400;font-family:inherit;text-align:left;white-space:normal;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.5);}
 .ac{border-bottom:1px dotted var(--text-faint);cursor:help;}
@@ -372,6 +390,10 @@ tr[data-g]{cursor:pointer;}
           </div>
           <div class="hint" id="assignSuggestHint"></div>
         </div>
+        <hr class="section-divider">
+        <div class="panel-title">Rose in diretta</div>
+        <div class="hint" style="margin:0 0 8px;">Tutte le squadre in fila: crediti rimasti e giocatori per ruolo. Scorri di lato per vederle tutte. Tocca un giocatore per aprire la scheda (in rosso se infortunato).</div>
+        <div class="ar-wrap" id="astaRoses"></div>
         <hr class="section-divider">
         <div class="panel-title">Ultime assegnazioni</div>
         <ul class="log-list" id="astaLog"></ul>
@@ -1238,7 +1260,7 @@ function renderAsta(){
   const squadre = Array.from(new Set(state.players.map(p=>p.squadra).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
   squadraSel.innerHTML = '<option value="">Tutte</option>' + squadre.map(s=>`<option value="${escapeAttr(s)}">${escapeHtml(s)}</option>`).join('');
   if(prev && squadre.includes(prev)) squadraSel.value = prev;
-  renderAstaResults(); renderAstaLog();
+  renderAstaResults(); renderAstaRoses(); renderAstaLog();
 }
 ['astaSearch','astaFRuolo','astaFSquadra','astaFStato','astaFSort'].forEach(id=>{
   el(id).addEventListener('input', ()=> renderAstaResults());
@@ -1308,6 +1330,26 @@ el('assignConfirm').addEventListener('click', function(){
   toast(`${p.nome} assegnato a ${team.name} per ${fmt(price)} crediti`);
   renderAll();
 });
+function renderAstaRoses(){
+  const box = el('astaRoses'); if(!box) return;
+  const roles = ['P','D','C','A'];
+  box.innerHTML = state.teams.map(t=>{
+    const rem = t.budget - spentByTeam(t);
+    const totSlots = roles.reduce((s,r)=> s + (state.slots[r]||0), 0);
+    const missing = Math.max(0, totSlots - t.roster.length);
+    const maxBid = missing ? Math.max(0, rem - (missing-1)) : 0;   /* tiene 1 cr. per ogni altro slot vuoto */
+    const items = t.roster.map(r=>({p:playerById(r.playerId), price:r.price})).filter(x=>x.p)
+      .sort((a,b)=> (ROLE_ORDER[a.p.ruolo]-ROLE_ORDER[b.p.ruolo]) || (b.price-a.price) || a.p.nome.localeCompare(b.p.nome));
+    const counts = roles.map(r=>{
+      const n = items.filter(x=>x.p.ruolo===r).length, sl = state.slots[r]||0;
+      return `<span class="${sl && n>=sl ? 'full' : ''}">${r} ${n}/${sl}</span>`;
+    }).join('');
+    const list = items.length ? items.map(x=>`<li><span class="role-tag role-${x.p.ruolo}">${x.p.ruolo}</span><span class="player-link${nameCls(x.p)}" data-detail="${escapeAttr(x.p.id)}" title="${escapeAttr(x.p.nome)}">${escapeHtml(x.p.nome)}</span><span class="ar-price">${fmt(x.price)}</span></li>`).join('')
+      : '<li class="ar-empty">Nessun giocatore</li>';
+    return `<div class="ar-team"><div class="ar-head"><div class="ar-name" title="${escapeAttr(t.name)}">${escapeHtml(t.name)}</div><div class="ar-cred">${fmt(rem)} <small>cr. rimasti</small></div><div class="ar-max">${missing ? 'rilancio max <b>'+fmt(maxBid)+'</b> &middot; '+missing+(missing===1?' slot':' slot')+' da riempire' : 'rosa completa'}</div><div class="ar-counts">${counts}</div></div><ul class="ar-list">${list}</ul></div>`;
+  }).join('');
+  box.querySelectorAll('[data-detail]').forEach(n=> n.addEventListener('click', function(){ openPlayerDetail(this.dataset.detail); }));
+}
 function renderAstaLog(){
   const entries = [];
   state.teams.forEach(t=> t.roster.forEach(r=>{ const p = playerById(r.playerId); if(p) entries.push({team:t.name, name:p.nome, ruolo:p.ruolo, price:r.price, id:p.id, cls:nameCls(p), at:r.at||0, seq:entries.length}); }));
