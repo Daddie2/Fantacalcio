@@ -799,6 +799,11 @@ function watchBadges(p){
   return (mine ? ' <span class="badge badge-watch">puntato</span>' : '') + contestBadge(p, mine);
 }
 function addWatch(id){ const w=getWatchlist(); if(w.indexOf(id)===-1){ w.push(id); saveState(); } }
+function setWatchFor(id, tid, on){
+  const w = getWatchlist(tid); const i = w.indexOf(id);
+  if(on && i===-1) w.push(id); else if(!on && i!==-1) w.splice(i,1);
+  saveState();
+}
 function removeWatch(id){ const w=getWatchlist(); const i=w.indexOf(id); if(i!==-1){ w.splice(i,1); saveState(); } }
 
 /* ================= PRICE SUGGESTIONS ================= */
@@ -813,7 +818,17 @@ function computeMarketSuggestions(){
 }
 let marketSuggestions = {};
 let listoneSort = {key:null, dir:1};
-let myTeamId = null;
+function savedMyTeam(){
+  try{
+    const lg = state.leagues && state.leagues[state.activeLeague];
+    return (lg && lg.myTeam && state.teams.some(t=> t.id===lg.myTeam)) ? lg.myTeam : null;
+  }catch(e){ return null; }
+}
+let myTeamId = savedMyTeam();
+function setMyTeam(id){
+  myTeamId = id || null;
+  try{ const lg = state.leagues && state.leagues[state.activeLeague]; if(lg){ lg.myTeam = myTeamId; saveState(); } }catch(e){}
+}
 
 /* ================= XLSX / CSV IMPORT ================= */
 function normHeader(s){ return String(s||'').trim().toUpperCase().replace(/\./g,'').replace(/\s+/g,''); }
@@ -1714,7 +1729,7 @@ function renderConsigli(){
   drawWatchlistPanel();
   drawConsigli();
 }
-el('myTeamSelect').addEventListener('change', function(){ myTeamId=this.value; renderConsigli(); });
+el('myTeamSelect').addEventListener('change', function(){ setMyTeam(this.value); renderConsigli(); });
 
 function drawWatchlistPanel(){
   const box = el('watchListBox'); const wl = getWatchlist(); const tm = teamById(watchTeamId()); el('watchTitle').textContent = 'Giocatori puntati da ' + (tm ? tm.name : '');
@@ -1891,7 +1906,7 @@ function injuryVerdict(w){ if(w===null) return 'Tempi da verificare'; if(w<=3) r
 
 function drawConsigli(){
   const teamId = el('myTeamSelect').value || myTeamId || (state.teams[0] && state.teams[0].id);
-  myTeamId = teamId;
+  if(myTeamId !== teamId) setMyTeam(teamId);
   const team = teamById(teamId); if(!team) return;
   const scale = (team.budget || 500) / 500;
   const spent = spentByTeam(team);
@@ -2259,7 +2274,7 @@ function drawPlayerDetail(){
     else if(mb.status==='ruolo_pieno') maxBidText='Ruolo pieno';
     else { maxBidText=fmt(mb.value); maxBidCls='gold'; }
   }
-  const watchBtn = isWatched(p.id) ? `<button class="btn btn-ghost" id="pdWatchBtn">Togli dai puntati</button>` : `<button class="btn btn-gold" id="pdWatchBtn">+ Puntalo</button>`;
+  const watchBtn = (isWatched(p.id) ? `<button class="btn btn-ghost" id="pdWatchBtn">Togli dai puntati</button>` : `<button class="btn btn-gold" id="pdWatchBtn">+ Puntalo</button>`) + ` <button class="btn btn-ghost" data-contest="${escapeAttr(p.id)}">Squadre che puntano (${watchersOf(p.id).length})</button>`;
   const addTeams = state.teams.filter(t=> !roleIsFull(t, p.ruolo));
   const addTeamOpts = addTeams.length
     ? addTeams.map(t=>`<option value="${t.id}" ${t.id===myTeamId?'selected':''}>${escapeHtml(t.name)} (rim. ${fmt(t.budget - spentByTeam(t))})</option>`).join('')
@@ -2396,7 +2411,7 @@ function drawPlayerDetail(){
   el('playerDetailBody').querySelectorAll('[data-detail]').forEach(l=> l.addEventListener('click', function(){ openPlayerDetail(this.dataset.detail); }));
   ['pdTeamSelect','pdTeamSelect2'].forEach(function(id){
     const ts = el(id);
-    if(ts) ts.addEventListener('change', function(){ myTeamId=this.value; drawPlayerDetail(); renderAll(); });
+    if(ts) ts.addEventListener('change', function(){ setMyTeam(this.value); drawPlayerDetail(); renderAll(); });
   });
 }
 
@@ -2497,12 +2512,33 @@ function bindGiornate(p){
 }
 function openContest(id){
   const p = playerById(id); if(!p) return;
-  const me = watchTeamId(), ws = watchersOf(id), own = ownerOf(id);
+  const me = watchTeamId(), own = ownerOf(id);
+  const teams = state.teams.slice();
+  const rows = teams.map(t=>{
+    const on = isWatched(id, t.id);
+    const rem = fmt(t.budget-spentByTeam(t));
+    let btn;
+    if(on) btn = '<button class="btn btn-ghost btn-sm" data-wtoggle="'+escapeAttr(t.id)+'" data-won="0">Togli</button>';
+    else if(own) btn = '<span class="hint" style="margin:0;">&mdash;</span>';
+    else btn = '<button class="btn btn-gold btn-sm" data-wtoggle="'+escapeAttr(t.id)+'" data-won="1">+ Aggiungi</button>';
+    return '<li><span class="roster-name">'+escapeHtml(t.name)+(t.id===me?' <span class="badge badge-watch">tu</span>':'')+(on?' <span class="badge badge-contest">punta</span>':'')+'</span>'+
+      '<span class="roster-actions"><span class="hint" style="margin:0;">rim. '+rem+' cr.</span>'+btn+'</span></li>';
+  }).join('');
+  const nW = teams.filter(t=> isWatched(id, t.id)).length;
   el('contestBody').innerHTML = '<div class="pd-header"><div><div class="hint" style="margin:0;">Chi punta questo giocatore</div><h2 class="pd-name" style="margin:4px 0 0;">'+escapeHtml(p.nome)+'</h2></div><button class="btn btn-ghost btn-sm" id="contestClose">Chiudi &times;</button></div>' +
     (own ? '<p class="hint">Già preso da '+escapeHtml(own.team.name)+' per '+fmt(own.price)+' cr.</p>' : '') +
-    (ws.length ? '<ul class="roster-list">'+ws.map(t=> '<li><span class="roster-name">'+escapeHtml(t.name)+(t.id===me?' <span class="badge badge-watch">tu</span>':'')+'</span><span class="hint" style="margin:0;">rim. '+fmt(t.budget-spentByTeam(t))+' cr.</span></li>').join('')+'</ul>' : '<p class="hint">Nessuna squadra lo sta puntando.</p>');
+    '<p class="hint" style="margin:6px 0 8px;">'+(nW ? nW+(nW===1?' squadra lo punta':' squadre lo puntano') : 'Nessuna squadra lo sta puntando')+'.</p>' +
+    '<ul class="roster-list">'+rows+'</ul>';
   el('contestOverlay').classList.add('show');
   el('contestClose').addEventListener('click', ()=> el('contestOverlay').classList.remove('show'));
+  el('contestBody').querySelectorAll('[data-wtoggle]').forEach(function(b){
+    b.addEventListener('click', function(){
+      setWatchFor(id, this.dataset.wtoggle, this.dataset.won==='1');
+      openContest(id);
+      try{ if(currentDetailId) drawPlayerDetail(); }catch(e){}
+      renderAll();
+    });
+  });
 }
 document.addEventListener('click', function(e){
   const b = e.target.closest && e.target.closest('[data-contest]');
@@ -2588,7 +2624,7 @@ function switchLeague(id){
   state.activeLeague = id;
   ensureLeagues();
   saveState();
-  activeRosterTeam=null; myTeamId=null; lineupTeamId=null; rosterEditingId=null; currentDetailId=null;
+  activeRosterTeam=null; myTeamId=savedMyTeam(); lineupTeamId=null; rosterEditingId=null; currentDetailId=null;
   renderSetup(); renderAll();
   toast('Lega attiva: ' + activeLeague().name);
 }
@@ -2613,7 +2649,7 @@ function deleteActiveLeague(){
   state.activeLeague = next;
   ensureLeagues();
   saveState();
-  activeRosterTeam=null; myTeamId=null; lineupTeamId=null;
+  activeRosterTeam=null; myTeamId=savedMyTeam(); lineupTeamId=null;
   renderSetup(); renderAll();
   toast('Lega eliminata');
 }
