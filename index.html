@@ -269,9 +269,9 @@ input[type=time]{background:#fff;color:#000;}
 
 .badge-contest{cursor:pointer;}
 .badge-watch[data-contest]{cursor:pointer;}
-.ar-wrap{display:flex;gap:8px;overflow:auto;max-height:80vh;align-items:flex-start;-webkit-overflow-scrolling:touch;padding-bottom:6px;}
-.ar-team{flex:1 1 0;min-width:162px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;}
-.ar-head{position:sticky;top:0;z-index:1;background:var(--panel-2);padding:8px 8px 6px;border-bottom:1px solid var(--line);border-radius:6px 6px 0 0;}
+.ar-wrap{display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;align-items:flex-start;-webkit-overflow-scrolling:touch;padding-bottom:8px;overscroll-behavior-x:contain;scroll-snap-type:x proximity;}
+.ar-team{scroll-snap-align:start;flex:1 1 0;min-width:162px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;}
+.ar-head{background:var(--panel-2);padding:8px 8px 6px;border-bottom:1px solid var(--line);border-radius:6px 6px 0 0;}
 .ar-name{font-family:var(--font-head);font-size:14px;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ar-cred{font-family:var(--font-mono);color:var(--gold);font-weight:600;font-size:15px;margin:2px 0 5px;}
 .ar-cred small{color:var(--text-dim);font-weight:400;font-size:11px;}
@@ -288,7 +288,21 @@ input[type=time]{background:#fff;color:#000;}
 .ar-list .ar-price{font-family:var(--font-mono);font-size:11px;color:var(--text-dim);}
 .ar-list .role-tag{width:16px;height:16px;line-height:16px;font-size:10px;flex:0 0 auto;}
 .ar-empty{padding:8px;color:var(--text-faint);font-size:12px;}
-@media(max-width:700px){.ar-team{flex:0 0 172px;}}
+@media(max-width:700px){
+  .ar-wrap{gap:10px;margin:0 -4px;padding:0 4px 10px;}
+  .ar-team{flex:0 0 min(82vw,300px);}
+  .ar-head{padding:12px 12px 10px;}
+  .ar-name{font-size:18px;}
+  .ar-cred{font-size:24px;margin:4px 0 6px;}
+  .ar-cred small{font-size:13px;}
+  .ar-max{font-size:14px;margin:0 0 10px;}
+  .ar-counts{font-size:14px;gap:6px 10px;}
+  .ar-list{padding:6px 12px 12px;}
+  .ar-list li{font-size:16px;padding:9px 0;gap:8px;}
+  .ar-list li.ar-grp{font-size:14px;padding:6px 10px;margin-top:12px;}
+  .ar-list .ar-price{font-size:14px;}
+  .ar-list .role-tag{width:22px;height:22px;line-height:22px;font-size:12px;}
+}
 /* Tooltip acronimi (hover su PC, pressione lunga su telefono) */
 #acTip{position:fixed;z-index:400;max-width:260px;display:none;background:#0d1015;color:var(--text);border:1px solid var(--gold-dim);border-radius:6px;padding:8px 11px;font-size:12px;line-height:1.45;font-weight:400;font-family:inherit;text-align:left;white-space:normal;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.5);}
 .ac{border-bottom:1px dotted var(--text-faint);cursor:help;}
@@ -394,7 +408,7 @@ tr[data-g]{cursor:pointer;}
         </div>
         <hr class="section-divider">
         <div class="panel-title">Rose in diretta</div>
-        <div class="hint" style="margin:0 0 8px;">Tutte le squadre in fila: crediti rimasti e giocatori per ruolo. Scorri di lato per vederle tutte. Tocca un giocatore per aprire la scheda (in rosso se infortunato).</div>
+        <div class="hint" style="margin:0 0 8px;">Tutte le squadre in fila: crediti rimasti e giocatori per ruolo. Scorri di lato per vedere le altre squadre. Tocca un giocatore per aprire la scheda (in rosso se infortunato).</div>
         <div class="ar-wrap" id="astaRoses"></div>
         <hr class="section-divider">
         <div class="panel-title">Ultime assegnazioni</div>
