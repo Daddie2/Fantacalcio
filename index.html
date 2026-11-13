@@ -272,6 +272,9 @@ input[type=time]{background:#fff;color:#000;}
 .ar-wrap{display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;align-items:flex-start;-webkit-overflow-scrolling:touch;padding-bottom:8px;overscroll-behavior-x:contain;scroll-snap-type:x proximity;}
 .ar-team{scroll-snap-align:start;flex:1 1 0;min-width:162px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;}
 .ar-head{background:var(--panel-2);padding:8px 8px 6px;border-bottom:1px solid var(--line);border-radius:6px 6px 0 0;}
+.ar-head[data-team-go]{cursor:pointer;}
+.ar-head[data-team-go]:hover .ar-go{color:var(--gold);}
+.ar-go{float:right;font-family:var(--font-body);font-size:11px;letter-spacing:0;color:var(--text-faint);}
 .ar-name{font-family:var(--font-head);font-size:14px;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ar-cred{font-family:var(--font-mono);color:var(--gold);font-weight:600;font-size:15px;margin:2px 0 5px;}
 .ar-cred small{color:var(--text-dim);font-weight:400;font-size:11px;}
@@ -1367,9 +1370,14 @@ function renderAstaRoses(){
       return head + grp.map(x=>`<li><span class="role-tag role-${x.p.ruolo}">${x.p.ruolo}</span><span class="player-link${nameCls(x.p)}" data-detail="${escapeAttr(x.p.id)}" title="${escapeAttr(x.p.nome)}">${escapeHtml(x.p.nome)}</span><span class="ar-price">${fmt(x.price)}</span></li>`).join('');
     }).join('');
     const spentTot = spentByTeam(t);
-    return `<div class="ar-team"><div class="ar-head"><div class="ar-name" title="${escapeAttr(t.name)}">${escapeHtml(t.name)}</div><div class="ar-cred">${fmt(rem)} <small>cr. rimasti</small></div><div class="ar-max">speso <b>${fmt(spentTot)}</b> &middot; ${missing ? 'rilancio max <b>'+fmt(maxBid)+'</b>' : 'rosa completa'}</div><div class="ar-counts">${counts}</div></div><ul class="ar-list">${list}</ul></div>`;
+    return `<div class="ar-team"><div class="ar-head" data-team-go="${escapeAttr(t.id)}" title="Apri la rosa di ${escapeAttr(t.name)}"><div class="ar-name">${escapeHtml(t.name)} <span class="ar-go">Apri rosa &rsaquo;</span></div><div class="ar-cred">${fmt(rem)} <small>cr. rimasti</small></div><div class="ar-max">speso <b>${fmt(spentTot)}</b> &middot; ${missing ? 'rilancio max <b>'+fmt(maxBid)+'</b>' : 'rosa completa'}</div><div class="ar-counts">${counts}</div></div><ul class="ar-list">${list}</ul></div>`;
   }).join('');
   box.querySelectorAll('[data-detail]').forEach(n=> n.addEventListener('click', function(){ openPlayerDetail(this.dataset.detail); }));
+  box.querySelectorAll('[data-team-go]').forEach(n=> n.addEventListener('click', function(){
+    activeRosterTeam = this.dataset.teamGo; rosterAddQuery = '';
+    switchView('rose');
+    setTimeout(()=>{ const panel = el('rosterPanel'); if(panel) panel.scrollIntoView({behavior:'smooth', block:'start'}); }, 50);
+  }));
 }
 function renderAstaLog(){
   const entries = [];
