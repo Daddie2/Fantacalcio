@@ -367,6 +367,19 @@ tr[data-g]{cursor:pointer;}
   #view-listone .tbl-scroll td .btn-sm{margin-left:2px;padding:4px 8px;}
   #view-listone .badge{font-size:10.5px;padding:2px 6px;}
 }
+
+/* Asta live: tutte le squadre su un'unica riga, senza testo che esce dalle card */
+@media (min-width:801px){
+  body:has(#view-asta.active) .content{padding-left:14px;padding-right:14px;}
+  body:has(#view-asta.active) .league-topbar{margin-left:-14px;margin-right:-14px;padding-left:14px;padding-right:14px;}
+  #astaRoses{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px;}
+  #astaRoses .ar-head{padding:8px 6px 6px;}
+  #astaRoses .ar-list{padding:4px 6px 8px;}
+  #astaRoses .ar-list li.ar-grp{flex-wrap:wrap;white-space:normal;font-size:10.5px;padding:3px 5px;column-gap:4px;row-gap:0;}
+  #astaRoses .ar-list li.ar-grp span:last-child{font-size:10.5px;margin-left:auto;white-space:nowrap;}
+  #astaRoses .ar-counts{font-size:10.5px;}
+  #astaRoses .ar-max,#astaRoses .ar-cred small{font-size:10.5px;}
+}
 </style>
 </head>
 <body>
