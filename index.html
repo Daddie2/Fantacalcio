@@ -260,6 +260,15 @@ input[type=time]{background:#fff;color:#000;}
 .sw-mode{width:auto;padding:4px 6px;font-size:12px;}
 .sw-badge{display:inline-block;margin-left:5px;padding:0 6px;border-radius:10px;font-size:10px;font-family:var(--font-mono);color:var(--gold);background:var(--panel-2);border:1px solid var(--gold);white-space:nowrap;}
 .pp .sw-badge{margin:2px 0 0;}
+.pitch-sm{padding:12px 4px;gap:10px;}
+.pitch-sm .pitch-row{flex-wrap:nowrap;}
+.pp-sm{width:64px;flex:0 1 64px;min-width:0;cursor:default;}
+.pp-sm .pp-shirt{width:24px;height:24px;line-height:24px;font-size:11px;}
+.pp-sm .pp-name{font-size:11px;}
+.pp-one{cursor:pointer;}
+.pp-or{font-size:9px;color:var(--text-faint);margin:1px 0;}
+.pp-ballot{border:1px dashed var(--gold-dim);border-radius:6px;padding:2px 0;}
+.mt-view{margin:0 0 12px;}
 .league-topbar{position:static !important;}
 [data-explain]{cursor:help;}
 .info-btn{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;margin-left:8px;border-radius:50%;border:1px solid var(--gold);background:transparent;color:var(--gold);font:italic 700 15px Georgia,serif;line-height:1;cursor:pointer;padding:0;vertical-align:middle;}
@@ -1129,9 +1138,9 @@ async function autoFetchAndImport(opts){
   
   try{
     const wbF = await fetchWorkbook('data/formazioni.csv'); const rowsF = workbookToRows(wbF);
-    const hdr = rowsF[0].map(normHeader); const iId=hdr.indexOf('ID'), iSt=hdr.indexOf('STATO'), iPr=hdr.indexOf('PROB'), iAg=hdr.indexOf('AGGIORNATO');
+    const hdr = rowsF[0].map(normHeader); const iId=hdr.indexOf('ID'), iSt=hdr.indexOf('STATO'), iPr=hdr.indexOf('PROB'), iAg=hdr.indexOf('AGGIORNATO'), iMo=hdr.indexOf('MODULO'), iSl=hdr.indexOf('SLOT');
     state.players.forEach(p=> delete p.probForm);
-    for(let i=1;i<rowsF.length;i++){ const pf = playerById(String(rowsF[i][iId])); if(pf) pf.probForm = {stato:rowsF[i][iSt], prob:parseFloat(rowsF[i][iPr])||0, agg:rowsF[i][iAg]}; }
+    for(let i=1;i<rowsF.length;i++){ const pf = playerById(String(rowsF[i][iId])); if(pf) { const sl = iSl>=0 ? parseInt(rowsF[i][iSl],10) : NaN; pf.probForm = {stato:rowsF[i][iSt], prob:parseFloat(rowsF[i][iPr])||0, agg:rowsF[i][iAg], modulo:(iMo>=0 && rowsF[i][iMo]) ? String(rowsF[i][iMo]).trim() : '', slot:isNaN(sl)?null:sl}; } }
     saveState();
   }catch(e){ console.warn('auto formazioni', e); }
 
@@ -3123,6 +3132,45 @@ function fmtLeft(ms){ const s=Math.max(0,Math.floor(ms/1000)), d=Math.floor(s/86
 function oppInfo(p){ const r = selRound(), k = teamKey(p.squadra); if(!r || !r.matches.length || !k) return null; for(const m of r.matches){ if(m.hk===k) return {opp:m.a, home:true, start:m.start, m, ref:r.n+':'+r.matches.indexOf(m)}; if(m.ak===k) return {opp:m.h, home:false, start:m.start, m, ref:r.n+':'+r.matches.indexOf(m)}; } return null; }
 function oppCell(p){ const o = oppInfo(p); if(!o) return '<span class="hint" style="margin:0;">&mdash;</span>'; return `<span class="opp match-link" data-mr="${o.ref}">${escapeHtml(o.m.h)} &ndash; ${escapeHtml(o.m.a)}</span><span class="kick">${escapeHtml(fmtKick(o.start))}</span>`; }
 function oppShort(p){ const o = oppInfo(p); return o ? `<span class="match-link" data-mr="${o.ref}">${escapeHtml(o.m.h)} &ndash; ${escapeHtml(o.m.a)}</span>` : ''; }
+function probChip(list){
+  const inner = list.map(x=>`<div class="pp-one" data-detail="${x.p.id}">
+      <div class="pp-shirt role-${x.p.ruolo}">${x.p.ruolo}</div>
+      <div class="pp-name${nameCls(x.p)}" title="${escapeAttr(x.p.nome)}">${escapeHtml(x.p.nome)}</div>
+      <div class="pp-prob" style="color:${x.prob<0.5?'var(--red)':'var(--text-faint)'}">${Math.round(x.prob*100)}%</div>
+    </div>`).join('<div class="pp-or">o</div>');
+  return `<div class="pp pp-sm${list.length>1?' pp-ballot':''}">${inner}</div>`;
+}
+/* Probabile formazione "schierata": usa modulo e posizione (slot) lette da Gazzetta;
+   se mancano o non tornano, ripiega sui ruoli del listone. */
+function probPitch(pl){
+  const cand = pl.filter(x=> x.p.probForm && (x.p.probForm.stato==='titolare' || x.p.probForm.stato==='ballottaggio'));
+  if(!cand.length) return null;
+  const ids = new Set(cand.map(x=> x.p.id));
+  const withSlot = cand.filter(x=> Number.isInteger(x.p.probForm.slot));
+  const modEntry = withSlot.find(x=> x.p.probForm.modulo);
+  const parts = modEntry ? String(modEntry.p.probForm.modulo).split('-').map(Number).filter(n=> n>0) : [];
+  const total = 1 + parts.reduce((a,b)=> a+b, 0);
+  let rows = null, modulo = '', fallback = false;
+  if(parts.length>=2 && withSlot.length===cand.length){
+    const slots = {};
+    withSlot.forEach(x=>{ (slots[x.p.probForm.slot] = slots[x.p.probForm.slot] || []).push(x); });
+    const keys = Object.keys(slots).map(Number).sort((a,b)=> a-b);
+    if(keys.length===total && keys[0]===0 && keys[keys.length-1]===total-1){
+      rows = []; let i = 0;
+      [1].concat(parts).forEach(n=>{ rows.push(keys.slice(i, i+n).map(k=> slots[k])); i += n; });
+      modulo = parts.join('-');
+    }
+  }
+  if(!rows){
+    fallback = true;
+    const byRole = {P:[],D:[],C:[],A:[]};
+    cand.forEach(x=>{ if(byRole[x.p.ruolo]) byRole[x.p.ruolo].push([x]); });
+    rows = ['P','D','C','A'].map(r=> byRole[r]);
+  }
+  const html = '<div class="pitch pitch-sm">' + rows.slice().reverse().map(row=>`<div class="pitch-row">${row.map(probChip).join('')}</div>`).join('') + '</div>'
+    + (fallback ? '<p class="hint" style="margin:6px 0 0;">Schieramento ricostruito dai ruoli del listone (modulo non disponibile).</p>' : '');
+  return {html, ids, modulo};
+}
 function matchTeamHtml(key, name, est){
   const owner = {}; (state.teams||[]).forEach(t=> (t.roster||[]).forEach(r=>{ owner[r.playerId] = t.name; }));
   const pl = state.players.filter(p=> teamKey(p.squadra)===key).map(p=>({p, prob:playProb(p, est), fm:baseFm(p)}));
@@ -3138,11 +3186,15 @@ function matchTeamHtml(key, name, est){
   const xi = (gk?[gk]:[]).concat(avail.filter(x=>x.p.ruolo!=='P').slice(0,10));
   const ord = {P:0,D:1,C:2,A:3};
   xi.sort((a,b)=> ord[a.p.ruolo]-ord[b.p.ruolo] || b.prob-a.prob);
-  const rest = avail.filter(x=> xi.indexOf(x)<0 && x.prob>0);
+  let rest = avail.filter(x=> xi.indexOf(x)<0 && x.prob>0);
+  const pitch = (lineupView==='campo' && hasForm) ? probPitch(pl) : null;
+  let outList = out;
+  if(pitch){ rest = avail.filter(x=> !pitch.ids.has(x.p.id) && x.prob>0); outList = out.filter(x=> !pitch.ids.has(x.p.id)); }
   const row = x=>`<div class="mt-row"><span class="role-tag role-${x.p.ruolo}">${x.p.ruolo}</span><span class="player-link${nameCls(x.p)}" data-detail="${x.p.id}">${escapeHtml(x.p.nome)}</span>${owner[x.p.id]?`<span class="mt-own">${escapeHtml(owner[x.p.id])}</span>`:''}<span class="mt-p" style="color:${x.prob<0.5?'var(--red)':'inherit'}">${Math.round(x.prob*100)}%</span></div>`;
-  html += `<div class="mt-sub">Probabili titolari</div>` + xi.map(row).join('');
+  if(pitch) html += `<div class="mt-sub">Probabile formazione${pitch.modulo?' ('+escapeHtml(pitch.modulo)+')':''}</div>` + pitch.html;
+  else html += `<div class="mt-sub">Probabili titolari</div>` + xi.map(row).join('');
   if(rest.length) html += `<div class="mt-sub">Ballottaggi e panchina</div>` + rest.map(row).join('');
-  if(out.length) html += `<div class="mt-sub">Indisponibili</div>` + out.map(row).join('');
+  if(outList.length) html += `<div class="mt-sub">Indisponibili</div>` + outList.map(row).join('');
   return html + '</div>';
 }
 function openMatch(ref){
@@ -3150,9 +3202,10 @@ function openMatch(ref){
   const r = roundList().find(x=> x.n===n), m = r && r.matches[idx];
   if(!m) return;
   const d = roundNow().def, est = !!(d && n!==d.n);
-  el('matchBody').innerHTML = `<div class="pd-header"><div><div class="hint" style="margin:0;">${n}ª giornata &middot; ${escapeHtml(fmtKick(m.start))}</div><h2 class="pd-name" style="margin:4px 0 0;">${escapeHtml(m.h)} &ndash; ${escapeHtml(m.a)}</h2></div><button class="btn btn-ghost btn-sm" id="matchCloseBtn">Chiudi &times;</button></div><div class="mt-grid">${matchTeamHtml(m.hk,m.h,est)}${matchTeamHtml(m.ak,m.a,est)}</div>`;
+  el('matchBody').innerHTML = `<div class="pd-header"><div><div class="hint" style="margin:0;">${n}ª giornata &middot; ${escapeHtml(fmtKick(m.start))}</div><h2 class="pd-name" style="margin:4px 0 0;">${escapeHtml(m.h)} &ndash; ${escapeHtml(m.a)}</h2></div><button class="btn btn-ghost btn-sm" id="matchCloseBtn">Chiudi &times;</button></div><div class="mt-view"><label class="sw"><input type="checkbox" id="matchViewSwitch" ${lineupView==='campo'?'checked':''}> Vista a campo</label></div><div class="mt-grid">${matchTeamHtml(m.hk,m.h,est)}${matchTeamHtml(m.ak,m.a,est)}</div>`;
   el('matchOverlay').classList.add('show');
   el('matchCloseBtn').addEventListener('click', closeMatch);
+  el('matchViewSwitch').addEventListener('change', function(){ lineupView = this.checked?'campo':'elenco'; state.lineupView = lineupView; saveState(); const bd = el('matchOverlay'), top = bd.scrollTop; openMatch(ref); bd.scrollTop = top; renderLineups(); });
   el('matchBody').querySelectorAll('[data-detail]').forEach(nd=> nd.addEventListener('click', function(){ openPlayerDetail(this.dataset.detail); }));
 }
 function closeMatch(){ el('matchOverlay').classList.remove('show'); }
