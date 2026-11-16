@@ -1,15 +1,21 @@
 """
 Scarica le probabili formazioni da Gazzetta.it e le abbina ai giocatori del listone.
 
-Output: data/formazioni.csv  (id, nome, squadra, stato, prob, fonte, aggiornato)
+Output: data/formazioni.csv  (id, nome, squadra, stato, prob, fonte, aggiornato, modulo, slot)
   - id      = id del giocatore in data/quotazioni.csv (cosi' l'app non deve rifare l'abbinamento)
   - stato   = titolare | ballottaggio
   - prob    = probabilita' stimata (0-100) che giochi dall'inizio
+  - modulo  = modulo indicato da Gazzetta per la squadra (es. 3-5-2)
+  - slot    = posizione nell'undici (0 = portiere, poi difesa, centrocampo, attacco).
+              I giocatori in ballottaggio per lo stesso posto condividono lo stesso slot.
+              Serve all'app per mostrare la probabile formazione "schierata" a campo.
 
 Va eseguito DOPO fetch_data.py (serve data/quotazioni.csv).
 
 NOTA: il parser e' scritto "al buio" rispetto all'HTML reale di Gazzetta. Se alla prima
 esecuzione estrae 0 squadre, guarda data/debug_formazioni.html e adatta parse_gazzetta().
+Si assume che Gazzetta elenchi i giocatori in ordine portiere -> difesa -> centrocampo -> attacco.
+Se non e' cosi', l'app ripiega da sola sui ruoli del listone.
 """
 import csv
 import os
@@ -97,9 +103,13 @@ def split_entry(entry):
 
 def parse_gazzetta(html, known_team_keys):
     """
-    Ritorna lista di dict: {squadra, nome, stato}.
+    Ritorna (lista di dict {squadra, nome, stato, modulo, slot}, numero di intestazioni).
     Strategia: nel testo della pagina cerca le intestazioni 'SQUADRA (modulo):' e legge
     l'elenco dei giocatori fino alla prossima intestazione o parola-stop.
+    Ogni voce dell'elenco e' uno 'slot' dell'undici (0 = portiere); piu' nomi nello stesso
+    slot sono un ballottaggio.
+    Se la pagina riporta la stessa squadra due volte (vista classica + schieramento) si
+    tiene solo la prima occorrenza, cosi' gli slot non si mischiano.
     """
     soup = BeautifulSoup(html, "html.parser")
     for t in soup(["script", "style", "noscript"]):
@@ -108,6 +118,7 @@ def parse_gazzetta(html, known_team_keys):
 
     headers = list(HEADER_RE.finditer(text))
     out = []
+    done_teams = set()
     for i, m in enumerate(headers):
         words = m.group(1).split()
         # il gruppo puo' includere parole precedenti (es. "Serie A INTER"): si prova dal suffisso piu' corto
@@ -120,20 +131,32 @@ def parse_gazzetta(html, known_team_keys):
         if squadra is None:
             squadra = words[-1]
 
+        tk = team_key(squadra)
+        if tk in done_teams:
+            continue
+        done_teams.add(tk)
+
         end = headers[i + 1].start() if i + 1 < len(headers) else len(text)
         seg = text[m.end():end]
         stop = STOP_RE.search(seg)
         if stop:
             seg = seg[:stop.start()]
 
+        modulo = m.group(2)
+        slot = 0
         for entry in re.split(r"[;,]", seg):
             nomi, ballot = split_entry(entry)
+            if not nomi:
+                continue
             for nome in nomi:
                 out.append({
                     "squadra": squadra,
                     "nome": nome,
                     "stato": "ballottaggio" if ballot else "titolare",
+                    "modulo": modulo,
+                    "slot": slot,
                 })
+            slot += 1
     return out, len(headers)
 
 
@@ -202,6 +225,8 @@ def main():
             "prob": PROB_BALLOTTAGGIO if e["stato"] == "ballottaggio" else PROB_TITOLARE,
             "fonte": "gazzetta",
             "aggiornato": now,
+            "modulo": e["modulo"],
+            "slot": e["slot"],
         })
 
     print(f"Squadre trovate: {n_teams}, giocatori letti: {len(entries)}, abbinati: {len(rows)}")
@@ -212,7 +237,9 @@ def main():
         sys.exit(1)
 
     with open("data/formazioni.csv", "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=["id", "nome", "squadra", "stato", "prob", "fonte", "aggiornato"])
+        w = csv.DictWriter(
+            f, fieldnames=["id", "nome", "squadra", "stato", "prob", "fonte", "aggiornato", "modulo", "slot"]
+        )
         w.writeheader()
         w.writerows(rows)
     print("OK: data/formazioni.csv")
