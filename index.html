@@ -2109,12 +2109,21 @@ function drawConsigli(){
     <table>
       <thead><tr><th>Reparto</th><th class="num">Slot mancanti</th><th class="num">Già speso</th><th class="num">Budget consigliato</th><th class="num">Media a giocatore</th><th class="num">Fascia tipica*</th><th class="num">Scarto**</th></tr></thead>
       <tbody>`;
+  /* Budget ideale per reparto arrotondato col metodo del resto piu grande: la somma torna sempre al budget */
+  const idealRound = (()=>{
+    const roles = ['P','D','C','A'];
+    const raw = roles.map(r=> team.budget*ROLE_WEIGHTS[r]);
+    const fl = raw.map(Math.floor);
+    let rem = Math.round(team.budget) - fl.reduce((a,b)=> a+b, 0);
+    raw.map((v,i)=> [v-fl[i], i]).sort((a,b)=> b[0]-a[0] || a[1]-b[1]).forEach(([,i])=>{ if(rem>0){ fl[i]++; rem--; } });
+    const o = {}; roles.forEach((r,i)=> o[r]=fl[i]); return o;
+  })();
   ['P','D','C','A'].forEach(r=>{
     const rg = ROLE_RANGES[r];
     const typ = `${fmt(team.budget*rg[0])}&ndash;${fmt(team.budget*rg[1])}`;
     const spentShare = team.budget ? spentByRole[r]/team.budget : 0;
     const warn = spentShare > rg[1] ? ' style="color:var(--red)" title="Sopra la fascia tipica"' : '';
-    const idealTot = team.budget*ROLE_WEIGHTS[r], slotsR = state.slots[r]||0, filled = slotsR-neededSlots[r];
+    const idealTot = idealRound[r], slotsR = state.slots[r]||0, filled = slotsR-neededSlots[r];
     const consTot = neededSlots[r] ? shownBudget(r) : idealTot;
     const consAvg = neededSlots[r] ? shownBudget(r)/neededSlots[r] : (slotsR ? idealTot/slotsR : 0);
     const gap = spentByRole[r] - (slotsR ? idealTot*filled/slotsR : 0);
