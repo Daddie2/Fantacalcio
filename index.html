@@ -2873,6 +2873,7 @@ function playProb(p, est){
   return rate===null ? base : Math.max(0.05, Math.min(0.95, 0.5*base + 0.5*rate));
 }
 let lineupView = state.lineupView || 'campo';
+let probView = state.probView || 'elenco';  /* vista delle probabili formazioni reali (popup partita), indipendente da lineupView */
 function blendStat(p, f){
   const c = p.stats && p.stats.curr, v = p.stats && p.stats.prev;
   const pvC = (c && c.pv) || 0, a = c && c[f], b = v && v[f];
@@ -3187,7 +3188,7 @@ function matchTeamHtml(key, name, est){
   const ord = {P:0,D:1,C:2,A:3};
   xi.sort((a,b)=> ord[a.p.ruolo]-ord[b.p.ruolo] || b.prob-a.prob);
   let rest = avail.filter(x=> xi.indexOf(x)<0 && x.prob>0);
-  const pitch = (lineupView==='campo' && hasForm) ? probPitch(pl) : null;
+  const pitch = (probView==='campo' && hasForm) ? probPitch(pl) : null;
   let outList = out;
   if(pitch){ rest = avail.filter(x=> !pitch.ids.has(x.p.id) && x.prob>0); outList = out.filter(x=> !pitch.ids.has(x.p.id)); }
   const row = x=>`<div class="mt-row"><span class="role-tag role-${x.p.ruolo}">${x.p.ruolo}</span><span class="player-link${nameCls(x.p)}" data-detail="${x.p.id}">${escapeHtml(x.p.nome)}</span>${owner[x.p.id]?`<span class="mt-own">${escapeHtml(owner[x.p.id])}</span>`:''}<span class="mt-p" style="color:${x.prob<0.5?'var(--red)':'inherit'}">${Math.round(x.prob*100)}%</span></div>`;
@@ -3202,10 +3203,10 @@ function openMatch(ref){
   const r = roundList().find(x=> x.n===n), m = r && r.matches[idx];
   if(!m) return;
   const d = roundNow().def, est = !!(d && n!==d.n);
-  el('matchBody').innerHTML = `<div class="pd-header"><div><div class="hint" style="margin:0;">${n}ª giornata &middot; ${escapeHtml(fmtKick(m.start))}</div><h2 class="pd-name" style="margin:4px 0 0;">${escapeHtml(m.h)} &ndash; ${escapeHtml(m.a)}</h2></div><button class="btn btn-ghost btn-sm" id="matchCloseBtn">Chiudi &times;</button></div><div class="mt-view"><label class="sw"><input type="checkbox" id="matchViewSwitch" ${lineupView==='campo'?'checked':''}> Vista a campo</label></div><div class="mt-grid">${matchTeamHtml(m.hk,m.h,est)}${matchTeamHtml(m.ak,m.a,est)}</div>`;
+  el('matchBody').innerHTML = `<div class="pd-header"><div><div class="hint" style="margin:0;">${n}ª giornata &middot; ${escapeHtml(fmtKick(m.start))}</div><h2 class="pd-name" style="margin:4px 0 0;">${escapeHtml(m.h)} &ndash; ${escapeHtml(m.a)}</h2></div><button class="btn btn-ghost btn-sm" id="matchCloseBtn">Chiudi &times;</button></div><div class="mt-view"><label class="sw"><input type="checkbox" id="matchViewSwitch" ${probView==='campo'?'checked':''}> Probabili formazioni a campo</label></div><div class="mt-grid">${matchTeamHtml(m.hk,m.h,est)}${matchTeamHtml(m.ak,m.a,est)}</div>`;
   el('matchOverlay').classList.add('show');
   el('matchCloseBtn').addEventListener('click', closeMatch);
-  el('matchViewSwitch').addEventListener('change', function(){ lineupView = this.checked?'campo':'elenco'; state.lineupView = lineupView; saveState(); const bd = el('matchOverlay'), top = bd.scrollTop; openMatch(ref); bd.scrollTop = top; renderLineups(); });
+  el('matchViewSwitch').addEventListener('change', function(){ probView = this.checked?'campo':'elenco'; state.probView = probView; saveState(); const bd = el('matchOverlay'), top = bd.scrollTop; openMatch(ref); bd.scrollTop = top; });
   el('matchBody').querySelectorAll('[data-detail]').forEach(nd=> nd.addEventListener('click', function(){ openPlayerDetail(this.dataset.detail); }));
 }
 function closeMatch(){ el('matchOverlay').classList.remove('show'); }
