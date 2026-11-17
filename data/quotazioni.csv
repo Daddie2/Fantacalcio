@@ -33,7 +33,6 @@ p_barella,C,Barella,INT,18.0,63.0
 p_zielinski,C,Zielinski,INT,18.0,42.0
 p_taylor_k,C,Taylor K.,LAZ,18.0,60.0
 p_noslin,A,Noslin,LAZ,18.0,100.0
-p_leao*,A,Leao*,MIL,18.0,75.0
 p_wesley,D,Wesley,ROM,18.0,87.0
 p_adams_c,A,Adams C.,TOR,18.0,33.0
 p_simeone,A,Simeone,TOR,18.0,69.0
@@ -95,7 +94,6 @@ p_mandragora,C,Mandragora,TOR,13.0,30.0
 p_palmisani,P,Palmisani,FRO,13.0,28.0
 p_bonny,A,Bonny,INT,13.0,18.0
 p_modric,C,Modric,MIL,13.0,55.0
-p_nkunku*,A,Nkunku*,MIL,13.0,20.0
 p_cristante,C,Cristante,ROM,13.0,42.0
 p_njie,C,Njie,FIO,13.0,83.0
 p_adams_a,A,Adams A.,VEN,13.0,29.0
@@ -122,7 +120,7 @@ p_rrahmani,D,Rrahmani,NAP,12.0,44.0
 p_lobotka,C,Lobotka,NAP,12.0,12.0
 p_lang,A,Lang,NAP,12.0,26.0
 p_mancini,D,Mancini,ROM,12.0,49.0
-p_n'dicka,D,N'Dicka,ROM,12.0,34.0
+p_ndicka,D,Ndicka,ROM,12.0,34.0
 p_matic,C,Matic,SAS,12.0,15.0
 p_adzic,C,Adzic,SAS,12.0,31.0
 p_kulenovic,A,Kulenovic,TOR,12.0,15.0
@@ -156,11 +154,9 @@ p_masini,C,Masini,FRO,10.0,14.0
 p_martinez_jo,P,Martinez Jo.,INT,10.0,51.0
 p_kalulu,D,Kalulu,JUV,10.0,24.0
 p_floriani_mussolini,D,Floriani Mussolini,LAZ,10.0,20.0
-p_dia*,A,Dia*,LAZ,10.0,20.0
 p_n'dri,A,N'Dri,LEC,10.0,14.0
 p_saelemaekers,C,Saelemaekers,MIL,10.0,20.0
 p_chukwueze,C,Chukwueze,MIL,10.0,18.0
-p_lukaku*,A,Lukaku*,NAP,10.0,45.0
 p_doig,D,Doig,SAS,10.0,12.0
 p_comuzzo,D,Comuzzo,TOR,10.0,13.0
 p_cacciamani,C,Cacciamani,TOR,10.0,18.0
@@ -177,10 +173,8 @@ p_fabbian,C,Fabbian,PAR,9.0,20.0
 p_piccoli,A,Piccoli,BOL,9.0,23.0
 p_calvani,D,Calvani,FRO,9.0,16.0
 p_cichella,C,Cichella,FRO,9.0,10.0
-p_di_gregorio*,P,Di Gregorio*,JUV,9.0,10.0
 p_douglas_luiz,C,Douglas Luiz,JUV,9.0,27.0
 p_provstgaard,D,Provstgaard,LAZ,9.0,18.0
-p_ratkov*,A,Ratkov*,LAZ,9.0,22.0
 p_akinsanmiro,C,Akinsanmiro,MON,9.0,12.0
 p_colpani,C,Colpani,MON,9.0,9.0
 p_meret,P,Meret,NAP,9.0,42.0
@@ -197,24 +191,20 @@ p_theate,D,Theate,BOL,9.0,11.0
 p_braganca,C,Braganca,TOR,9.0,16.0
 p_nzola,A,Nzola,CAG,9.0,21.0
 p_alaba,D,Alaba,UDI,9.0,12.0
-p_dallinga*,A,Dallinga*,BOL,8.0,10.0
 p_kempf,D,Kempf,COM,8.0,15.0
 p_valle,D,Valle,COM,8.0,20.0
 p_milla,C,Milla,COM,8.0,21.0
 p_fagioli,C,Fagioli,FIO,8.0,20.0
 p_ostigard,D,Ostigard,GEN,8.0,26.0
-p_norton-cuffy*,D,Norton-Cuffy*,GEN,8.0,15.0
 p_frendrup,C,Frendrup,GEN,8.0,15.0
 p_gatti,D,Gatti,JUV,8.0,12.0
 p_boga,A,Boga,JUV,8.0,17.0
-p_david*,A,David*,JUV,8.0,25.0
 p_pedraza,D,Pedraza,LAZ,8.0,7.0
 p_veiga_d,D,Veiga D.,LEC,8.0,12.0
 p_gallo,D,Gallo,LEC,8.0,12.0
 p_musah,C,Musah,MIL,8.0,17.0
 p_kouadio,D,Kouadio,MON,8.0,13.0
 p_birindelli,D,Birindelli,MON,8.0,12.0
-p_gutierrez*,D,Gutierrez*,NAP,8.0,26.0
 p_santos_a,A,Santos A.,NAP,8.0,17.0
 p_valeri,D,Valeri,PAR,8.0,20.0
 p_gollini,P,Gollini,ROM,8.0,20.0
@@ -235,7 +225,6 @@ p_lulli,D,Lulli,ROM,8.0,20.0
 p_perri,P,Perri,TOR,8.0,13.0
 p_zeballos,A,Zeballos,MON,8.0,9.0
 p_ehizibue,D,Ehizibue,GEN,8.0,9.0
-p_djimsiti*,D,Djimsiti*,ATA,7.0,16.0
 p_scalvini,D,Scalvini,ATA,7.0,16.0
 p_de_roon,C,De Roon,ROM,7.0,10.0
 p_zortea,D,Zortea,BOL,7.0,15.0
@@ -251,19 +240,16 @@ p_doekhi,D,Doekhi,LAZ,7.0,11.0
 p_maleh,C,Maleh,LEC,7.0,7.0
 p_tomori,D,Tomori,MIL,7.0,10.0
 p_de_winter,D,De Winter,MIL,7.0,16.0
-p_suzuki*,P,Suzuki*,PAR,7.0,20.0
 p_ismajli,D,Ismajli,TOR,7.0,9.0
 p_tourè_e,A,Tourè E.,PAR,7.0,20.0
 p_terzic,D,Terzic,FRO,7.0,5.0
 p_monteiro_j,C,Monteiro J.,LEC,7.0,10.0
 p_sanchez_ro,P,Sanchez Ro.,COM,7.0,4.0
 p_kolasinac,D,Kolasinac,ATA,6.0,10.0
-p_ahanor*,D,Ahanor*,ATA,6.0,13.0
 p_lucumì,D,Lucumì,JUV,6.0,14.0
 p_rowe,C,Rowe,ATA,6.0,22.0
 p_odgaard,C,Odgaard,BOL,6.0,25.0
 p_mina,D,Mina,CAG,6.0,11.0
-p_mutandwa*,A,Mutandwa*,CAG,6.0,7.0
 p_tornqvist,P,Tornqvist,MON,6.0,6.0
 p_fadera,C,Fadera,CAG,6.0,10.0
 p_de_gea,P,De Gea,FIO,6.0,13.0
@@ -271,17 +257,13 @@ p_pongracic,D,Pongracic,FIO,6.0,8.0
 p_fini,C,Fini,FRO,6.0,10.0
 p_vasquez,D,Vasquez,GEN,6.0,18.0
 p_stones,D,Stones,INT,6.0,8.0
-p_perin*,P,Perin*,JUV,6.0,5.0
 p_celik,D,Celik,JUV,6.0,11.0
 p_locatelli,C,Locatelli,JUV,6.0,15.0
-p_romagnoli*,D,Romagnoli*,LAZ,6.0,20.0
 p_falcone,P,Falcone,LEC,6.0,17.0
 p_jashari,C,Jashari,MIL,6.0,11.0
-p_gimenez*,A,Gimenez*,MIL,6.0,10.0
 p_marin_r,D,Marin R.,NAP,6.0,22.0
 p_spinazzola,D,Spinazzola,NAP,6.0,11.0
 p_mazzocchi,D,Mazzocchi,VEN,6.0,10.0
-p_circati*,D,Circati*,PAR,6.0,18.0
 p_delprato,D,Delprato,PAR,6.0,18.0
 p_keita_m,C,Keita M.,PAR,6.0,12.0
 p_almqvist,C,Almqvist,PAR,6.0,5.0
@@ -321,9 +303,7 @@ p_olivera,D,Olivera,NAP,5.0,10.0
 p_giovane,A,Giovane,NAP,5.0,6.0
 p_corvi,P,Corvi,PAR,5.0,2.0
 p_troilo,D,Troilo,PAR,5.0,13.0
-p_ondrejka*,C,Ondrejka*,PAR,5.0,18.0
 p_comert,D,Comert,TOR,5.0,4.0
-p_pedersen*,D,Pedersen*,TOR,5.0,12.0
 p_casadei,C,Casadei,TOR,5.0,8.0
 p_vojvoda,D,Vojvoda,UDI,5.0,13.0
 p_unai_gomez,C,Unai Gomez,UDI,5.0,12.0
@@ -343,18 +323,12 @@ p_bernasconi,D,Bernasconi,ATA,4.0,11.0
 p_heggem,D,Heggem,BOL,4.0,10.0
 p_holm,D,Holm,BOL,4.0,3.0
 p_kofler,D,Kofler,CAG,4.0,2.0
-p_zappa*,D,Zappa*,CAG,4.0,7.0
-p_prati*,C,Prati*,CAG,4.0,7.0
 p_fazzini,C,Fazzini,CAG,4.0,10.0
-p_borrelli*,A,Borrelli*,CAG,4.0,9.0
 p_smolcic_i,D,Smolcic I.,COM,4.0,8.0
 p_addai,C,Addai,COM,4.0,8.0
-p_morata*,A,Morata*,COM,4.0,7.0
 p_viery,D,Viery,FIO,4.0,10.0
 p_cittadini,D,Cittadini,FRO,4.0,10.0
-p_koutsoupias*,C,Koutsoupias*,FRO,4.0,11.0
 p_hasa,C,Hasa,FRO,4.0,1.0
-p_martin*,D,Martin*,GEN,4.0,8.0
 p_traorè_hj,C,Traorè Hj.,GEN,4.0,11.0
 p_provedel,P,Provedel,INT,4.0,10.0
 p_luis_henrique,C,Luis Henrique,INT,4.0,10.0
@@ -365,9 +339,7 @@ p_ngom,C,Ngom,LEC,4.0,8.0
 p_pierotti,C,Pierotti,LEC,4.0,10.0
 p_geubbels,A,Geubbels,LEC,4.0,11.0
 p_bartesaghi,D,Bartesaghi,MIL,4.0,10.0
-p_fofana_y*,C,Fofana Y.*,MIL,4.0,10.0
 p_loftus-cheek,C,Loftus-Cheek,MIL,4.0,7.0
-p_delli_carri*,D,Delli Carri*,MON,4.0,11.0
 p_lucchesi,D,Lucchesi,MON,4.0,11.0
 p_carboni_a,D,Carboni A.,MON,4.0,10.0
 p_bakoune,D,Bakoune,MON,4.0,2.0
@@ -378,7 +350,6 @@ p_bernabè,C,Bernabè,PAR,4.0,16.0
 p_frigan,A,Frigan,PAR,4.0,1.0
 p_elphege,A,Elphege,PAR,4.0,3.0
 p_koulierakis,D,Koulierakis,ROM,4.0,8.0
-p_el_aynaoui*,C,El Aynaoui*,ROM,4.0,13.0
 p_idzes,D,Idzes,SAS,4.0,10.0
 p_konè_i,C,Konè I.,SAS,4.0,20.0
 p_ilic,C,Ilic,LEC,4.0,12.0
@@ -397,20 +368,17 @@ p_wiafe,C,Wiafe,GEN,4.0,5.0
 p_hien,D,Hien,ATA,3.0,8.0
 p_vitik,D,Vitik,BOL,3.0,5.0
 p_moro_n,C,Moro N.,BOL,3.0,12.0
-p_kuhn*,A,Kuhn*,COM,3.0,5.0
 p_amey,D,Amey,FRO,3.0,1.0
 p_mitaj,D,Mitaj,GEN,3.0,5.0
 p_meichtry,C,Meichtry,GEN,3.0,6.0
 p_pavard,D,Pavard,INT,3.0,10.0
 p_kelly_l,D,Kelly L.,JUV,3.0,10.0
-p_miretti*,C,Miretti*,JUV,3.0,7.0
 p_lazzari,D,Lazzari,LAZ,3.0,4.0
 p_marusic,D,Marusic,LAZ,3.0,7.0
 p_gandelman,C,Gandelman,LEC,3.0,7.0
 p_stulic,A,Stulic,LEC,3.0,8.0
 p_gabbia,D,Gabbia,MIL,3.0,7.0
 p_diawara_s,D,Diawara S.,MIL,3.0,10.0
-p_athekame*,D,Athekame*,MIL,3.0,8.0
 p_estupinan,D,Estupinan,MIL,3.0,9.0
 p_ricci_s,C,Ricci S.,COM,3.0,10.0
 p_pessina,C,Pessina,MON,3.0,14.0
@@ -419,9 +387,7 @@ p_buongiorno,D,Buongiorno,NAP,3.0,7.0
 p_folorunsho,C,Folorunsho,MON,3.0,11.0
 p_neres,A,Neres,NAP,3.0,11.0
 p_ordonez_c,C,Ordonez C.,PAR,3.0,6.0
-p_sorensen_o*,C,Sorensen O.*,PAR,3.0,12.0
 p_rensch,D,Rensch,ROM,3.0,12.0
-p_angelino*,D,Angelino*,ROM,3.0,12.0
 p_muric,P,Muric,SAS,3.0,2.0
 p_turati,P,Turati,SAS,3.0,3.0
 p_lipani,C,Lipani,SAS,3.0,3.0
@@ -463,7 +429,6 @@ p_kaba,C,Kaba,LEC,2.0,3.0
 p_camarda,A,Camarda,MIL,2.0,4.0
 p_thiam,P,Thiam,MON,2.0,1.0
 p_colombo_l,C,Colombo L.,MON,2.0,3.0
-p_petagna*,A,Petagna*,MON,2.0,5.0
 p_ndiaye,D,Ndiaye,PAR,2.0,4.0
 p_valenti,D,Valenti,PAR,2.0,4.0
 p_cremaschi,C,Cremaschi,PAR,2.0,1.0
@@ -473,7 +438,6 @@ p_aboukhlal,C,Aboukhlal,TOR,2.0,2.0
 p_arizala,D,Arizala,UDI,2.0,7.0
 p_zarraga,C,Zarraga,UDI,2.0,4.0
 p_chakvetadze,C,Chakvetadze,UDI,2.0,9.0
-p_buksa*,A,Buksa*,UDI,2.0,4.0
 p_bella-kotchap,D,Bella-Kotchap,VEN,2.0,8.0
 p_schingtienne,D,Schingtienne,VEN,2.0,4.0
 p_dagasso,C,Dagasso,VEN,2.0,1.0
@@ -486,35 +450,24 @@ p_jovanovic,C,Jovanovic,UDI,2.0,2.0
 p_fernandez_t,C,Fernandez T.,VEN,2.0,4.0
 p_esteban,A,Esteban,LEC,2.0,6.0
 p_vasquez_d,P,Vasquez D.,ROM,2.0,3.0
-p_rossi_f*,P,Rossi F.*,ATA,1.0,1.0
 p_sportiello,P,Sportiello,ATA,1.0,1.0
 p_happonen,P,Happonen,BOL,1.0,1.0
-p_ciocci*,P,Ciocci*,CAG,1.0,1.0
 p_sherri,P,Sherri,CAG,1.0,1.0
-p_raterink*,D,Raterink*,CAG,1.0,1.0
 p_idrissi_r,D,Idrissi R.,CAG,1.0,1.0
-p_albarracin*,A,Albarracin*,CAG,1.0,1.0
 p_vigorito,P,Vigorito,COM,1.0,1.0
 p_goldaniga,D,Goldaniga,COM,1.0,1.0
-p_cuenca_a*,D,Cuenca A.*,COM,1.0,8.0
 p_lahdo,C,Lahdo,COM,1.0,1.0
-p_azon*,A,Azon*,COM,1.0,1.0
 p_christensen_o,P,Christensen O.,FIO,1.0,1.0
 p_lezzerini,P,Lezzerini,FIO,1.0,1.0
 p_parisi,D,Parisi,FIO,1.0,7.0
 p_desplanches,P,Desplanches,FRO,1.0,1.0
 p_lolic,P,Lolic,FRO,1.0,1.0
 p_akpoguma,D,Akpoguma,FRO,1.0,4.0
-p_gelli_j*,D,Gelli J.*,FRO,1.0,1.0
-p_oyono_j*,D,Oyono J.*,FRO,1.0,2.0
-p_corrado*,D,Corrado*,FRO,1.0,1.0
 p_el_azzouzi_a,C,El Azzouzi A.,FRO,1.0,1.0
 p_kone_b,C,Kone B.,FRO,1.0,1.0
 p_gelli_f,C,Gelli F.,FRO,1.0,1.0
 p_sommariva,P,Sommariva,GEN,1.0,1.0
 p_stolz,P,Stolz,GEN,1.0,1.0
-p_vogliacco*,D,Vogliacco*,GEN,1.0,2.0
-p_matturro*,D,Matturro*,GEN,1.0,2.0
 p_puczka,D,Puczka,GEN,1.0,1.0
 p_venturino,C,Venturino,GEN,1.0,2.0
 p_havel,A,Havel,GEN,1.0,1.0
@@ -524,19 +477,14 @@ p_rugani,D,Rugani,JUV,1.0,1.0
 p_ekhator,A,Ekhator,JUV,1.0,4.0
 p_motta,P,Motta,LAZ,1.0,1.0
 p_renzetti,P,Renzetti,LAZ,1.0,1.0
-p_patric*,D,Patric*,LAZ,1.0,1.0
 p_pellegrini_lu,D,Pellegrini Lu.,LAZ,1.0,2.0
 p_cataldi,C,Cataldi,LAZ,1.0,7.0
 p_przyborek,C,Przyborek,LAZ,1.0,2.0
-p_fruchtl*,P,Fruchtl*,LEC,1.0,1.0
-p_samooja*,P,Samooja*,LEC,1.0,1.0
 p_jean,D,Jean,LEC,1.0,1.0
-p_perez_m*,D,Perez M.*,LEC,1.0,1.0
 p_fofana_sa,C,Fofana Sa.,LEC,1.0,1.0
 p_berisha_m,C,Berisha M.,LEC,1.0,4.0
 p_terracciano,P,Terracciano,MIL,1.0,1.0
 p_torriani,P,Torriani,MIL,1.0,1.0
-p_pizzignacco*,P,Pizzignacco*,MON,1.0,1.0
 p_strajnar,P,Strajnar,MON,1.0,1.0
 p_antov,D,Antov,MON,1.0,1.0
 p_ciurria,C,Ciurria,MON,1.0,1.0
@@ -545,35 +493,24 @@ p_marianucci,D,Marianucci,NAP,1.0,4.0
 p_carboni_f,D,Carboni F.,PAR,1.0,3.0
 p_de_marzi,P,De Marzi,ROM,1.0,1.0
 p_ziolkowski,D,Ziolkowski,MON,1.0,2.0
-p_vaz*,A,Vaz*,ROM,1.0,4.0
 p_russo_a,P,Russo A.,SAS,1.0,1.0
 p_walukiewicz,D,Walukiewicz,SAS,1.0,9.0
 p_candè,D,Candè,SAS,1.0,3.0
-p_missori*,D,Missori*,SAS,1.0,2.0
 p_pieragnolo,D,Pieragnolo,SAS,1.0,1.0
 p_boloca,C,Boloca,SAS,1.0,1.0
-p_iannoni*,C,Iannoni*,SAS,1.0,1.0
-p_moro_l*,A,Moro L.*,SAS,1.0,1.0
 p_mascardi,P,Mascardi,TOR,1.0,1.0
-p_paleari*,P,Paleari*,TOR,1.0,1.0
 p_siviero,P,Siviero,TOR,1.0,1.0
 p_biraghi,D,Biraghi,TOR,1.0,4.0
-p_anjorin*,C,Anjorin*,TOR,1.0,4.0
 p_padelli,P,Padelli,UDI,1.0,1.0
-p_piana*,P,Piana*,UDI,1.0,1.0
-p_mlacic*,D,Mlacic*,UDI,1.0,3.0
-p_camara_a*,C,Camara A.*,UDI,1.0,3.0
 p_bayo_v,A,Bayo V.,UDI,1.0,3.0
 p_grandi,P,Grandi,VEN,1.0,1.0
 p_pozzi,P,Pozzi,VEN,1.0,1.0
 p_sverko,D,Sverko,VEN,1.0,1.0
 p_gomes,D,Gomes,VEN,1.0,1.0
 p_franjic,D,Franjic,VEN,1.0,1.0
-p_bjarkason*,C,Bjarkason*,VEN,1.0,3.0
 p_duncan,C,Duncan,VEN,1.0,1.0
 p_lisman,A,Lisman,VEN,1.0,1.0
 p_adorante,A,Adorante,VEN,1.0,1.0
-p_vismara*,P,Vismara*,ATA,1.0,1.0
 p_satalino,P,Satalino,SAS,1.0,1.0
 p_aurelio,D,Aurelio,CAG,1.0,4.0
 p_grillitsch,C,Grillitsch,FRO,1.0,7.0
@@ -588,7 +525,6 @@ p_omar_fayed,D,Omar Fayed,FRO,1.0,1.0
 p_bleve,P,Bleve,LEC,1.0,1.0
 p_laerke,C,Laerke,LEC,1.0,1.0
 p_comotto,C,Comotto,MIL,1.0,1.0
-p_macchioni*,D,Macchioni*,SAS,1.0,1.0
 p_ciervo,C,Ciervo,CAG,1.0,1.0
 p_grabara,P,Grabara,JUV,1.0,1.0
 p_maye,D,Maye,MON,1.0,1.0
