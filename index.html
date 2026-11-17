@@ -381,9 +381,15 @@ tr[data-g]{cursor:pointer;}
 @media (min-width:801px){
   body:has(#view-asta.active) .content{padding-left:14px;padding-right:14px;}
   body:has(#view-asta.active) .league-topbar{margin-left:-14px;margin-right:-14px;padding-left:14px;padding-right:14px;}
-  #astaRoses{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px;}
-  #astaRoses .ar-head{padding:8px 6px 6px;}
-  #astaRoses .ar-list{padding:4px 6px 8px;}
+  /* Rose in diretta: il blocco si allarga a sinistra sopra lo spazio vuoto della sidebar (sidebar 230px + padding del contenuto e del riquadro),
+     le squadre vanno a capo da sole (nessuno scorrimento) e il testo non viene tagliato */
+  #astaRoses{position:relative;z-index:20;margin-left:-268px;width:calc(100% + 268px);padding:0 0 8px 14px;box-sizing:border-box;background:var(--panel);
+    grid-template-columns:repeat(auto-fit,minmax(172px,1fr));grid-auto-flow:row;grid-auto-columns:auto;gap:8px;overflow:visible;}
+  #astaRoses .ar-team{min-width:0;}
+  #astaRoses .ar-head{padding:8px 8px 6px;}
+  #astaRoses .ar-list{padding:4px 8px 8px;}
+  #astaRoses .ar-max{white-space:normal;overflow-wrap:anywhere;}
+  #astaRoses .ar-cred{white-space:nowrap;}
   #astaRoses .ar-list li.ar-grp{flex-wrap:wrap;justify-content:center;text-align:center;white-space:normal;font-size:10.5px;padding:3px 5px;column-gap:4px;row-gap:0;}
   #astaRoses .ar-list li.ar-grp span:last-child{font-size:10.5px;margin-left:0;white-space:nowrap;}
   #astaRoses .ar-counts{font-size:10.5px;}
@@ -450,7 +456,7 @@ tr[data-g]{cursor:pointer;}
         </div>
         <hr class="section-divider">
         <div class="panel-title">Rose in diretta</div>
-        <div class="hint" style="margin:0 0 8px;">Tutte le squadre in fila: crediti rimasti e giocatori per ruolo. Scorri di lato per vedere le altre squadre. Tocca un giocatore per aprire la scheda (in rosso se infortunato).</div>
+        <div class="hint" style="margin:0 0 8px;">Tutte le squadre in vista: crediti rimasti e giocatori per ruolo. Tocca un giocatore per aprire la scheda (in rosso se infortunato).</div>
         <div class="ar-wrap" id="astaRoses"></div>
         <hr class="section-divider">
         <div class="panel-title">Ultime assegnazioni</div>
