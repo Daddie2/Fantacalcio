@@ -733,9 +733,9 @@ tr[data-g]{cursor:pointer;}
         <div class="panel-title">Backup dati</div>
         <p class="hint" style="margin-top:0;">I dati sono salvati automaticamente nel browser. Usa il backup per portarli su un altro dispositivo o metterli al sicuro.</p>
         <div class="btn-row">
-          <button class="btn btn-ghost" id="exportBtn">Esporta backup (.json)</button>
-          <label class="btn btn-ghost" style="display:inline-flex;align-items:center;">Importa backup<input type="file" id="importBackupInput" accept=".json" style="display:none;"></label>
-          <label class="btn btn-ghost" style="display:inline-flex;align-items:center;">Importa rosa (.json)<input type="file" id="importRosterInput" accept=".json" style="display:none;"></label>
+          <button class="btn btn-ghost" id="exportBtn">Esporta backup completo (.json)</button>
+          <label class="btn btn-ghost" style="display:inline-flex;align-items:center;">Importa backup completo<input type="file" id="importBackupInput" accept=".json" style="display:none;"></label>
+          <label class="btn btn-ghost" style="display:inline-flex;align-items:center;">Importa singola rosa (.json)<input type="file" id="importRosterInput" accept=".json" style="display:none;"></label>
           <button class="btn btn-danger" id="resetBtn">Azzera lega</button>
         </div>
       </div>
@@ -2284,16 +2284,40 @@ el('saveSettingsBtn').addEventListener('click', function(){
   saveState(); toast('Impostazioni salvate'); renderAll();
 });
 el('exportBtn').addEventListener('click', function(){
+  syncLeague();
   const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob); const a = document.createElement('a');
   a.href = url; a.download = 'fanta-war-room-backup.json'; a.click(); URL.revokeObjectURL(url);
 });
+/* Un backup completo ha le leghe (o teams+players); il file di una singola rosa ha 'giocatori' / 'squadra' */
+function looksLikeBackup(d){
+  return !!d && typeof d==='object' && !Array.isArray(d) && !Array.isArray(d.giocatori) &&
+    ((d.leagues && typeof d.leagues==='object' && Object.keys(d.leagues).length>0) || (Array.isArray(d.teams) && Array.isArray(d.players)));
+}
+function applyBackup(parsed){
+  const nLeghe = parsed.leagues ? Object.keys(parsed.leagues).length : 1;
+  const nGioc = Array.isArray(parsed.players) ? parsed.players.length : 0;
+  if(!confirm(`Importare il backup completo (${nLeghe} ${nLeghe===1?'lega':'leghe'}, ${nGioc} giocatori nel listone)?\nTutti i dati di questo dispositivo verranno sostituiti.`)) return;
+  state = parsed;
+  if(!Array.isArray(state.players)) state.players = [];
+  ensureLeagues();
+  activeRosterTeam=null; myTeamId=savedMyTeam(); lineupTeamId=null; rosterEditingId=null; currentDetailId=null;
+  saveState(); renderSetup(); renderAll(); renderLeagueSelect();
+  toast(`Backup importato: ${nLeghe} ${nLeghe===1?'lega':'leghe'}`);
+}
 el('importBackupInput').addEventListener('change', function(e){
   const f = e.target.files[0]; if(!f) return;
+  const input = this;
   const r = new FileReader();
   r.onload = function(ev){
-    try{ const parsed = JSON.parse(ev.target.result); if(!parsed.teams || !parsed.players){ toast('File non valido'); return; } state = parsed; ensureLeagues(); saveState(); renderAll(); renderSetup(); toast('Backup importato'); }
+    try{
+      const parsed = JSON.parse(ev.target.result);
+      if(looksLikeBackup(parsed)){ applyBackup(parsed); }
+      else if(parsed && (parsed.giocatori || parsed.squadra)){ toast('Questo è il file di una singola rosa, non un backup'); importRosterJson(parsed); }
+      else toast('File non valido');
+    }
     catch(err){ console.error(err); toast('Errore backup'); }
+    input.value = '';
   };
   r.readAsText(f);
 });
@@ -3399,7 +3423,7 @@ function importRosterJson(data){
 el('importRosterInput').addEventListener('change', function(e){
   const f = e.target.files[0]; if(!f) return;
   const r = new FileReader();
-  r.onload = function(ev){ try{ importRosterJson(JSON.parse(ev.target.result)); }catch(err){ console.error(err); toast('Errore JSON'); } };
+  r.onload = function(ev){ try{ const d = JSON.parse(ev.target.result); if(looksLikeBackup(d)){ toast('Questo è un backup completo, non una singola rosa'); applyBackup(d); } else importRosterJson(d); }catch(err){ console.error(err); toast('Errore JSON'); } };
   r.readAsText(f); this.value = '';
 });
 
