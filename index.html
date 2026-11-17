@@ -279,13 +279,10 @@ input[type=time]{background:#fff;color:#000;}
 
 .badge-contest{cursor:pointer;}
 .badge-watch[data-contest]{cursor:pointer;}
-.ar-wrap{--ar-cols:1;--ar-gap:12px;display:grid;gap:var(--ar-gap);align-items:stretch;padding-bottom:8px;
-  grid-template-columns:repeat(auto-fit,minmax(calc((100% - (var(--ar-cols) - 1) * var(--ar-gap)) / var(--ar-cols) - .5px),1fr));}
-@media(min-width:420px){.ar-wrap{--ar-cols:2;}}
-@media(min-width:640px){.ar-wrap{--ar-cols:3;}}
-@media(min-width:900px){.ar-wrap{--ar-cols:4;}}
-@media(min-width:1000px){.ar-wrap{--ar-cols:5;}}
-@media(min-width:1300px){.ar-wrap{--ar-cols:10;--ar-gap:6px;}}
+.ar-wrap{--ar-min:170px;--ar-gap:12px;display:grid;gap:var(--ar-gap);align-items:stretch;padding-bottom:8px;
+  grid-template-columns:repeat(auto-fit,minmax(var(--ar-min),1fr));}
+/* Da 701px in su le card sono compatte: la larghezza minima fissa fa scendere le colonne una alla volta (10, 9, 8, ...) */
+@media(min-width:701px){.ar-wrap{--ar-min:98px;--ar-gap:6px;}}
 .ar-team{min-width:0;height:100%;display:flex;flex-direction:column;overflow:hidden;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;}
 .ar-list{flex:1 1 auto;}
 .ar-head{background:var(--panel-2);padding:8px 8px 6px;border-bottom:1px solid var(--line);border-radius:6px 6px 0 0;}
@@ -391,12 +388,12 @@ tr[data-g]{cursor:pointer;}
 }
 .ar-title{font-size:20px;}
 /* Rose in diretta: griglia responsiva come le card articoli.
-   Colonne per breakpoint (1 / 2 / 3 / 4 / 5, e 10 in un'unica riga da 1300px); le card di una riga hanno la stessa altezza */
+   Il numero di colonne si adatta in modo progressivo alla larghezza disponibile (larghezza minima della card); le card di una riga hanno la stessa altezza */
 #astaRoses .ar-list li.ar-grp{flex-wrap:wrap;justify-content:center;text-align:center;white-space:normal;column-gap:4px;row-gap:0;}
 #astaRoses .ar-list li.ar-grp span:last-child{margin-left:0;white-space:nowrap;}
 #astaRoses .ar-max{white-space:normal;overflow-wrap:anywhere;}
 #astaRoses .ar-cred{white-space:nowrap;}
-@media (min-width:1300px){
+@media (min-width:701px){
   #astaRoses .ar-head{padding:8px 6px 6px;}
   #astaRoses .ar-list{padding:4px 6px 8px;}
   #astaRoses .ar-name{font-size:15.5px;}
