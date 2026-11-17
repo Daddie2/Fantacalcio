@@ -37,12 +37,13 @@ a{color:var(--gold);}
 .sf-row b{font-family:var(--font-mono);color:var(--text);font-weight:500;}
 
 /* Main */
-.content{flex:1;min-width:0;padding:0 34px 60px 34px;max-width:none;}
+html{scrollbar-gutter:stable;}
+.content{--pad:20px;flex:1;min-width:0;padding:0 var(--pad) 60px var(--pad);max-width:none;}
 .view{display:none;}
 .view.active{display:block;}
 
 /* Barra lega in alto (sticky) */
-.league-topbar{position:sticky;top:0;z-index:30;background:linear-gradient(180deg, var(--bg) 70%, rgba(18,22,28,.85));padding:16px 0 14px 0;margin:0 -34px 20px -34px;padding-left:34px;padding-right:34px;border-bottom:1px solid var(--line);}
+.league-topbar{position:sticky;top:0;z-index:30;background:linear-gradient(180deg, var(--bg) 70%, rgba(18,22,28,.85));padding:16px 0 14px 0;margin:0 calc(-1*var(--pad)) 20px calc(-1*var(--pad));padding-left:var(--pad);padding-right:var(--pad);border-bottom:1px solid var(--line);}
 .league-topbar-inner{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
 .league-topbar-label{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);}
 .league-topbar select{min-width:180px;max-width:280px;padding:7px 10px;font-size:13.5px;}
@@ -332,7 +333,6 @@ input[type=time]{background:#fff;color:#000;}
 .tbl-scroll tbody td{white-space:nowrap;}
 .tbl-scroll tbody td:first-child{white-space:normal;min-width:170px;}
 .tbl-scroll td .btn-sm{margin-left:4px;}
-body:has(#view-listone.active) .content{max-width:none;}
 
 .gchart{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:6px;}
 .gchart svg{display:block;width:100%;min-width:640px;height:auto;touch-action:pan-x pan-y;}
@@ -364,8 +364,6 @@ tr[data-g]{cursor:pointer;}
 
 /* Listone compatto: tutta la tabella visibile senza scroll orizzontale su schermi larghi */
 @media (min-width:801px){
-  body:has(#view-listone.active) .content{padding-left:18px;padding-right:18px;}
-  body:has(#view-listone.active) .league-topbar{margin-left:-18px;margin-right:-18px;padding-left:18px;padding-right:18px;}
   #view-listone .tbl-scroll table{font-size:12.5px;}
   #view-listone .tbl-scroll thead th{padding:7px 6px;}
   #view-listone .tbl-scroll tbody td{padding:6px 6px;}
@@ -380,7 +378,7 @@ tr[data-g]{cursor:pointer;}
 /* Menu in alto su tutti gli schermi: marchio, voci di navigazione e riepilogo lega stanno nella barra superiore */
 @media (min-width:801px){
   #app{flex-direction:column;min-height:100vh;}
-  .sidebar{width:100%;flex-direction:row;align-items:center;gap:6px;padding:0 24px;height:54px;border-right:none;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50;}
+  .sidebar{width:100%;flex-direction:row;align-items:center;gap:6px;padding:0 24px;height:54px;border-right:none;border-bottom:1px solid var(--line);position:static;}
   .sidebar .brand{border:none;padding:0 18px 0 0;margin:0;font-size:18px;white-space:nowrap;}
   .sidebar .nav{flex-direction:row;padding:0;gap:4px;}
   .sidebar .nav button{white-space:nowrap;padding:8px 12px;}
@@ -389,8 +387,6 @@ tr[data-g]{cursor:pointer;}
 }
 /* Asta live: le 10 squadre stanno su un'unica riga leggibile */
 @media (min-width:801px){
-  body:has(#view-asta.active) .content{padding-left:14px;padding-right:14px;}
-  body:has(#view-asta.active) .league-topbar{margin-left:-14px;margin-right:-14px;padding-left:14px;padding-right:14px;}
   #view-asta .panel{padding:18px 16px;}
   /* una sola riga, colonne uguali; sotto ~122px per squadra compare lo scorrimento invece di schiacciare il testo */
   #astaRoses{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(122px,1fr);gap:6px;overflow-x:auto;overflow-y:hidden;padding-bottom:8px;}
@@ -404,6 +400,25 @@ tr[data-g]{cursor:pointer;}
   #astaRoses .ar-list li.ar-grp span:last-child{font-size:10.5px;margin-left:0;white-space:nowrap;}
   #astaRoses .ar-counts{font-size:10.5px;}
   #astaRoses .ar-max,#astaRoses .ar-cred small{font-size:10.5px;}
+}
+@media (min-width:1500px){
+  #astaRoses{gap:8px;}
+  #astaRoses .ar-head{padding:10px 10px 8px;}
+  #astaRoses .ar-list{padding:4px 10px 10px;}
+  #astaRoses .ar-name{font-size:15.5px;}
+  #astaRoses .ar-cred{font-size:17px;}
+  #astaRoses .ar-max,#astaRoses .ar-cred small{font-size:12px;}
+  #astaRoses .ar-counts{font-size:12px;}
+  #astaRoses .ar-list li{font-size:13.5px;}
+  #astaRoses .ar-list li.ar-grp,#astaRoses .ar-list li.ar-grp span:last-child{font-size:11.5px;}
+}
+@media (min-width:1800px){
+  #astaRoses .ar-name{font-size:17px;}
+  #astaRoses .ar-cred{font-size:19px;}
+  #astaRoses .ar-max,#astaRoses .ar-cred small{font-size:13px;}
+  #astaRoses .ar-counts{font-size:13px;}
+  #astaRoses .ar-list li{font-size:14.5px;}
+  #astaRoses .ar-list li.ar-grp,#astaRoses .ar-list li.ar-grp span:last-child{font-size:12.5px;}
 }
 </style>
 </head>
