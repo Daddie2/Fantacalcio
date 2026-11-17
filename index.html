@@ -377,21 +377,23 @@ tr[data-g]{cursor:pointer;}
   #view-listone .badge{font-size:10.5px;padding:2px 6px;}
 }
 
-/* Asta live: la sidebar diventa una barra stretta (solo icone, si apre al passaggio del mouse),
-   cosi' tutta la vista guadagna spazio in modo uniforme e le 10 squadre stanno su un'unica riga */
+/* Menu in alto su tutti gli schermi: marchio, voci di navigazione e riepilogo lega stanno nella barra superiore */
 @media (min-width:801px){
-  body:has(#view-asta.active) #app{padding-left:56px;}
-  body:has(#view-asta.active) .sidebar{position:fixed;left:0;top:0;bottom:0;width:56px;overflow:hidden;white-space:nowrap;z-index:60;transition:width .15s ease;}
-  body:has(#view-asta.active) .sidebar:hover{width:230px;box-shadow:6px 0 24px rgba(0,0,0,.45);}
-  body:has(#view-asta.active) .sidebar .brand,
-  body:has(#view-asta.active) .sidebar .sidebar-foot{opacity:0;transition:opacity .15s;}
-  body:has(#view-asta.active) .sidebar:hover .brand,
-  body:has(#view-asta.active) .sidebar:hover .sidebar-foot{opacity:1;}
+  #app{flex-direction:column;min-height:100vh;}
+  .sidebar{width:100%;flex-direction:row;align-items:center;gap:6px;padding:0 24px;height:54px;border-right:none;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50;}
+  .sidebar .brand{border:none;padding:0 18px 0 0;margin:0;font-size:18px;white-space:nowrap;}
+  .sidebar .nav{flex-direction:row;padding:0;gap:4px;}
+  .sidebar .nav button{white-space:nowrap;padding:8px 12px;}
+  .sidebar .sidebar-foot{margin:0 0 0 auto;padding:0;border:none;display:flex;align-items:center;gap:20px;}
+  .sidebar .sf-row{padding:0;gap:6px;white-space:nowrap;}
+}
+/* Asta live: le 10 squadre stanno su un'unica riga leggibile */
+@media (min-width:801px){
   body:has(#view-asta.active) .content{padding-left:14px;padding-right:14px;}
   body:has(#view-asta.active) .league-topbar{margin-left:-14px;margin-right:-14px;padding-left:14px;padding-right:14px;}
   #view-asta .panel{padding:18px 16px;}
-  /* una sola riga, colonne uguali; sotto ~118px per squadra compare lo scorrimento invece di schiacciare il testo */
-  #astaRoses{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(118px,1fr);gap:6px;overflow-x:auto;overflow-y:hidden;padding-bottom:8px;}
+  /* una sola riga, colonne uguali; sotto ~122px per squadra compare lo scorrimento invece di schiacciare il testo */
+  #astaRoses{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(122px,1fr);gap:6px;overflow-x:auto;overflow-y:hidden;padding-bottom:8px;}
   #astaRoses .ar-team{min-width:0;}
   #astaRoses .ar-head{padding:8px 7px 6px;}
   #astaRoses .ar-list{padding:4px 7px 8px;}
