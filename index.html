@@ -279,9 +279,15 @@ input[type=time]{background:#fff;color:#000;}
 
 .badge-contest{cursor:pointer;}
 .badge-watch[data-contest]{cursor:pointer;}
-.ar-wrap{display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;align-items:flex-start;-webkit-overflow-scrolling:touch;padding-bottom:8px;overscroll-behavior-x:contain;scroll-snap-type:x proximity;}
-@media(min-width:701px){.ar-wrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));overflow:visible;align-items:start;scroll-snap-type:none;}.ar-team{min-width:0;}}
-.ar-team{scroll-snap-align:start;flex:1 1 0;min-width:162px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;}
+.ar-wrap{--ar-cols:1;--ar-gap:12px;display:grid;gap:var(--ar-gap);align-items:stretch;padding-bottom:8px;
+  grid-template-columns:repeat(auto-fit,minmax(calc((100% - (var(--ar-cols) - 1) * var(--ar-gap)) / var(--ar-cols) - .5px),1fr));}
+@media(min-width:420px){.ar-wrap{--ar-cols:2;}}
+@media(min-width:640px){.ar-wrap{--ar-cols:3;}}
+@media(min-width:900px){.ar-wrap{--ar-cols:4;}}
+@media(min-width:1250px){.ar-wrap{--ar-cols:5;}}
+@media(min-width:1700px){.ar-wrap{--ar-cols:10;--ar-gap:8px;}}
+.ar-team{min-width:0;height:100%;display:flex;flex-direction:column;overflow:hidden;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;}
+.ar-list{flex:1 1 auto;}
 .ar-head{background:var(--panel-2);padding:8px 8px 6px;border-bottom:1px solid var(--line);border-radius:6px 6px 0 0;}
 .ar-head[data-team-go]{cursor:pointer;}
 .ar-head[data-team-go]:hover .ar-go{color:var(--gold);}
@@ -304,8 +310,6 @@ input[type=time]{background:#fff;color:#000;}
 .ar-list .role-tag{width:16px;height:16px;line-height:16px;font-size:10px;flex:0 0 auto;}
 .ar-empty{padding:8px;color:var(--text-faint);font-size:12px;}
 @media(max-width:700px){
-  .ar-wrap{gap:10px;margin:0 -4px;padding:0 4px 10px;}
-  .ar-team{flex:0 0 min(72vw,270px);}
   .ar-head{padding:10px 10px 8px;}
   .ar-name{font-size:15px;}
   .ar-cred{font-size:18px;margin:2px 0 5px;}
@@ -385,40 +389,19 @@ tr[data-g]{cursor:pointer;}
   .sidebar .sidebar-foot{margin:0 0 0 auto;padding:0;border:none;display:flex;align-items:center;gap:20px;}
   .sidebar .sf-row{padding:0;gap:6px;white-space:nowrap;}
 }
-/* Asta live: le 10 squadre stanno su un'unica riga leggibile */
-@media (min-width:801px){
-  #view-asta .panel{padding:18px 16px;}
-  /* una sola riga, colonne uguali; sotto ~122px per squadra compare lo scorrimento invece di schiacciare il testo */
-  #astaRoses{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(122px,1fr);gap:6px;overflow-x:auto;overflow-y:hidden;padding-bottom:8px;}
-  #astaRoses .ar-team{min-width:0;}
+/* Rose in diretta: griglia responsiva come le card articoli.
+   Colonne per breakpoint (1 / 2 / 3 / 4 / 5, e 10 in un'unica riga da 1700px); le card di una riga hanno la stessa altezza */
+#astaRoses .ar-list li.ar-grp{flex-wrap:wrap;justify-content:center;text-align:center;white-space:normal;column-gap:4px;row-gap:0;}
+#astaRoses .ar-list li.ar-grp span:last-child{margin-left:0;white-space:nowrap;}
+#astaRoses .ar-max{white-space:normal;overflow-wrap:anywhere;}
+#astaRoses .ar-cred{white-space:nowrap;}
+@media (min-width:1700px){
   #astaRoses .ar-head{padding:8px 7px 6px;}
   #astaRoses .ar-list{padding:4px 7px 8px;}
-  #astaRoses .ar-name{font-size:13.5px;}
-  #astaRoses .ar-cred{font-size:14px;white-space:nowrap;}
-  #astaRoses .ar-max{white-space:normal;overflow-wrap:anywhere;}
-  #astaRoses .ar-list li.ar-grp{flex-wrap:wrap;justify-content:center;text-align:center;white-space:normal;font-size:10.5px;padding:3px 4px;column-gap:4px;row-gap:0;}
-  #astaRoses .ar-list li.ar-grp span:last-child{font-size:10.5px;margin-left:0;white-space:nowrap;}
-  #astaRoses .ar-counts{font-size:10.5px;}
-  #astaRoses .ar-max,#astaRoses .ar-cred small{font-size:10.5px;}
-}
-@media (min-width:1500px){
-  #astaRoses{gap:8px;}
-  #astaRoses .ar-head{padding:10px 10px 8px;}
-  #astaRoses .ar-list{padding:4px 10px 10px;}
-  #astaRoses .ar-name{font-size:15.5px;}
-  #astaRoses .ar-cred{font-size:17px;}
-  #astaRoses .ar-max,#astaRoses .ar-cred small{font-size:12px;}
-  #astaRoses .ar-counts{font-size:12px;}
-  #astaRoses .ar-list li{font-size:13.5px;}
-  #astaRoses .ar-list li.ar-grp,#astaRoses .ar-list li.ar-grp span:last-child{font-size:11.5px;}
-}
-@media (min-width:1800px){
-  #astaRoses .ar-name{font-size:17px;}
-  #astaRoses .ar-cred{font-size:19px;}
-  #astaRoses .ar-max,#astaRoses .ar-cred small{font-size:13px;}
-  #astaRoses .ar-counts{font-size:13px;}
-  #astaRoses .ar-list li{font-size:14.5px;}
-  #astaRoses .ar-list li.ar-grp,#astaRoses .ar-list li.ar-grp span:last-child{font-size:12.5px;}
+  #astaRoses .ar-name{font-size:14px;}
+  #astaRoses .ar-cred{font-size:15px;}
+  #astaRoses .ar-cred small,#astaRoses .ar-max,#astaRoses .ar-counts{font-size:10.5px;}
+  #astaRoses .ar-list li.ar-grp,#astaRoses .ar-list li.ar-grp span:last-child{font-size:10.5px;}
 }
 </style>
 </head>
@@ -481,7 +464,7 @@ tr[data-g]{cursor:pointer;}
         </div>
         <hr class="section-divider">
         <div class="panel-title">Rose in diretta</div>
-        <div class="hint" style="margin:0 0 8px;">Tutte le squadre in una riga: crediti rimasti e giocatori per ruolo. Tocca un giocatore per aprire la scheda (in rosso se infortunato).</div>
+        <div class="hint" style="margin:0 0 8px;">Tutte le squadre: crediti rimasti e giocatori per ruolo. Tocca un giocatore per aprire la scheda (in rosso se infortunato).</div>
         <div class="ar-wrap" id="astaRoses"></div>
         <hr class="section-divider">
         <div class="panel-title">Ultime assegnazioni</div>
