@@ -392,6 +392,8 @@ tr[data-g]{cursor:pointer;}
 #astaRoses .ar-list li.ar-grp{flex-wrap:wrap;justify-content:center;text-align:center;white-space:normal;column-gap:4px;row-gap:0;}
 #astaRoses .ar-list li.ar-grp span:last-child{margin-left:0;white-space:nowrap;}
 #astaRoses .ar-max{white-space:normal;overflow-wrap:anywhere;}
+#astaRoses .ar-max-full{text-align:center;}
+#astaRoses .ar-max-full span{display:block;white-space:nowrap;}
 #astaRoses .ar-cred{white-space:nowrap;}
 @media (min-width:701px){
   #astaRoses .ar-head{padding:8px 6px 6px;}
@@ -1422,7 +1424,7 @@ function renderAstaRoses(){
       return head + grp.map(x=>`<li><span class="role-tag role-${x.p.ruolo}">${x.p.ruolo}</span><span class="player-link${nameCls(x.p)}" data-detail="${escapeAttr(x.p.id)}" title="${escapeAttr(x.p.nome)}">${escapeHtml(x.p.nome)}</span><span class="ar-price">${fmt(x.price)}</span></li>`).join('');
     }).join('');
     const spentTot = spentByTeam(t);
-    return `<div class="ar-team"><div class="ar-head" data-team-go="${escapeAttr(t.id)}" title="Apri la rosa di ${escapeAttr(t.name)}"><div class="ar-name">${escapeHtml(t.name)}</div><div class="ar-cred">${fmt(rem)} <small>cr. rimasti</small></div><div class="ar-max">speso <b>${fmt(spentTot)}</b> &middot; ${missing ? 'rilancio max <b>'+fmt(maxBid)+'</b>' : 'rosa completa'}</div><div class="ar-counts">${counts}</div><div class="ar-go">Apri rosa &rsaquo;</div></div><ul class="ar-list">${list}</ul></div>`;
+    return `<div class="ar-team"><div class="ar-head" data-team-go="${escapeAttr(t.id)}" title="Apri la rosa di ${escapeAttr(t.name)}"><div class="ar-name">${escapeHtml(t.name)}</div><div class="ar-cred">${fmt(rem)} <small>cr. rimasti</small></div><div class="ar-max${missing ? '' : ' ar-max-full'}">${missing ? 'speso <b>'+fmt(spentTot)+'</b> &middot; rilancio max <b>'+fmt(maxBid)+'</b>' : '<span>speso <b>'+fmt(spentTot)+'</b></span><span>rosa completa</span>'}</div><div class="ar-counts">${counts}</div><div class="ar-go">Apri rosa &rsaquo;</div></div><ul class="ar-list">${list}</ul></div>`;
   }).join('');
   box.querySelectorAll('[data-detail]').forEach(n=> n.addEventListener('click', function(){ openPlayerDetail(this.dataset.detail); }));
   box.querySelectorAll('[data-team-go]').forEach(n=> n.addEventListener('click', function(){
