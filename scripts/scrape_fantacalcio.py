@@ -5,6 +5,13 @@ Ogni fase e' isolata: se una fallisce (anche con un'eccezione) le altre
 girano comunque, e i CSV delle fasi riuscite vengono salvati. Alla fine lo
 script esce con codice 1 se una fase CRITICA e' fallita, cosi' il run su
 GitHub risulta rosso invece di fallire in silenzio.
+
+Quotazioni: nella tabella di fantacalcio.it alcuni calciatori hanno un
+asterisco accanto al nome (es. "Leao *"): sono quelli che non fanno piu' parte
+della lista (ceduti/usciti). Vengono esclusi da data/quotazioni.csv e
+l'elenco viene stampato nel log. Per tenerli comunque: FC_KEEP_STARRED=1.
+Per escludere a mano altri giocatori: data/esclusi_quotazioni.txt
+(una riga per giocatore: "Nome" oppure "Nome|SQ", es. "Leao|MIL"; # = commento).
 """
 import os
 import sys
@@ -12,6 +19,7 @@ import re
 import csv
 import time
 import traceback
+import unicodedata
 import requests
 from datetime import date
 from bs4 import BeautifulSoup, NavigableString, Tag, Comment
@@ -37,6 +45,10 @@ URLS = {
 # La pagina statistiche-serie-a "semplice" (in URLS sopra) punta invece
 # sempre da sola alla stagione IN CORSO, senza bisogno di specificarla.
 STATS_SEASON_URL_TEMPLATE = "https://www.fantacalcio.it/statistiche-serie-a/{season}/italia"
+
+# Esclusioni dal listone
+ESCLUSI_FILE = "data/esclusi_quotazioni.txt"
+STAR_MAX_SHARE = 0.25   # se piu' del 25% delle righe ha l'asterisco non e' il segnale che pensavo: non escludo nulla
 
 BLOCK_MARKERS = [
     "captcha", "attention required", "access denied",
@@ -117,6 +129,13 @@ def clean_number(val):
         return 0
 
 
+def norm_key(s):
+    """Chiave di confronto: maiuscolo, senza accenti ne' punteggiatura."""
+    s = unicodedata.normalize("NFD", str(s or ""))
+    s = "".join(c for c in s if unicodedata.category(c) != "Mn")
+    return re.sub(r"[^A-Z0-9]+", " ", s.upper()).strip()
+
+
 def build_header_labels(header_row):
     """
     Espande gli header rispettando gli attributi colspan.
@@ -184,7 +203,12 @@ def extract_ruolo(row):
 
 
 def parse_quotazioni(html):
-    """Estrae le quotazioni dalla tabella reale di fantacalcio.it."""
+    """
+    Estrae le quotazioni dalla tabella reale di fantacalcio.it.
+    Ogni giocatore ha anche la chiave 'starred' (True se la riga riporta
+    l'asterisco accanto al nome: giocatore non piu' in lista). La chiave non
+    finisce nel CSV (save_csv ignora i campi extra).
+    """
     table, headers = extract_from_table(html, ['CALCIATORE', 'FVM', 'QUOTAZ'])
     if not table:
         print("ATTENZIONE: tabella quotazioni non trovata, struttura pagina cambiata", file=sys.stderr)
@@ -227,11 +251,17 @@ def parse_quotazioni(html):
         nome_idx = col_map['nome']
         if nome_idx >= len(row_data):
             continue
-        nome = row_data[nome_idx]
+
+        # L'asterisco puo' stare nella cella del nome, in quella della squadra
+        # o in un elemento a parte: lo cerco in tutto il testo della riga.
+        starred = '*' in row.get_text(' ', strip=True)
+
+        nome = row_data[nome_idx].replace('*', '').strip()
         if not nome or len(nome) < 2:
             continue
 
         squadra = row_data[col_map['squadra']] if col_map['squadra'] < len(row_data) else ''
+        squadra = squadra.replace('*', '').strip()
 
         qta_idx = col_map.get('qta')
         qta = clean_number(row_data[qta_idx]) if qta_idx is not None and qta_idx < len(row_data) else 0
@@ -247,10 +277,27 @@ def parse_quotazioni(html):
             'nome': nome,
             'squadra': squadra,
             'qta': qta,
-            'fvm': fvm
+            'fvm': fvm,
+            'starred': starred,
         })
 
     return players
+
+
+def load_manual_exclusions(path=ESCLUSI_FILE):
+    """Legge data/esclusi_quotazioni.txt -> set di (nome_normalizzato, squadra_normalizzata o '')."""
+    out = set()
+    try:
+        with open(path, encoding='utf-8') as f:
+            for line in f:
+                line = line.split('#', 1)[0].strip()
+                if not line:
+                    continue
+                nome, _, sq = line.partition('|')
+                out.add((norm_key(nome), norm_key(sq)))
+    except OSError:
+        pass
+    return out
 
 
 STAT_ALIASES = {
@@ -538,7 +585,8 @@ def save_csv(data, path, headers):
     if not data:
         return False
     with open(path, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=headers)
+        # extrasaction='ignore': i campi di servizio (es. 'starred') non vanno nel CSV
+        writer = csv.DictWriter(f, fieldnames=headers, extrasaction='ignore')
         writer.writeheader()
         writer.writerows(data)
     return True
@@ -688,6 +736,40 @@ def stage_quotazioni():
         print("ERRORE: nessun giocatore estratto dalle quotazioni", file=sys.stderr)
         print("   HTML salvato in data/debug_quotazioni.html per analisi", file=sys.stderr)
         return False
+
+    total = len(players)
+
+    # 1) Giocatori con l'asterisco = non piu' in lista (es. ceduti all'estero)
+    starred = [p for p in players if p.get('starred')]
+    if starred:
+        share = len(starred) / total
+        if os.environ.get("FC_KEEP_STARRED") == "1":
+            print(f"   {len(starred)} giocatori con asterisco ma FC_KEEP_STARRED=1: li tengo", file=sys.stderr)
+        elif share > STAR_MAX_SHARE:
+            print(f"   ATTENZIONE: {len(starred)}/{total} righe hanno l'asterisco ({share:.0%}): "
+                  f"non sembra il segnale 'fuori lista', non escludo nessuno.", file=sys.stderr)
+        else:
+            players = [p for p in players if not p.get('starred')]
+            elenco = ", ".join(f"{p['nome']} ({p['squadra']})" for p in starred)
+            print(f"   Esclusi {len(starred)} giocatori con asterisco (fuori lista): {elenco}",
+                  file=sys.stderr)
+
+    # 2) Esclusioni manuali (data/esclusi_quotazioni.txt)
+    manual = load_manual_exclusions()
+    if manual:
+        def is_manual(p):
+            n, s = norm_key(p['nome']), norm_key(p['squadra'])
+            return (n, '') in manual or (n, s) in manual
+        removed = [p for p in players if is_manual(p)]
+        if removed:
+            players = [p for p in players if not is_manual(p)]
+            print(f"   Esclusi a mano ({ESCLUSI_FILE}): "
+                  + ", ".join(f"{p['nome']} ({p['squadra']})" for p in removed), file=sys.stderr)
+
+    if not players:
+        print("ERRORE: dopo le esclusioni non resta nessun giocatore", file=sys.stderr)
+        return False
+
     headers = ['id', 'ruolo', 'nome', 'squadra', 'qta', 'fvm']
     if not save_csv(players, "data/quotazioni.csv", headers):
         print("ERRORE: impossibile salvare quotazioni.csv", file=sys.stderr)
