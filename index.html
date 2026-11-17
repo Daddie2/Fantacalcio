@@ -284,15 +284,15 @@ input[type=time]{background:#fff;color:#000;}
 @media(min-width:420px){.ar-wrap{--ar-cols:2;}}
 @media(min-width:640px){.ar-wrap{--ar-cols:3;}}
 @media(min-width:900px){.ar-wrap{--ar-cols:4;}}
-@media(min-width:1250px){.ar-wrap{--ar-cols:5;}}
-@media(min-width:1700px){.ar-wrap{--ar-cols:10;--ar-gap:8px;}}
+@media(min-width:1000px){.ar-wrap{--ar-cols:5;}}
+@media(min-width:1300px){.ar-wrap{--ar-cols:10;--ar-gap:6px;}}
 .ar-team{min-width:0;height:100%;display:flex;flex-direction:column;overflow:hidden;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;}
 .ar-list{flex:1 1 auto;}
 .ar-head{background:var(--panel-2);padding:8px 8px 6px;border-bottom:1px solid var(--line);border-radius:6px 6px 0 0;}
 .ar-head[data-team-go]{cursor:pointer;}
 .ar-head[data-team-go]:hover .ar-go{color:var(--gold);}
 .ar-go{margin-top:7px;padding-top:6px;border-top:1px dashed var(--line);text-align:right;font-size:12px;color:var(--gold-dim);}
-.ar-name{font-family:var(--font-head);font-size:14px;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ar-name{font-family:var(--font-head);font-size:16.5px;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ar-cred{font-family:var(--font-mono);color:var(--gold);font-weight:600;font-size:15px;margin:2px 0 5px;}
 .ar-cred small{color:var(--text-dim);font-weight:400;font-size:11px;}
 .ar-max{font-size:11px;color:var(--text-dim);margin:-2px 0 6px;line-height:1.3;}
@@ -311,7 +311,7 @@ input[type=time]{background:#fff;color:#000;}
 .ar-empty{padding:8px;color:var(--text-faint);font-size:12px;}
 @media(max-width:700px){
   .ar-head{padding:10px 10px 8px;}
-  .ar-name{font-size:15px;}
+  .ar-name{font-size:17px;}
   .ar-cred{font-size:18px;margin:2px 0 5px;}
   .ar-cred small{font-size:12px;}
   .ar-max{font-size:12.5px;margin:0 0 8px;}
@@ -389,16 +389,17 @@ tr[data-g]{cursor:pointer;}
   .sidebar .sidebar-foot{margin:0 0 0 auto;padding:0;border:none;display:flex;align-items:center;gap:20px;}
   .sidebar .sf-row{padding:0;gap:6px;white-space:nowrap;}
 }
+.ar-title{font-size:20px;}
 /* Rose in diretta: griglia responsiva come le card articoli.
-   Colonne per breakpoint (1 / 2 / 3 / 4 / 5, e 10 in un'unica riga da 1700px); le card di una riga hanno la stessa altezza */
+   Colonne per breakpoint (1 / 2 / 3 / 4 / 5, e 10 in un'unica riga da 1300px); le card di una riga hanno la stessa altezza */
 #astaRoses .ar-list li.ar-grp{flex-wrap:wrap;justify-content:center;text-align:center;white-space:normal;column-gap:4px;row-gap:0;}
 #astaRoses .ar-list li.ar-grp span:last-child{margin-left:0;white-space:nowrap;}
 #astaRoses .ar-max{white-space:normal;overflow-wrap:anywhere;}
 #astaRoses .ar-cred{white-space:nowrap;}
-@media (min-width:1700px){
-  #astaRoses .ar-head{padding:8px 7px 6px;}
-  #astaRoses .ar-list{padding:4px 7px 8px;}
-  #astaRoses .ar-name{font-size:14px;}
+@media (min-width:1300px){
+  #astaRoses .ar-head{padding:8px 6px 6px;}
+  #astaRoses .ar-list{padding:4px 6px 8px;}
+  #astaRoses .ar-name{font-size:15.5px;}
   #astaRoses .ar-cred{font-size:15px;}
   #astaRoses .ar-cred small,#astaRoses .ar-max,#astaRoses .ar-counts{font-size:10.5px;}
   #astaRoses .ar-list li.ar-grp,#astaRoses .ar-list li.ar-grp span:last-child{font-size:10.5px;}
@@ -463,7 +464,7 @@ tr[data-g]{cursor:pointer;}
           <div class="hint" id="assignSuggestHint"></div>
         </div>
         <hr class="section-divider">
-        <div class="panel-title">Rose in diretta</div>
+        <div class="panel-title ar-title">Rose in diretta</div>
         <div class="hint" style="margin:0 0 8px;">Tutte le squadre: crediti rimasti e giocatori per ruolo. Tocca un giocatore per aprire la scheda (in rosso se infortunato).</div>
         <div class="ar-wrap" id="astaRoses"></div>
         <hr class="section-divider">
