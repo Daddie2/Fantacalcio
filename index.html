@@ -251,8 +251,17 @@ input[type=time]{background:#fff;color:#000;}
 .match-link:hover{text-decoration:underline;color:var(--gold);}
 .match-row{cursor:pointer;}
 .match-row:hover td{background:var(--panel-2);}
-.mt-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
-@media (max-width:640px){.mt-grid{grid-template-columns:1fr;}}
+.mt-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;}
+.mt-team{min-width:0;}
+.mt-team .hint{overflow-wrap:anywhere;}
+.pitch-sm{overflow:hidden;}
+.pd-modal{min-width:0;max-width:min(780px,100%);box-sizing:border-box;overflow-x:hidden;}
+#matchBody{min-width:0;}
+.mt-row{min-width:0;}
+.mt-row .player-link{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cmp-wrap,table.cmp{touch-action:pan-x pan-y;}
+.cmp-modal{overflow-x:hidden;}
+@media (max-width:760px){.mt-grid{grid-template-columns:minmax(0,1fr);}}
 .mt-team h3{font-family:var(--font-head);font-size:16px;margin:0 0 4px;}
 .mt-sub{font-size:11px;color:var(--text-dim);margin:14px 0 4px;text-transform:uppercase;letter-spacing:.04em;}
 .mt-row{display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid var(--line-soft);font-size:12.5px;}
@@ -448,6 +457,39 @@ table.cmp .cmp-x{margin-top:6px;padding:2px 8px;font-size:11px;}
   table.cmp .cmp-l{font-size:11px;}
   .cmp-head h2{font-size:16px;}
   .cmp-bar{max-width:calc(100vw - 20px);}
+}
+
+/* ===== Fix scheda partita + confronto (mobile) ===== */
+#matchOverlay .pd-modal{max-width:min(1000px,100%);overflow-x:auto;touch-action:pan-x pan-y;}
+.mt-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+.pitch-sm{max-width:100%;box-sizing:border-box;}
+.pitch-sm .pitch-row{flex-wrap:nowrap;justify-content:space-evenly;gap:2px;}
+.pitch-sm .pp-sm{flex:1 1 0;width:auto;max-width:76px;min-width:0;}
+.pp-sm .pp-one{min-width:0;}
+.pp-sm .pp-name,.pp-sm .pp-prob{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mt-row .role-tag,.mt-row .mt-p{flex:none;}
+.mt-row .player-link{flex:1 1 auto;}
+.mt-own{flex:0 1 auto;min-width:0;max-width:34%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.opp-ha{margin-left:4px;font-size:10px;color:var(--text-faint);font-family:var(--font-mono);}
+.pd-header{gap:10px;flex-wrap:wrap;}
+.pd-header > div:first-child{min-width:0;flex:1 1 200px;}
+.pd-modal.cmp-modal{overflow:visible;min-height:min(70vh,520px);}
+#cmpOverlay{z-index:130;}
+.cmp-sug{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px 0;}
+.cmp-sug .btn{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+@media (max-width:800px){
+  .pd-overlay{padding:10px 6px;}
+  .pd-modal{margin-bottom:20px;}
+}
+@media (max-width:760px){
+  .mt-grid{grid-template-columns:minmax(0,1fr);}
+  #matchOverlay .pd-modal{padding:12px 8px 16px;}
+  .pd-name{font-size:17px;}
+  .pitch-sm{padding:10px 2px;}
+  .pp-sm .pp-shirt{width:22px;height:22px;line-height:22px;font-size:10px;}
+  .pp-sm .pp-name{font-size:9.5px;}
+  .pp-sm .pp-prob{font-size:9px;}
+  .pitch-sm .pp-sm{max-width:62px;}
 }
 </style>
 </head>
@@ -1194,7 +1236,7 @@ el('statsPastePrevBtn').addEventListener('click', function(){
   try{ handleStatsImport(workbookToRows(XLSX.read(t,{type:'string'})),'prev','stagione precedente'); }catch(err){ console.error(err); el('statsImportStatus').textContent='Errore.'; }
 });
 
-async function fetchWorkbook(path){ const res = await fetch(path + '?_=' + Date.now(), {cache:'no-store'}); if(!res.ok) throw new Error('HTTP '+res.status); const text = await res.text(); return XLSX.read(text,{type:'string'}); }
+async function fetchWorkbook(path, raw){ const res = await fetch(path + '?_=' + Date.now(), {cache:'no-store'}); if(!res.ok) throw new Error('HTTP '+res.status); const text = await res.text(); return XLSX.read(text,{type:'string', raw: !!raw}); }
 async function autoFetchAndImport(opts){
   opts = opts||{}; const silent = !!opts.silent;
   const setStatus = m=>{ const s = el('autoFetchStatus'); if(s) s.textContent = m; };
@@ -1208,7 +1250,7 @@ async function autoFetchAndImport(opts){
   try{ const wb = await fetchWorkbook('data/indisponibili.csv'); const rows = workbookToRows(wb); const parsed = parseIndisponibiliRows(rows); if(parsed){ mergeIndisponibiliIntoPlayers(parsed); iOk=true; } }catch(e){ console.warn('auto indisp', e); }
   
   try{
-    const wbF = await fetchWorkbook('data/formazioni.csv'); const rowsF = workbookToRows(wbF);
+    const wbF = await fetchWorkbook('data/formazioni.csv', true); const rowsF = workbookToRows(wbF);
     const hdr = rowsF[0].map(normHeader); const iId=hdr.indexOf('ID'), iSt=hdr.indexOf('STATO'), iPr=hdr.indexOf('PROB'), iAg=hdr.indexOf('AGGIORNATO'), iMo=hdr.indexOf('MODULO'), iSl=hdr.indexOf('SLOT');
     state.players.forEach(p=>{ delete p.probForm; p.titolaritaGz=false; });
     for(let i=1;i<rowsF.length;i++){ const pf = playerById(String(rowsF[i][iId])); if(pf) { const sl = iSl>=0 ? parseInt(rowsF[i][iSl],10) : NaN; pf.probForm = {stato:rowsF[i][iSt], prob:parseFloat(rowsF[i][iPr])||0, agg:rowsF[i][iAg], modulo:(iMo>=0 && rowsF[i][iMo]) ? String(rowsF[i][iMo]).trim() : '', slot:isNaN(sl)?null:sl}; } }
@@ -3228,8 +3270,8 @@ function lineupEst(){ const r = selRound(), d = roundNow().def; return !!(r && d
 function fmtKick(d){ return d.toLocaleString('it-IT', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}); }
 function fmtLeft(ms){ const s=Math.max(0,Math.floor(ms/1000)), d=Math.floor(s/86400), h=Math.floor(s%86400/3600), m=Math.floor(s%3600/60), x=s%60; return (d?d+'g ':'')+String(h).padStart(2,'0')+'h '+String(m).padStart(2,'0')+'m '+String(x).padStart(2,'0')+'s'; }
 function oppInfo(p){ const r = selRound(), k = teamKey(p.squadra); if(!r || !r.matches.length || !k) return null; for(const m of r.matches){ if(m.hk===k) return {opp:m.a, home:true, start:m.start, m, ref:r.n+':'+r.matches.indexOf(m)}; if(m.ak===k) return {opp:m.h, home:false, start:m.start, m, ref:r.n+':'+r.matches.indexOf(m)}; } return null; }
-function oppCell(p){ const o = oppInfo(p); if(!o) return '<span class="hint" style="margin:0;">&mdash;</span>'; return `<span class="opp match-link" data-mr="${o.ref}">${escapeHtml(o.m.h)} &ndash; ${escapeHtml(o.m.a)}</span><span class="kick">${escapeHtml(fmtKick(o.start))}</span>`; }
-function oppShort(p){ const o = oppInfo(p); return o ? `<span class="match-link" data-mr="${o.ref}">${escapeHtml(o.m.h)} &ndash; ${escapeHtml(o.m.a)}</span>` : ''; }
+function oppCell(p){ const o = oppInfo(p); if(!o) return '<span class="hint" style="margin:0;">&mdash;</span>'; return `<span class="opp match-link" data-mr="${o.ref}">vs ${escapeHtml(o.opp)}</span><span class="opp-ha">${o.home?'casa':'trasf.'}</span><span class="kick">${escapeHtml(fmtKick(o.start))}</span>`; }
+function oppShort(p){ const o = oppInfo(p); return o ? `<span class="match-link" data-mr="${o.ref}">vs ${escapeHtml(o.opp)}</span><span class="opp-ha">${o.home?'casa':'trasf.'}</span>` : ''; }
 function probChip(list){
   const inner = list.map(x=>`<div class="pp-one" data-detail="${x.p.id}">
       <div class="pp-shirt role-${x.p.ruolo}">${x.p.ruolo}</div>
@@ -3574,7 +3616,12 @@ function cmpRefreshUI(){
   el('cmpBarTxt').textContent = 'Confronto: '+n+'/'+CMP_MAX;
   if(open) cmpRender();
 }
-function cmpOpen(){ el('cmpOverlay').classList.add('show'); cmpRender(); cmpRefreshUI(); }
+function cmpOpen(){
+  const ov = el('cmpOverlay'); ov.classList.add('show'); ov.scrollTop = 0;
+  cmpRefreshUI();
+  const s = el('cmpSearch');
+  if(s && !s.disabled && cmpPlayers().length<2) setTimeout(function(){ try{ s.focus(); }catch(e){} }, 60);
+}
 function cmpClose(){ el('cmpOverlay').classList.remove('show'); cmpRefreshUI(); }
 el('cmpOpen').addEventListener('click', cmpOpen);
 el('cmpClear').addEventListener('click', function(){ cmpIds=[]; cmpSave(); cmpRefreshUI(); });
@@ -3583,7 +3630,12 @@ document.addEventListener('keydown', function(e){ if(e.key==='Escape' && el('cmp
 /* pulsanti "Confronta" ovunque (capture: non apre la scheda sottostante) */
 document.addEventListener('click', function(e){
   const b = e.target.closest && e.target.closest('[data-cmp]'); if(!b) return;
-  e.preventDefault(); e.stopPropagation(); cmpToggle(b.dataset.cmp);
+  e.preventDefault(); e.stopPropagation();
+  if(b.id==='pdCmpBtn'){                       /* dalla scheda giocatore: aggiunge (se manca) e apre il confronto */
+    try{ if(cmpIds.indexOf(b.dataset.cmp)<0) cmpToggle(b.dataset.cmp); }catch(err){ console.error(err); }
+    cmpOpen(); return;
+  }
+  cmpToggle(b.dataset.cmp);
 }, true);
 
 function cmpNum(x){ return (x===null || x===undefined || isNaN(x)) ? null : +x; }
@@ -3622,7 +3674,7 @@ function cmpBuildRows(M){
   row('Fantasquadra', m=>{ const o = ownerOf(m.p.id); return {t:o ? escapeHtml(o.team.name)+'<small>'+fmt(o.price)+' cr.</small>' : 'Libero', n:null}; });
 
   sec('Prossima giornata');
-  row('Avversario', m=> m.opp ? {t:(m.opp.home?'vs ':'@ ')+escapeHtml(m.opp.opp)+'<small>'+(m.opp.home?'in casa':'in trasferta')+'</small>', n:null} : null);
+  row('Avversario', m=> m.opp ? {t:'vs '+escapeHtml(m.opp.opp)+'<small>'+(m.opp.home?'in casa':'in trasferta')+'</small>', n:null} : null);
   row('Probabilità di giocare', m=>({t:Math.round(m.prob*100)+'%<small>'+escapeHtml(m.src)+'</small>', n:m.prob}), 'hi');
 
   sec('Valore atteso');
@@ -3681,6 +3733,20 @@ function cmpWhy(M){
   return `<div class="cmp-why"><b>Perché questa scelta?</b> ${why}<div class="hint" style="margin:6px 0 0;">Formazione e panchina sono ordinate per punti attesi = probabilità di giocare × fantamedia.</div></div>`;
 }
 function cmpRender(){
+  try{ cmpRenderInner(); }
+  catch(err){
+    console.error(err);
+    const body = el('cmpBody'); if(!body) return;
+    body.innerHTML = `<div class="cmp-head"><h2>Confronta giocatori</h2><div style="display:flex;gap:6px;"><button class="btn btn-ghost btn-sm" id="cmpCloseBtn">Chiudi &times;</button></div></div><div class="cmp-add"><input type="text" id="cmpSearch" placeholder="Cerca un giocatore da aggiungere…" autocomplete="off"><div class="cmp-results" id="cmpResults" style="display:none;"></div></div><p class="hint">Non riesco a mostrare la tabella per questi giocatori, ma puoi cambiare la selezione.</p>`;
+    cmpBindSearch();
+  }
+}
+function cmpSuggest(p){
+  const list = state.players.filter(x=> x.ruolo===p.ruolo && cmpIds.indexOf(x.id)<0 && x.status!=='infortunato' && x.status!=='rotto')
+    .sort((a,b)=> ((b.fvm||0)-(a.fvm||0)) || ((b.qta||0)-(a.qta||0))).slice(0,6);
+  return `<p class="hint" style="margin:0 0 8px;">Con chi vuoi confrontare <b>${escapeHtml(p.nome)}</b>? Cerca qui sopra oppure scegli un suggerito (stesso ruolo):</p><div class="cmp-sug">${list.map(x=>`<button class="btn btn-ghost btn-sm cmp-chip" data-add="${x.id}">${escapeHtml(x.nome)} <small style="color:var(--text-faint);">${escapeHtml(x.squadra)}</small></button>`).join('')}</div>`;
+}
+function cmpRenderInner(){
   const body = el('cmpBody'); if(!body) return;
   const keepQ = (el('cmpSearch') && el('cmpSearch').value) || '';
   const hadFocus = document.activeElement && document.activeElement.id==='cmpSearch';
@@ -3692,6 +3758,7 @@ function cmpRender(){
     html += `<p class="hint">Cerca un giocatore qui sopra, oppure tocca il pulsante &#8644; accanto a un nome nel listone o nella scheda giocatore. Puoi confrontarne fino a ${CMP_MAX}.</p>`;
     body.innerHTML = html; cmpBindSearch(); if(hadFocus) el('cmpSearch').focus(); return;
   }
+  if(P.length===1) html += cmpSuggest(P[0]);
   const M = P.map(cmpMetrics);
   const rows = cmpBuildRows(M);
   const roles = new Set(P.map(p=>p.ruolo));
@@ -3736,6 +3803,10 @@ function cmpBindSearch(){
   }
   inp.addEventListener('input', show);
 }
+document.addEventListener('click', function(e){
+  const c = e.target.closest && e.target.closest('#cmpBody .cmp-chip'); if(!c) return;
+  e.preventDefault(); cmpToggle(c.dataset.add);
+});
 cmpRefreshUI();
 
 })();
