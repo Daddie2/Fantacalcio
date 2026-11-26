@@ -1021,6 +1021,7 @@ function computeAutoTitolarita(){
   state.players.forEach(p=>{
     if(p.titolaritaManual) return;
     const prev = p.titolarita;
+    p.titolaritaGz = false;
     const key = p.squadra||'';
     const gc = maxPvCurr[key], gp = maxPvPrev[key];
     const pvC = p.stats && p.stats.curr && p.stats.curr.pv;
@@ -1056,6 +1057,14 @@ function computeAutoTitolarita(){
       }
     }
     if(p.titolarita!==prev) updated++;
+  });
+  /* le probabili formazioni di Gazzetta hanno la precedenza sulla stima da statistiche (solo in positivo:
+     chi non e' stato abbinato o non e' nell'undici resta con la stima, cosi' un abbinamento mancato non lo declassa) */
+  state.players.forEach(p=>{
+    if(p.titolaritaManual || !p.probForm) return;
+    const st = String(p.probForm.stato||'').toLowerCase();
+    if(st==='titolare'){ p.titolarita='titolare'; p.titolaritaAuto=false; p.titolaritaGz=true; }
+    else if(st==='ballottaggio'){ p.titolarita = (p.probForm.prob>=60 ? 'titolare' : 'secondo'); p.titolaritaAuto=false; p.titolaritaGz=true; }
   });
   saveState(); return updated;
 }
@@ -1155,9 +1164,11 @@ async function autoFetchAndImport(opts){
   try{
     const wbF = await fetchWorkbook('data/formazioni.csv'); const rowsF = workbookToRows(wbF);
     const hdr = rowsF[0].map(normHeader); const iId=hdr.indexOf('ID'), iSt=hdr.indexOf('STATO'), iPr=hdr.indexOf('PROB'), iAg=hdr.indexOf('AGGIORNATO'), iMo=hdr.indexOf('MODULO'), iSl=hdr.indexOf('SLOT');
-    state.players.forEach(p=> delete p.probForm);
+    state.players.forEach(p=>{ delete p.probForm; p.titolaritaGz=false; });
     for(let i=1;i<rowsF.length;i++){ const pf = playerById(String(rowsF[i][iId])); if(pf) { const sl = iSl>=0 ? parseInt(rowsF[i][iSl],10) : NaN; pf.probForm = {stato:rowsF[i][iSt], prob:parseFloat(rowsF[i][iPr])||0, agg:rowsF[i][iAg], modulo:(iMo>=0 && rowsF[i][iMo]) ? String(rowsF[i][iMo]).trim() : '', slot:isNaN(sl)?null:sl}; } }
-    saveState();
+    const nPf = state.players.filter(p=>p.probForm).length;
+    console.info('auto formazioni: righe CSV', rowsF.length-1, '- giocatori abbinati', nPf);
+    computeAutoTitolarita();   /* riapplica la precedenza Gazzetta e salva */
   }catch(e){ console.warn('auto formazioni', e); }
 
   try{ 
@@ -1479,7 +1490,7 @@ el('toggleStatCols').addEventListener('change', function(){ showStatCols=this.ch
 function statCellCurr(p){ const s=p.stats && p.stats.curr; if(!s) return '<span class="hint" style="margin:0;">&mdash;</span>'; const a=[]; if(s.pv!==undefined) a.push(ac('Pv')+' '+fmt(s.pv)); if(s.mv!==undefined) a.push(ac('Mv')+' '+s.mv.toFixed(2)); if(s.fm!==undefined) a.push(ac('Fm')+' '+s.fm.toFixed(2)); return a.length?a.join(' &middot; '):'<span class="hint" style="margin:0;">&mdash;</span>'; }
 function statCellPrev(p){ const s=p.stats && p.stats.prev; if(!s) return '<span class="hint" style="margin:0;">&mdash;</span>'; const a=[]; if(s.mv!==undefined) a.push(ac('Mv')+' '+s.mv.toFixed(2)); if(s.fm!==undefined) a.push(ac('Fm')+' '+s.fm.toFixed(2)); return a.length?a.join(' &middot; '):'<span class="hint" style="margin:0;">&mdash;</span>'; }
 function statusBadge(p){ const st=p.status||'ok'; const cls = st==='infortunato'?'badge-infortunato':st==='rotto'?'badge-rotto':'badge-ok'; const title = p.statusNote?` title="${escapeHtml(p.statusNote)}"`:''; return `<span class="badge ${cls}"${title}>${STATUS_LABELS[st]}</span>`; }
-function titolaritaBadge(p, compact){ if(!p.titolarita) return compact?'':'<span class="hint" style="margin:0;">&mdash;</span>'; const cls = p.titolarita==='titolare'?'badge-titolare':p.titolarita==='secondo'?'badge-secondo':'badge-panchinaro'; if(compact) return `<span class="badge ${cls}">${STARTER_LABELS[p.titolarita]}</span>`; const src = p.titolaritaManual?' (manuale)':(p.titolaritaAuto?' (auto)':''); return `<span class="badge ${cls}">${STARTER_LABELS[p.titolarita]}</span><span class="hint" style="margin:0;">${src}</span>`; }
+function titolaritaBadge(p, compact){ if(!p.titolarita) return compact?'':'<span class="hint" style="margin:0;">&mdash;</span>'; const cls = p.titolarita==='titolare'?'badge-titolare':p.titolarita==='secondo'?'badge-secondo':'badge-panchinaro'; if(compact) return `<span class="badge ${cls}">${STARTER_LABELS[p.titolarita]}</span>`; const src = p.titolaritaManual?' (manuale)':(p.titolaritaGz?' (Gazzetta)':(p.titolaritaAuto?' (auto)':'')); return `<span class="badge ${cls}">${STARTER_LABELS[p.titolarita]}</span><span class="hint" style="margin:0;">${src}</span>`; }
 
 function drawListoneTable(){
   const q = el('fSearch').value.trim().toLowerCase();
