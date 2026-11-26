@@ -405,6 +405,50 @@ tr[data-g]{cursor:pointer;}
   #astaRoses .ar-cred small,#astaRoses .ar-max,#astaRoses .ar-counts{font-size:11.5px;}
   #astaRoses .ar-list li.ar-grp,#astaRoses .ar-list li.ar-grp span:last-child{font-size:11.5px;}
 }
+
+/* ===== Confronto giocatori ===== */
+#cmpOverlay{z-index:120;}
+.cmp-modal{max-width:1040px;}
+.cmp-btn{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin-left:6px;padding:0;border:1px solid var(--line);border-radius:4px;background:transparent;color:var(--text-faint);font-size:12px;line-height:1;cursor:pointer;vertical-align:middle;}
+.cmp-btn:hover{border-color:var(--gold-dim);color:var(--gold);}
+.cmp-btn.on{background:var(--gold);border-color:var(--gold);color:#1a1508;font-weight:700;}
+.cmp-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:14px;}
+.cmp-head h2{font-family:var(--font-head);font-size:18px;margin:0;}
+.cmp-add{position:relative;margin:0 0 12px 0;}
+.cmp-results{position:absolute;left:0;right:0;top:100%;z-index:5;background:var(--panel-2);border:1px solid var(--line);border-radius:6px;margin-top:4px;max-height:260px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+.cmp-res{display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--line-soft);font-size:13.5px;}
+.cmp-res:last-child{border-bottom:none;}
+.cmp-res:hover,.cmp-res:active{background:var(--panel);}
+.cmp-res .hint{margin:0 0 0 auto;}
+.cmp-why{background:var(--panel-2);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:6px;padding:10px 14px;margin:0 0 14px 0;font-size:13px;color:var(--text-dim);}
+.cmp-why b{color:var(--text);}
+.cmp-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:6px;}
+table.cmp{border-collapse:separate;border-spacing:0;width:100%;table-layout:fixed;}
+table.cmp th,table.cmp td{padding:8px 10px;border-bottom:1px solid var(--line-soft);text-align:center;vertical-align:middle;font-size:13px;cursor:default;}
+table.cmp tbody tr:hover{background:transparent;}
+table.cmp col.cmp-c0{width:130px;}
+table.cmp col.cmp-cn{min-width:130px;}
+table.cmp .cmp-l{position:sticky;left:0;z-index:2;background:var(--panel);text-align:left;color:var(--text-dim);font-size:12px;border-right:1px solid var(--line-soft);}
+table.cmp thead th{position:static;background:var(--panel-2);color:var(--text);font-weight:600;vertical-align:top;white-space:normal;}
+table.cmp thead th.cmp-l{background:var(--panel-2);}
+table.cmp tr.cmp-sec td{background:var(--panel-2);color:var(--gold);font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:6px 10px;text-align:left;}
+table.cmp tr.cmp-sec td.cmp-l{background:var(--panel-2);color:var(--gold);}
+table.cmp td.best{color:var(--green);font-weight:700;background:rgba(76,139,103,.10);}
+table.cmp td.none{color:var(--text-faint);}
+table.cmp small{display:block;margin-top:2px;color:var(--text-faint);font-size:11px;font-weight:400;}
+table.cmp .cmp-pname{display:block;margin-top:4px;cursor:pointer;word-break:break-word;}
+table.cmp .cmp-pname:hover{color:var(--gold);text-decoration:underline;}
+table.cmp .cmp-x{margin-top:6px;padding:2px 8px;font-size:11px;}
+.cmp-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:90;display:none;align-items:center;gap:10px;background:var(--panel-2);border:1px solid var(--gold-dim);border-radius:999px;padding:8px 10px 8px 16px;box-shadow:0 8px 24px rgba(0,0,0,.5);font-size:13px;white-space:nowrap;}
+.cmp-bar.show{display:flex;}
+@media (max-width:800px){
+  table.cmp col.cmp-c0{width:92px;}
+  table.cmp col.cmp-cn{min-width:112px;}
+  table.cmp th,table.cmp td{padding:7px 6px;font-size:12.5px;}
+  table.cmp .cmp-l{font-size:11px;}
+  .cmp-head h2{font-size:16px;}
+  .cmp-bar{max-width:calc(100vw - 20px);}
+}
 </style>
 </head>
 <body>
@@ -750,6 +794,8 @@ tr[data-g]{cursor:pointer;}
 <div class="pd-overlay" id="matchOverlay"><div class="pd-modal"><div id="matchBody"></div></div></div>
 <div class="pd-overlay" id="explainOverlay" style="z-index:120;"><div class="pd-modal" style="max-width:480px;"><div id="explainBody"></div></div></div>
 <div class="pd-overlay" id="pdOverlay"><div class="pd-modal"><div id="playerDetailBody"></div></div></div>
+<div class="pd-overlay" id="cmpOverlay"><div class="pd-modal cmp-modal"><div id="cmpBody"></div></div></div>
+<div class="cmp-bar" id="cmpBar"><span id="cmpBarTxt"></span><button class="btn btn-gold btn-sm" id="cmpOpen">Confronta</button><button class="btn btn-ghost btn-sm" id="cmpClear" title="Svuota">&times;</button></div>
 <div class="pd-overlay" id="contestOverlay" style="z-index:110;"><div class="pd-modal" style="max-width:440px;"><div id="contestBody"></div></div></div>
 
 <script>
@@ -1550,7 +1596,7 @@ function drawListoneTable(){
       : `<select class="mini-select" data-team-for="${p.id}">${teamOptionsForRole(p.ruolo)}</select><input type="number" class="mini-input" data-price-for="${p.id}" value="${marketSuggestions[p.id]||p.qta||1}"><button class="btn btn-sm btn-gold" data-assign="${p.id}">OK</button>`;
     const watch = watchBadges(p);
     return `<tr>
-      <td class="sticky-col"><span class="role-tag role-${p.ruolo}">${p.ruolo}</span> <span class="player-link${nameCls(p)}" data-detail="${p.id}">${escapeHtml(p.nome)}</span>${watch}</td>
+      <td class="sticky-col"><span class="role-tag role-${p.ruolo}">${p.ruolo}</span> <span class="player-link${nameCls(p)}" data-detail="${p.id}">${escapeHtml(p.nome)}</span>${cmpBtn(p.id)}${watch}</td>
       <td>${escapeHtml(p.squadra)}</td>
       <td class="num">${fmt(p.qta)}</td>
       <td class="num">${fmt(p.fvm)}</td>
@@ -2507,7 +2553,7 @@ function drawPlayerDetail(){
   const html = `
     <div class="pd-header">
       <div><span class="role-tag role-${p.ruolo}">${p.ruolo}</span><span class="pd-name${nameCls(p)}">${escapeHtml(p.nome)}</span><span class="hint" style="margin:0;">${escapeHtml(p.squadra)}</span> ${watchBadges(p)}</div>
-      <button class="btn btn-ghost btn-sm" id="pdCloseBtn">Chiudi &times;</button>
+      <div style="display:flex;gap:6px;flex-shrink:0;"><button class="btn btn-ghost btn-sm" data-cmp="${p.id}" id="pdCmpBtn">${(Array.isArray(cmpIds)&&cmpIds.indexOf(p.id)>=0)?'&#10003; In confronto':'&#8644; Confronta'}</button><button class="btn btn-ghost btn-sm" id="pdCloseBtn">Chiudi &times;</button></div>
     </div>
     ${warning}
     <div class="row" style="margin-bottom:14px;">
@@ -3497,7 +3543,203 @@ renderSetup();
 renderAll();
 try{ const lv = localStorage.getItem('fwr_view'); if(lv && document.getElementById('view-'+lv)) switchView(lv); }catch(e){}
 
+
+/* ================= CONFRONTO GIOCATORI ================= */
+var cmpIds = [];
+try{ cmpIds = JSON.parse(localStorage.getItem('fwr_cmp')||'[]'); if(!Array.isArray(cmpIds)) cmpIds=[]; cmpIds = cmpIds.slice(0,4); }catch(e){ cmpIds=[]; }
+var CMP_MAX = 4;
+function cmpSave(){ try{ localStorage.setItem('fwr_cmp', JSON.stringify(cmpIds)); }catch(e){} }
+function cmpBtn(id){ const on = Array.isArray(cmpIds) && cmpIds.indexOf(id)>=0; return `<button class="cmp-btn${on?' on':''}" data-cmp="${id}" title="${on?'Togli dal confronto':'Aggiungi al confronto'}">${on?'&#10003;':'&#8644;'}</button>`; }
+function cmpPlayers(){ return cmpIds.map(playerById).filter(Boolean); }
+function cmpToggle(id){
+  const i = cmpIds.indexOf(id);
+  if(i>=0){ cmpIds.splice(i,1); }
+  else{
+    if(!playerById(id)) return;
+    if(cmpIds.length>=CMP_MAX){ toast('Puoi confrontare al massimo '+CMP_MAX+' giocatori'); return; }
+    cmpIds.push(id);
+    const p = playerById(id); toast(p.nome+' aggiunto al confronto ('+cmpIds.length+'/'+CMP_MAX+')');
+  }
+  cmpSave(); cmpRefreshUI();
+}
+function cmpRefreshUI(){
+  document.querySelectorAll('[data-cmp]').forEach(b=>{
+    const on = cmpIds.indexOf(b.dataset.cmp)>=0;
+    if(b.classList.contains('cmp-btn')){ b.classList.toggle('on', on); b.innerHTML = on ? '&#10003;' : '&#8644;'; b.title = on?'Togli dal confronto':'Aggiungi al confronto'; }
+    else if(b.id==='pdCmpBtn'){ b.innerHTML = on ? '&#10003; In confronto' : '&#8644; Confronta'; }
+  });
+  const open = el('cmpOverlay').classList.contains('show');
+  const n = cmpPlayers().length;
+  el('cmpBar').classList.toggle('show', n>0 && !open);
+  el('cmpBarTxt').textContent = 'Confronto: '+n+'/'+CMP_MAX;
+  if(open) cmpRender();
+}
+function cmpOpen(){ el('cmpOverlay').classList.add('show'); cmpRender(); cmpRefreshUI(); }
+function cmpClose(){ el('cmpOverlay').classList.remove('show'); cmpRefreshUI(); }
+el('cmpOpen').addEventListener('click', cmpOpen);
+el('cmpClear').addEventListener('click', function(){ cmpIds=[]; cmpSave(); cmpRefreshUI(); });
+el('cmpOverlay').addEventListener('click', function(e){ if(e.target===this) cmpClose(); });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape' && el('cmpOverlay').classList.contains('show')){ e.stopImmediatePropagation(); cmpClose(); } }, true);
+/* pulsanti "Confronta" ovunque (capture: non apre la scheda sottostante) */
+document.addEventListener('click', function(e){
+  const b = e.target.closest && e.target.closest('[data-cmp]'); if(!b) return;
+  e.preventDefault(); e.stopPropagation(); cmpToggle(b.dataset.cmp);
+}, true);
+
+function cmpNum(x){ return (x===null || x===undefined || isNaN(x)) ? null : +x; }
+function cmpTeamHasForm(p){ return state.players.some(x=> x.squadra===p.squadra && x.probForm); }
+function cmpMetrics(p){
+  const est = lineupEst();
+  const prob = playProb(p, est), fm = baseFm(p), mv = baseMv(p), bm = bonusMalus(p), exp = prob*fm;
+  const rf = recentForm(p);
+  const rp = recentPresence(p);
+  const rows = giornateById[p.id] || [];
+  const cur = (p.stats && p.stats.curr) || {}, prev = (p.stats && p.stats.prev) || {};
+  let src;
+  if(p.status==='infortunato' || p.status==='rotto') src = 'indisponibile';
+  else if(!est && p.probForm) src = 'Gazzetta' + (p.probForm.stato==='ballottaggio' ? ' (ballottaggio)' : '');
+  else if(!est && cmpTeamHasForm(p)) src = 'non nell’undici Gazzetta';
+  else src = 'stima da statistiche';
+  const opp = oppInfo(p);
+  return {p, prob, fm, mv, bm, exp, rf, rp, rows, cur, prev, src, opp};
+}
+function cmpBuildRows(M){
+  const f2 = x=> x===null?null:x.toFixed(2);
+  const any = fn=> M.some(fn);
+  const out = [];
+  const sec = t=> out.push({sec:t});
+  /* fn(m) -> {t:html, n:number|null} oppure null; better: 'hi' | 'lo' | null */
+  const row = (label, fn, better)=> out.push({label, cells:M.map(m=>{ const r = fn(m); return r || null; }), better});
+  const stat = (get, dec)=> m=>{ const v = cmpNum(get(m)); return v===null ? null : {t:(dec===undefined?String(Math.round(v*100)/100).replace('.',','):v.toFixed(dec).replace('.',',')), n:v}; };
+
+  sec('Generale');
+  row('Squadra', m=>({t:escapeHtml(m.p.squadra), n:null}));
+  row('Quotazione', m=>({t:fmt(m.p.qta||0), n:cmpNum(m.p.qta)}));
+  row('FVM', m=> m.p.fvm ? {t:fmt(m.p.fvm), n:null} : null);
+  row('Prezzo consigliato', m=>{ const v = marketSuggestions[m.p.id]; return v ? {t:fmt(v), n:null} : null; });
+  row('Stato fisico', m=>({t:escapeHtml(STATUS_LABELS[m.p.status||'ok']||'OK')+(m.p.statusNote?'<small>'+escapeHtml(String(m.p.statusNote).slice(0,50))+'</small>':''), n:null}));
+  row('Titolarità', m=> m.p.titolarita ? {t:titolaritaBadge(m.p,true)+'<small>'+(m.p.titolaritaManual?'manuale':m.p.titolaritaGz?'Gazzetta':m.p.titolaritaAuto?'auto':'')+'</small>', n:null} : null);
+  row('Fantasquadra', m=>{ const o = ownerOf(m.p.id); return {t:o ? escapeHtml(o.team.name)+'<small>'+fmt(o.price)+' cr.</small>' : 'Libero', n:null}; });
+
+  sec('Prossima giornata');
+  row('Avversario', m=> m.opp ? {t:(m.opp.home?'vs ':'@ ')+escapeHtml(m.opp.opp)+'<small>'+(m.opp.home?'in casa':'in trasferta')+'</small>', n:null} : null);
+  row('Probabilità di giocare', m=>({t:Math.round(m.prob*100)+'%<small>'+escapeHtml(m.src)+'</small>', n:m.prob}), 'hi');
+
+  sec('Valore atteso');
+  row('Punti attesi', m=>({t:f2(m.exp).replace('.',',')+'<small>'+Math.round(m.prob*100)+'% × Fm '+f2(m.fm).replace('.',',')+'</small>', n:m.exp}), 'hi');
+  row('Fantamedia attesa', m=>({t:f2(m.fm).replace('.',','), n:m.fm}), 'hi');
+  row('Voto atteso', m=>({t:f2(m.mv).replace('.',','), n:m.mv}), 'hi');
+  row('Bonus / malus', m=> m.bm===null ? null : {t:(m.bm>0?'+':'')+f2(m.bm).replace('.',','), n:m.bm}, 'hi');
+  row('Forma recente (Fm)', m=> m.rf ? {t:f2(m.rf.fv).replace('.',',')+'<small>ultime '+m.rf.n+' a voto</small>', n:m.rf.fv} : null, 'hi');
+  row('Presenze ultime 5', m=>{ if(m.rp===null) return null; const k = Math.min(5, giornateMaxG||5); const v = Math.round(m.rp*k); return {t:v+'/'+k, n:m.rp}; }, 'hi');
+  row('Ultimi fantavoti', m=>{ const l = m.rows.slice(-5); if(!l.length) return null; return {t:l.map(r=> r.v!==null && r.fv!==null ? String(r.fv).replace('.',',') : 's.v.').join(' · '), n:null}; });
+
+  const hasGK = M.some(m=> m.p.ruolo==='P');
+  const season = (key, label)=>{
+    const g = m=> m[key];
+    if(!M.some(m=> Object.keys(g(m)).length)) return;
+    sec(label);
+    row('Presenze (pv)', stat(m=>g(m).pv,0), 'hi');
+    row('Media voto', stat(m=>g(m).mv,2), 'hi');
+    row('Fantamedia', stat(m=>g(m).fm,2), 'hi');
+    row('Gol', stat(m=>g(m).gf,0), 'hi');
+    row('Assist', stat(m=>g(m).ass,0), 'hi');
+    row('Gol+assist / partita', stat(m=>{ const pv = g(m).pv; return pv>0 ? ((g(m).gf||0)+(g(m).ass||0))/pv : null; },2), 'hi');
+    if(hasGK){ row('Gol subiti (portieri)', stat(m=> m.p.ruolo==='P' ? g(m).gs : null,0), 'lo'); row('Rigori parati', stat(m=> m.p.ruolo==='P' ? g(m).rp : null,0), 'hi'); }
+    row('Ammonizioni', stat(m=>g(m).amm,0), 'lo');
+    row('Espulsioni', stat(m=>g(m).esp,0), 'lo');
+  };
+  season('cur','Stagione corrente');
+  season('prev','Stagione precedente');
+
+  if(M.some(m=> pfNum(m.p,['minuti'])!==null || pfNum(m.p,['titolare'])!==null)){
+    sec('PianetaFanta');
+    row('Minuti giocati', stat(m=>pfNum(m.p,['minuti']),0), 'hi');
+    row('Volte titolare', stat(m=>pfNum(m.p,['titolare']),0), 'hi');
+    row('Subentrato', stat(m=>pfNum(m.p,['subentrato']),0), null);
+  }
+  return out;
+}
+function cmpWhy(M){
+  /* il perché ha senso solo tra giocatori dello stesso ruolo: prende il ruolo con più giocatori selezionati */
+  const byRole = {}; M.forEach(m=>{ (byRole[m.p.ruolo] = byRole[m.p.ruolo] || []).push(m); });
+  const ok = Object.keys(byRole).map(k=> byRole[k]).sort((a,b)=> b.length-a.length)[0] || [];
+  if(ok.length<2) return '';
+  const s = ok.slice().sort((a,b)=> b.exp-a.exp);
+  const a = s[0], b = s[1];
+  const pc = x=> Math.round(x*100)+'%', fx = x=> x.toFixed(2).replace('.',',');
+  let why;
+  if(b.prob===0 && a.prob>0) why = `<b>${escapeHtml(b.p.nome)}</b> è segnato come indisponibile (0%), quindi non vale punti attesi.`;
+  else if(a.exp-b.exp < 0.05) why = `<b>${escapeHtml(a.p.nome)}</b> e <b>${escapeHtml(b.p.nome)}</b> hanno praticamente gli stessi punti attesi.`;
+  else {
+    const pr = b.prob>0 ? a.prob/b.prob : 99, fr = b.fm>0 ? a.fm/b.fm : 1;
+    const driver = pr>=fr*1.15 ? 'soprattutto perché ha più probabilità di giocare' : (fr>=pr*1.15 ? 'soprattutto perché ha la fantamedia più alta' : 'per probabilità di giocare e fantamedia insieme');
+    why = `L’app preferisce <b>${escapeHtml(a.p.nome)}</b> a <b>${escapeHtml(b.p.nome)}</b> ${driver}: ${fx(a.exp)} punti attesi (${pc(a.prob)} × Fm ${fx(a.fm)}) contro ${fx(b.exp)} (${pc(b.prob)} × Fm ${fx(b.fm)}).`;
+  }
+  const bestFm = ok.slice().sort((x,y)=> y.fm-x.fm)[0];
+  if(bestFm !== a && bestFm.prob<a.prob) why += ` <b>${escapeHtml(bestFm.p.nome)}</b> ha la fantamedia più alta (${fx(bestFm.fm)}) ma gioca con probabilità minore (${pc(bestFm.prob)}).`;
+  return `<div class="cmp-why"><b>Perché questa scelta?</b> ${why}<div class="hint" style="margin:6px 0 0;">Formazione e panchina sono ordinate per punti attesi = probabilità di giocare × fantamedia.</div></div>`;
+}
+function cmpRender(){
+  const body = el('cmpBody'); if(!body) return;
+  const keepQ = (el('cmpSearch') && el('cmpSearch').value) || '';
+  const hadFocus = document.activeElement && document.activeElement.id==='cmpSearch';
+  const P = cmpPlayers();
+  const full = P.length>=CMP_MAX;
+  let html = `<div class="cmp-head"><h2>Confronta giocatori <span class="hint" style="margin:0;">(${P.length}/${CMP_MAX})</span></h2><div style="display:flex;gap:6px;">${P.length?'<button class="btn btn-ghost btn-sm" id="cmpEmpty">Svuota</button>':''}<button class="btn btn-ghost btn-sm" id="cmpCloseBtn">Chiudi &times;</button></div></div>`;
+  html += `<div class="cmp-add"><input type="text" id="cmpSearch" placeholder="${full?'Hai raggiunto il massimo: togline uno per aggiungerne altri':'Cerca un giocatore da aggiungere…'}" autocomplete="off" ${full?'disabled':''} value="${escapeAttr(keepQ)}"><div class="cmp-results" id="cmpResults" style="display:none;"></div></div>`;
+  if(!P.length){
+    html += `<p class="hint">Cerca un giocatore qui sopra, oppure tocca il pulsante &#8644; accanto a un nome nel listone o nella scheda giocatore. Puoi confrontarne fino a ${CMP_MAX}.</p>`;
+    body.innerHTML = html; cmpBindSearch(); if(hadFocus) el('cmpSearch').focus(); return;
+  }
+  const M = P.map(cmpMetrics);
+  const rows = cmpBuildRows(M);
+  const roles = new Set(P.map(p=>p.ruolo));
+  if(roles.size>1) html += `<p class="hint" style="margin:0 0 10px;">Hai scelto ruoli diversi: il confronto è più utile tra giocatori dello stesso ruolo.</p>`;
+  if(P.length>=2) html += cmpWhy(M);
+  const ncol = P.length;
+  const mob = window.innerWidth<=800, minW = (mob?92:130) + ncol*(mob?112:130);
+  html += `<div class="cmp-wrap"><table class="cmp" style="min-width:${minW}px"><colgroup><col class="cmp-c0">${'<col class="cmp-cn">'.repeat(ncol)}</colgroup><thead><tr><th class="cmp-l"></th>`;
+  P.forEach(p=>{ html += `<th><span class="role-tag role-${p.ruolo}">${p.ruolo}</span><span class="cmp-pname${nameCls(p)}" data-cmp-open="${p.id}">${escapeHtml(p.nome)}</span><small>${escapeHtml(p.squadra)}</small><button class="btn btn-ghost btn-sm cmp-x" data-cmp="${p.id}">Rimuovi</button></th>`; });
+  html += `</tr></thead><tbody>`;
+  rows.forEach(r=>{
+    if(r.sec){ html += `<tr class="cmp-sec"><td class="cmp-l">${r.sec}</td><td colspan="${ncol}"></td></tr>`; return; }
+    if(r.cells.every(c=> c===null)) return;   /* nessun dato per nessuno: riga nascosta */
+    const nums = r.cells.map(c=> c && c.n!==null ? c.n : null).filter(v=> v!==null);
+    let best = null;
+    if(r.better && nums.length>=2){ const mx = Math.max.apply(null,nums), mn = Math.min.apply(null,nums); if(mx!==mn) best = r.better==='hi' ? mx : mn; }
+    html += `<tr><td class="cmp-l">${r.label}</td>` + r.cells.map(c=>{
+      if(c===null) return '<td class="none">&mdash;</td>';
+      const isBest = best!==null && c.n===best;
+      return `<td${isBest?' class="best"':''}>${c.t}</td>`;
+    }).join('') + `</tr>`;
+  });
+  html += `</tbody></table></div><p class="hint">In verde il valore migliore della riga (per ammonizioni, espulsioni e gol subiti il più basso). &mdash; = dato non disponibile.</p>`;
+  body.innerHTML = html;
+  cmpBindSearch();
+  if(hadFocus && el('cmpSearch') && !el('cmpSearch').disabled) el('cmpSearch').focus();
+  body.querySelectorAll('[data-cmp-open]').forEach(n=> n.addEventListener('click', function(){ const id = this.dataset.cmpOpen; cmpClose(); openPlayerDetail(id); }));
+}
+function cmpBindSearch(){
+  const cb = el('cmpCloseBtn'); if(cb) cb.addEventListener('click', cmpClose);
+  const ce = el('cmpEmpty'); if(ce) ce.addEventListener('click', function(){ cmpIds=[]; cmpSave(); cmpRefreshUI(); });
+  const inp = el('cmpSearch'), box = el('cmpResults'); if(!inp) return;
+  const norm2 = s=> String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  function show(){
+    const q = norm2(inp.value).trim();
+    if(q.length<2){ box.style.display='none'; box.innerHTML=''; return; }
+    const res = state.players.filter(p=> cmpIds.indexOf(p.id)<0 && (norm2(p.nome).indexOf(q)>=0 || norm2(p.squadra).indexOf(q)===0))
+      .sort((a,b)=> (b.qta||0)-(a.qta||0)).slice(0,8);
+    box.innerHTML = res.length ? res.map(p=>`<div class="cmp-res" data-add="${p.id}"><span class="role-tag role-${p.ruolo}">${p.ruolo}</span><span>${escapeHtml(p.nome)}</span><span class="hint">${escapeHtml(p.squadra)}</span></div>`).join('') : '<div class="cmp-res"><span class="hint" style="margin:0;">Nessun giocatore trovato</span></div>';
+    box.style.display='block';
+    box.querySelectorAll('[data-add]').forEach(r=> r.addEventListener('click', function(){ const id = this.dataset.add; inp.value=''; box.style.display='none'; cmpToggle(id); }));
+  }
+  inp.addEventListener('input', show);
+}
+cmpRefreshUI();
+
 })();
+
 </script>
 <script>
 /* Blocca lo scroll della pagina sotto finché c'è un overlay aperto.
