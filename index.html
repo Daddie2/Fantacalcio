@@ -3394,7 +3394,7 @@ function renderLineups(){
   else{
     const out = team.roster.map(r=>playerById(r.playerId)).filter(p=> p && p.status==='infortunato');
     html += `<div class="stat-grid">
-      <div class="stat-box"><div class="label">Modulo</div><div class="value gold">${L.module}</div></div>
+      <div class="stat-box"><div class="label">Modulo consigliato</div><div class="value gold">${L.module}</div></div>
       <div class="stat-box"><div class="label">Punti attesi (11)</div><div class="value">${L.tot.toFixed(1)}</div></div>
       <div class="stat-box"><div class="label">Mod. difesa</div><div class="value ${L.db.bonus?'green':''}">${md.on ? (L.db.avg===null?'n.d.':'+'+L.db.bonus) : 'spento'}</div></div>
       ${so.on ? `<div class="stat-box"><div class="label">Switch</div><div class="value ${L.sw?'green':''}">${L.sw?'+'+L.sw.gain.toFixed(2):'nessuno'}</div></div>` : ''}
@@ -3404,7 +3404,7 @@ function renderLineups(){
     html += `<div class="panel"><div class="panel-title" style="display:flex;align-items:center;">Titolari<button type="button" class="info-btn" id="lineupInfoBtn" aria-label="Come si calcola tutto" title="Come si calcola tutto">i</button></div>${lineupView==='campo' ? pitchHtml(L) : lineupTable(L.xi)}</div>`;
     html += `<div class="panel"><div class="panel-title">Panchina completa (${L.bench.length})</div>${L.bench.length? lineupTable(L.bench) : '<p class="hint">Nessun panchinaro.</p>'}</div>`;
   }
-  html += `<div class="panel"><div class="panel-title">Tutte le squadre</div><div style="overflow-x:auto;"><table><thead><tr><th>Squadra</th><th>Modulo</th><th class="num">Punti attesi</th></tr></thead><tbody>` +
+  html += `<div class="panel"><div class="panel-title">Tutte le squadre</div><div style="overflow-x:auto;"><table><thead><tr><th>Squadra</th><th>Modulo consigliato</th><th class="num">Punti attesi</th></tr></thead><tbody>` +
     state.teams.map(t=>{ const b = bestLineup(t); return `<tr><td><span class="player-link" data-lt-pick="${t.id}">${escapeHtml(t.name)}</span></td><td>${b?b.module:'<span class="hint" style="margin:0;">rosa incompleta</span>'}</td><td class="num">${b?b.tot.toFixed(1):'&mdash;'}</td></tr>`; }).join('') + `</tbody></table></div></div>`;
   el('lineupContent').innerHTML = html;
   const ib = el('lineupInfoBtn'); if(ib) ib.addEventListener('click', openLineupInfo);
