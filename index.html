@@ -3794,14 +3794,16 @@ function cmpBindSearch(){
   const norm2 = s=> String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   function show(){
     const q = norm2(inp.value).trim();
-    if(q.length<2){ box.style.display='none'; box.innerHTML=''; return; }
-    const res = state.players.filter(p=> cmpIds.indexOf(p.id)<0 && (norm2(p.nome).indexOf(q)>=0 || norm2(p.squadra).indexOf(q)===0))
-      .sort((a,b)=> (b.qta||0)-(a.qta||0)).slice(0,8);
+    const ref = cmpPlayers()[0];
+    const pool = state.players.filter(p=> cmpIds.indexOf(p.id)<0);
+    const res = (q ? pool.filter(p=> norm2(p.nome).indexOf(q)>=0 || norm2(p.squadra).indexOf(q)===0) : pool.filter(p=> !ref || p.ruolo===ref.ruolo))
+      .sort((a,b)=> (q ? ((norm2(b.nome).indexOf(q)===0)-(norm2(a.nome).indexOf(q)===0)) : 0) || (b.qta||0)-(a.qta||0)).slice(0,8);
     box.innerHTML = res.length ? res.map(p=>`<div class="cmp-res" data-add="${p.id}"><span class="role-tag role-${p.ruolo}">${p.ruolo}</span><span>${escapeHtml(p.nome)}</span><span class="hint">${escapeHtml(p.squadra)}</span></div>`).join('') : '<div class="cmp-res"><span class="hint" style="margin:0;">Nessun giocatore trovato</span></div>';
     box.style.display='block';
     box.querySelectorAll('[data-add]').forEach(r=> r.addEventListener('click', function(){ const id = this.dataset.add; inp.value=''; box.style.display='none'; cmpToggle(id); }));
   }
   inp.addEventListener('input', show);
+  inp.addEventListener('focus', show);
 }
 document.addEventListener('click', function(e){
   const c = e.target.closest && e.target.closest('#cmpBody .cmp-chip'); if(!c) return;
