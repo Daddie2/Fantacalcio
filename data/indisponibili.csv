@@ -1,8 +1,8 @@
 nome,squadra,categoria,dettaglio
 Hien,Atalanta,infortunati,"il difensore operato a fine giugno per una lesione del tendine prossimale del muscolo semimembranoso della coscia sinistra, in recupero e pronto a tornare in campo dalla fine di novembre."
-Carnesecchi,Atalanta,infortunati,il portiere KO per un lesione del menisco mediale del ginocchio sinistro dalla sfida del 22 novembre contro l'Inter. Recuperabile da gennaio.
-Pompei,Atalanta,infortunati,"Il portiere fermo da inizio ottobre per la frattura della falange della mano destra, out nel prossimo turno di campionato. Recuperabile da metà dicembre."
 Kossounou,Atalanta,infortunati,"Il difensore frenato da una lesione muscolare di medio-alto grado del bicipite femorale della coscia sinistra alla vigilia della sfida di campionato contro la Juventus (del 20 settembre). Lungo stop, rientro dalla fine di novembre."
+Pompei,Atalanta,infortunati,"Il portiere fermo da inizio ottobre per la frattura della falange della mano destra, out nel prossimo turno di campionato. Recuperabile da metà dicembre."
+Carnesecchi,Atalanta,infortunati,il portiere KO per un lesione del menisco mediale del ginocchio sinistro dalla sfida del 22 novembre contro l'Inter. Recuperabile da inizio gennaio.
 Happonen,Bologna,infortunati,"Il portiere ai box per un trauma distorsivo del quinto dito della mano sinistra, recuperabile dalla prima metà di dicembre."
 De Silvestri,Bologna,infortunati,Il terzino out venerdì a Venezia per un affaticamento muscolare al polpaccio. Da valutare in vista del prossimo turno di campionato.
 Holm,Bologna,infortunati,Lo svedese KO in Nazionale il 26 settembre vittima di un problema al tendine della coscia destra. Ha deciso di operarsi e affronterà un lungo stop. Ipotesi di rientro in campo da fine febbraio.
@@ -11,59 +11,61 @@ El Azzouzi O.,Bologna,infortunati,"il centrocampista ai box per una lesione all'
 Enem,Bologna,infortunati,"Lavoro a parte negli ultimi giorni per l'attaccante a causa di un problema al tendine d'Achille. Out contro Udinese, Parma, Milan e Monza, forfait anche per venerdì a Venezia. Da valutare rientro tra i convocati in vista della sfida di campionato nella 14a giornata."
 Felici,Cagliari,infortunati,il centrocampista KO il 7 settembre contro il Lecce in casa vittima della rottura del legamento crociato anteriore. Verrà operato e costretto a un lungo stop (ipotizziamo un rientro da marzo).
 Liteta,Cagliari,infortunati,"il centrocampista out a Como sabato scorso per noie fisiche, da valutare in vista di lunedì nella 13a di campionato contro il Milan."
-Rodriguez Je.,Como,infortunati,"Il calciatore si è infortunato in allenamento il 20 ottobre vittima di un problema muscolare al quadricipite alto. Rimane da valutare per stabilire i tempi di recupero, si ipotizza un ritorno in campo da metà dicembre."
+Rodriguez Je.,Como,infortunati,"Il calciatore si è infortunato in allenamento il 20 ottobre vittima di un problema muscolare al quadricipite alto. Rimane da valutare per stabilire i tempi di recupero, si ipotizza un ritorno in campo dalla seconda metà di dicembre."
+Kambwala,Como,infortunati,"il difensore fermo ai box per un problema fisico, out nel prossimo turno di campionato. Da valutare."
 Kean,Como,infortunati,"l'attaccante si sottoporrà a nuove cure per un problema osseo alla gamba destra. Ipotizziamo un recupero da fine gennaio, ma la situazione rimane da monitorare."
-Pongracic,Fiorentina,infortunati,"il difensore il 15 ottobre contro l'Inter ha rimediato una lesione mio-fasciale a carico del capo lungo del bicipite femorale della coscia destra, rientro dalla fine di novembre."
-Viery,Fiorentina,infortunati,"il difensore costretto al cambio il 23 novembre a Monza per una esione del capo lungo del bicipite femorale della coscia sinistra, recuperabile dalla fine di dicembre."
+Viery,Fiorentina,infortunati,"il difensore costretto al cambio il 23 novembre a Monza per una esione del capo lungo del bicipite femorale della coscia sinistra, recuperabile dalla seconda metà di dicembre."
 Parisi,Fiorentina,infortunati,"il cursore di fascia della Viola sta svolgendo l'iter di recupero dall'infortunio al legamento crociato al ginocchio, punta a tornare convocabile da fine dicembre."
-Grillitsch,Frosinone,infortunati,"il centrocampista non convocato dalla gara di Genova (12 settembre) a causa di una sindrome retto-adduttoria, ha poi deciso di operarsi. Può tornare convocabile dalla fine di novembre."
+Pongracic,Fiorentina,infortunati,"il difensore il 15 ottobre contro l'Inter ha rimediato una lesione mio-fasciale a carico del capo lungo del bicipite femorale della coscia destra, rientro dalla fine di novembre."
 Birligea,Frosinone,infortunati,"l'attaccante alle prese con un guaio muscolare al bicipite femorale destro, non ci sarà sabato contro il Parma. Tempi di recupero da valutare."
-Raimondo,Frosinone,infortunati,"l'attaccante KO l'1 novembre contro il Toro vittima di una lesione multilegamentosa contusivo-distorsiva della caviglia sinistra. Iniziate le cure del caso, proverà a tornare già da metà dicembre in campo."
+Ostigard,Genoa,infortunati,"il difensore a inizio settimana ricoverato in ospedale per una forte influenza, poi smaltita ed è stato dimesso. Tuttavia, non farà parte della sfida di sabato contro l'Inter. Da valutare il rientro in vista della 14a giornata di A."
 Colombo,Genoa,infortunati,"L'attaccante KO il 22 novembre sul campo del Sassuolo vittima di una lesione del legamento crociato anteriore del ginocchio destro, campionato chiuso anzitempo."
-Bastoni,Inter,infortunati,Il difensore mercoledì in Champions League ha dovuto lasciare il campo per un fastidio muscolare alla gamba e andrà valutato. A rischio forfait ora in campionato contro il Genoa.
+Bastoni,Inter,infortunati,"Il difensore il 25 novembre in Champions League ha dovuto lasciare il campo per un risentimento al quadricipite della coscia sinistra, proverà a tornare arruolabile dalla metà di dicembre."
 Calhanoglu,Inter,infortunati,"il turco il 22 novembre a Bergamo ha ravvisato un risentimento muscolare ai flessori della coscia destra, rientro in campo dalla seconda metà di dicembre."
 Bonny,Inter,infortunati,"L'attaccante ai box per un risentimento muscolare ai flessori della coscia destra, rientro possibile dall'inizio di dicembre."
-Kalulu,Juventus,infortunati,"Il terzino bianconero ai box per una lesione ai muscoli ischiocrurali della gamba sinistra, recuperabile dalla fine di novembre."
+Locatelli,Juventus,infortunati,il metronomo del centrocampo bianconero ha rimediato la rottura del menisco esterno del ginocchio. Verrà operato a Lione a stretto giro. Lungo stop e possibilità di rivederlo in campo da febbraio.
 Grabara,Juventus,infortunati,"Il portiere out dal 20 settembre per una lesione al crociato anteriore del ginocchio destro. Operazione chirurgica e lungo stop, rientro da aprile."
 Thuram K.,Juventus,infortunati,"il centrocampista condizionato da una sindrome femoro-rotulea e, dopo un consulto medico a fine agosto, è stato sottoposto il 3 settembre a operazione chirurgica. Lungo stop, ipotizziamo un rientro da gennaio."
-Locatelli,Juventus,infortunati,il metronomo del centrocampo bianconero ha rimediato la rottura del menisco esterno del ginocchio. Verrà operato a Lione a stretto giro. Lungo stop e possibilità di rivederlo in campo da febbraio.
 Yildiz,Juventus,infortunati,"l'attaccante turco, dopo la gara di Frosinone (23 agosto), ha lamentato un problema al piede. Operato il 31 agosto di osteosintesi della frattura della base del V metatarso del piede sinistro. Rientro in campo dalla fine di dicembre."
 Tavares N.,Lazio,infortunati,"il terzino dei biancocelesti costretto al cambio l'8 novembre a Napoli a causa di un guaio muscolare al flessore della gamba. Recuperabile dalla metà di dicembre, proverà a esserci nel derby."
 Marusic,Lazio,infortunati,"Il montenegrino frenato ancora da un fastidio muscolare alla gamba, condizioni che restano valutare ma non ci sarà nel prossimo turno di campionato."
-Taylor K.,Lazio,infortunati,"Il centrocampista mercoledì non ha terminato l'allenamento a causa di un fastidio muscolare alla gamba che rimane da valutare, a rischio forfait sabato a Torino contro i granata."
+Taylor K.,Lazio,infortunati,Il centrocampista mercoledì non ha terminato l'allenamento a causa di un edema muscolare alla gamba che lo esclude per sabato a Torino contro i granata. Da valutare lunedì con ulteriori esami medici in vista della 14a giornata di A.
 Sutalo J.,Lazio,infortunati,il difensore KO l'8 novembre a Napoli vittima di una lesione muscolare di secondo grado al flessore della gamba. Recuperabile dalla fine di dicembre.
 Kaba,Lecce,infortunati,"il centrocampista ai box per una lesione di primo grado al bicipite femorale della coscia destra, recuperabile dalla fine di dicembre."
 Pierotti,Lecce,infortunati,"l'ala offensiva dei salentini ferma ai box per la frattura composta del malleolo mediale della caviglia destra rimediata nella seconda metà di ottobre, poi operato a inizio novembre. Lungo stop, ipotizziamo un rientro in campo da gennaio."
 Ilic,Lecce,infortunati,"il regista dei salentini KO l'11 ottobre in casa contro il Bologna vittima di una lesione miotendinea del retto femorale sinistro con lesione parziale del tendine, rientro da aprile."
+Saelemaekers,Milan,infortunati,Il belga fermo da inizio ottobre per un problema alla caviglia destra e operata il 13 ottobre. Stop lungo e lo rivedremo in campo nel 2027 inoltrato (ipotesi da febbraio).
 Chukwueze,Milan,infortunati,"Il nigeriano dal 21 ottobre fermato dalla rottura del tendine del muscolo tensore della fascia lata dell'anca sinistra. Operato il 4 novembre, lungo stop. Ipotesi di rientro in campo da aprile."
 Loftus-Cheek,Milan,infortunati,il centrocampista non al meglio per una lesione muscolare al flessore ravvisato sul finire del match di Udine (25 ottobre). Recuperabile dalla fine di novembre.
-Saelemaekers,Milan,infortunati,Il belga fermo da inizio ottobre per un problema alla caviglia destra e operata il 13 ottobre. Stop lungo e lo rivedremo in campo nel 2027 inoltrato (ipotesi da febbraio).
+Modric,Milan,infortunati,Il regista dei rossoneri non al meglio per un risentimento muscolare alla coscia e a forte rischio la sua presenza lunedì in campionato a Cagliari. Da valutare.
 Gabbia,Milan,infortunati,"il difensore KO l'11 ottobre contro il Sassuolo vittima di una lesione del flessore della coscia sinistra con parziale interessamento tendineo. Lo stop sarà lungo, anche con la terapia conservativa. Ipotesi rientro in campo da fine febbraio."
 Terracciano,Milan,infortunati,"il portiere non al meglio per noie fisiche, a rischio forfait anche nel prossimo turno di campionato contro il Cagliari. Condizioni da valutare nei prossimi allenamenti."
 Maye,Monza,infortunati,"Il difensore ai box per noie fisiche, assente nelle ultime sfide di campionato e ora da valutare in vista della 14a giornata di campionato."
 Ngonge,Monza,infortunati,L'attaccante out lunedì scorso contro la Fiorentina per noie fisiche. Da valutare in vista del prossimo turno di campionato.
 Folorunsho,Monza,infortunati,"Il centrocampista alle prese con noie muscolari al polpaccio, da valutare in vista della 14a giornata di campionato."
 Badiashile,Napoli,infortunati,"il difensore KO il 24 ottobre contro la Roma per una lesione distrattiva di medio grado del retto femorale destro, recuperabile dalla fine di novembre."
-Santos A.,Napoli,infortunati,"l'ala offensiva azzurra KO il 18 ottobre a Venezia, vittima di una lesione distrattiva di medio grado del bicipite femorale sinistro. Recuperabile dall'inizio di dicembre."
+Santos A.,Napoli,infortunati,"l'ala offensiva azzurra KO il 18 ottobre a Venezia, vittima di una lesione distrattiva di medio grado del bicipite femorale sinistro. Recuperabile dalla prima metà di dicembre."
+De Bruyne,Napoli,infortunati,Il centrocampista non al meglio per un lieve affaticamento muscolare alla gamba e verso il forfait per domenica sul campo del Sassuolo. Da valutare.
 Vergara,Napoli,infortunati,il centrocampista azzurro fermo dal 21 novembre per una lesione di alto grado del bicipite femorale della coscia sinistra. Lungo stop e ipotizziamo un rientro da febbraio.
-Lobotka,Napoli,infortunati,"lo slovacco il 28 ottobre vittima a Monza di una lesione della sindesmosi tibio-peroneale senza instabilità, associata a lesione di basso grado del LPAA della caviglia sinistra. Recuperabile dalla metà di dicembre."
-Buongiorno,Napoli,infortunati,"il difensore operato nella seconda metà di luglio al menisco del ginocchio destro. Sta recuperando lentamente, ipotizziamo possa tornare arruolabile da fine dicembre."
 Di Lorenzo,Napoli,infortunati,"il capitano azzurro costretto al cambio l'1 novembre contro la Juve per una lesione distrattiva del muscolo adduttore lungo della coscia sinistra, tentativo di recupero dalla fine di novembre."
+Buongiorno,Napoli,infortunati,"il difensore operato nella seconda metà di luglio al menisco del ginocchio destro. Sta recuperando lentamente, ipotizziamo possa tornare arruolabile da fine dicembre."
 Meret,Napoli,infortunati,Il portiere KO il 19 novembre in allenamento vittima della frattura della quinta vertebra lombare e ipotizziamo un rientro in campo da gennaio.
+Lobotka,Napoli,infortunati,"lo slovacco il 28 ottobre vittima a Monza di una lesione della sindesmosi tibio-peroneale senza instabilità, associata a lesione di basso grado del LPAA della caviglia sinistra. Recuperabile dalla metà di dicembre."
 Romero D.,Parma,infortunati,l'attaccante KO il 7 novembre contro il Bologna vittima in campo di una lussazione acromion-claveare della spalla destra. Recuperabile dalla metà di dicembre.
-Drobnic,Parma,infortunati,Il difensore in recupero da un problema al piede e rimane da valutare in vista di sabato a Frosinone nella 13a giornata di campionato.
+Drobnic,Parma,infortunati,Il difensore in lento recupero da un problema al piede e rimane da valutare in vista della 14a giornata di campionato.
 Rensch,Roma,infortunati,"Il difensore KO a Manchester in Champions League il 3 novembre per una lesione di primo grado dell'adduttore lungo di destra, poi il 24 novembre nuovo stop muscolare (lesione di secondo grado all'addutore sinistro). Rientro in campo dalla seconda metà di dicembre."
 Pellegrini Lo.,Roma,infortunati,"Il centrocampista dei giallorossi il 20 ottobre in Champions League ha rimediato una lesione di alto grado in corrispondenza della giunzione muscolo - tendinea distale del muscolo semitendinoso della coscia destra. Stop lungo, ipotizziamo un rientro dalla fine di dicembre."
 Leysen F.,Sassuolo,infortunati,"il difensore KO l'11 ottobre contro il Milan vittima di una lesione al crociato anteriore del ginocchio sinistro. Lungo stop, ipotesi rientro in campo da aprile."
 Volpato,Sassuolo,infortunati,l'ala offensiva dei neroverdi out dal match del 2 novembre contro la Fiorentina per un problema muscolare alla gamba. Da valutare in vista del prossimo turno di campionato contro il Napoli.
 Bakola,Sassuolo,infortunati,forfait del centrocampista nel turno precedente contro il Genoa per noie fisiche che restano da valutare in vista di domenica contro il Napoli.
-Adzic,Sassuolo,infortunati,"Il centrocampista fermo da metà novembre a causa di un fastidio al ginocchio e non ci sarà nel prossimo turno di campionato. Tempi di recupero da valutare, si teme un lungo stop."
+Adzic,Sassuolo,infortunati,"Il centrocampista fermo da metà novembre a causa di un fastidio al ginocchio (gli accertamenti diagnostici hanno evidenziato un piccolo distacco osteo-condrale) e operato il 26 novembre. Lungo stop, la sua stagione è, presumibilmente, terminata anzitempo."
 Konè I.,Sassuolo,infortunati,"il centrocampista canadese vittima a giugno nella gara dei Mondiali di una rottura di tibia e perone. Operato, punta a tornare in campo da fine dicembre."
 Boloca,Sassuolo,infortunati,il centrocampista fuori causa per un problema al ginocchio e fuori causa in questo inizio di campionato. Da valutare rientro da fine novembre.
 Ismajli,Torino,infortunati,"il difensore ai box per una distrazione di basso grado agli adduttori della coscia sinistra, tentativo di rientro dalla seconda metà di dicembre."
+Belghali,Torino,infortunati,il cursore di fascia granata condizionato da un'infiammazione al ginocchio e fuori causa per sabato contro la Lazio. Da valutare in vista della 14a giornata di A.
 Bertola,Udinese,infortunati,"Il difensore alle prese con un problema muscolare alla coscia destra dalla metà di novembre, condizioni da valutare ma sarà out nel prossimo turno di campionato."
 Davis K.,Udinese,infortunati,"l'attaccante condizionato da noie muscolari all'adduttore e, dopo aver saltato il match di Bologna, rischia di star fuori anche nel prossimo turno di campionato contro la Fiorentina. Da valutare."
 Gueye,Udinese,infortunati,"L'attaccante vittima di un problema alla caviglia a fine settembre. Ha deciso di operarsi, lungo stop di circa tre mesi e possibile ritorno in campo da fine gennaio."
-Sverko,Venezia,infortunati,il difensore operato in estate per il perdurare di un problema all'anca e recuperabile dalla metà di dicembre.
-Correia T.,Venezia,infortunati,Il difensore assente domenica scorsa contro la Juventus per noie fisiche. Da valutare in vista della prossima giornata di campionato.
 Franjic,Venezia,infortunati,il difensore costretto al cambio a Milano contro i rossoneri a fine agosto per un guaio alla spalla che ha richiesto l'intervento chirurgico. Lungo stop e rientro dalla metà di dicembre.
+Correia T.,Venezia,infortunati,Il difensore assente domenica scorsa contro la Juventus per noie fisiche. Da valutare in vista della prossima giornata di campionato.
+Sverko,Venezia,infortunati,il difensore operato in estate per il perdurare di un problema all'anca e recuperabile dalla metà di dicembre.

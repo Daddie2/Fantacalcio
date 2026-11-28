@@ -1,256 +1,230 @@
 id,nome,squadra,stato,prob,fonte,aggiornato,modulo,slot
-p_stankovic_f,Stankovic F.,VEN,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,0
-p_halhal,Halhal,VEN,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,1
-p_moreno_m,Moreno M.,VEN,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,2
-p_juan_jesus,Juan Jesus,VEN,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,3
-p_hainaut,Hainaut,VEN,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,4
-p_perez_k,Perez K.,VEN,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,5
-p_sohm,Sohm,VEN,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,6
-p_busio,Busio,VEN,ballottaggio,60,gazzetta,2026-11-27 17:50 UTC,3-5-2,7
-p_haps,Haps,VEN,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,8
-p_adams_a,Adams A.,VEN,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,9
-p_yeboah_j,Yeboah J.,VEN,ballottaggio,60,gazzetta,2026-11-27 17:50 UTC,3-5-2,10
-p_basic,Basic,VEN,ballottaggio,40,gazzetta,2026-11-27 17:50 UTC,3-5-2,7
-p_lauberbach,Lauberbach,VEN,ballottaggio,40,gazzetta,2026-11-27 17:50 UTC,3-5-2,10
-p_skorupski,Skorupski,BOL,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-3,0
-p_darmian,Darmian,BOL,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-3,1
-p_casale,Casale,BOL,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-3,2
-p_theate,Theate,BOL,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-3,3
-p_zortea,Zortea,BOL,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-3,4
-p_ferguson,Ferguson,BOL,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-3,5
-p_pobega,Pobega,BOL,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-3,6
-p_alhassane,Alhassane,BOL,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-3,7
-p_orsolini,Orsolini,BOL,ballottaggio,55,gazzetta,2026-11-27 17:50 UTC,3-4-3,8
-p_piccoli,Piccoli,BOL,ballottaggio,55,gazzetta,2026-11-27 17:50 UTC,3-4-3,9
-p_cambiaghi,Cambiaghi,BOL,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-3,10
-p_odgaard,Odgaard,BOL,ballottaggio,45,gazzetta,2026-11-27 17:50 UTC,3-4-3,9
-p_bernardeschi,Bernardeschi,BOL,ballottaggio,45,gazzetta,2026-11-27 17:50 UTC,3-4-3,8
-p_palmisani,Palmisani,FRO,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,0
-p_oyono_a,Oyono A.,FRO,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,1
-p_calvani,Calvani,FRO,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,2
-p_monterisi,Monterisi,FRO,ballottaggio,55,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,3
-p_bracaglia,Bracaglia,FRO,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,4
-p_calò,Calò,FRO,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,5
-p_masini,Masini,FRO,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,6
-p_ghedjemis,Ghedjemis,FRO,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,7
-p_schmid,Schmid,FRO,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,8
-p_kvernadze,Kvernadze,FRO,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,9
-p_bobcek,Bobcek,FRO,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,10
-p_cittadini,Cittadini,FRO,ballottaggio,45,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,3
-p_daffara,Daffara,PAR,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,0
-p_delprato,Delprato,PAR,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,1
-p_troilo,Troilo,PAR,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,2
-p_ndiaye,Ndiaye,PAR,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,3
-p_britschgi,Britschgi,PAR,ballottaggio,55,gazzetta,2026-11-27 17:50 UTC,3-5-2,4
-p_fabbian,Fabbian,PAR,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,5
-p_nicolussi_caviglia,Nicolussi Caviglia,PAR,ballottaggio,55,gazzetta,2026-11-27 17:50 UTC,3-5-2,6
-p_keita_m,Keita M.,PAR,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,7
-p_valeri,Valeri,PAR,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,8
-p_elphege,Elphege,PAR,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,9
-p_lontani,Lontani,PAR,ballottaggio,55,gazzetta,2026-11-27 17:50 UTC,3-5-2,10
-p_cremaschi,Cremaschi,PAR,ballottaggio,45,gazzetta,2026-11-27 17:50 UTC,3-5-2,4
-p_tourè_e,Tourè E.,PAR,ballottaggio,45,gazzetta,2026-11-27 17:50 UTC,3-5-2,10
-p_sierro,Sierro,PAR,ballottaggio,45,gazzetta,2026-11-27 17:50 UTC,3-5-2,6
-p_perri,Perri,TOR,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-4-2,0
-p_patterson,Patterson,TOR,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-4-2,1
-p_coco,Coco,TOR,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-4-2,2
-p_comuzzo,Comuzzo,TOR,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-4-2,3
-p_fortini,Fortini,TOR,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-4-2,4
-p_vlasic,Vlasic,TOR,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-4-2,5
-p_fitz-jim,Fitz-Jim,TOR,ballottaggio,55,gazzetta,2026-11-27 17:50 UTC,4-4-2,6
-p_mandragora,Mandragora,TOR,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-4-2,7
-p_cacciamani,Cacciamani,TOR,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-4-2,8
-p_adams_c,Adams C.,TOR,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-4-2,9
-p_simeone,Simeone,TOR,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-4-2,10
-p_braganca,Braganca,TOR,ballottaggio,45,gazzetta,2026-11-27 17:50 UTC,4-4-2,6
-p_mandas,Mandas,LAZ,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,0
-p_floriani_mussolini,Floriani Mussolini,LAZ,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,1
-p_leite,Leite,LAZ,ballottaggio,60,gazzetta,2026-11-27 17:50 UTC,4-3-3,2
-p_provstgaard,Provstgaard,LAZ,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,3
-p_pedraza,Pedraza,LAZ,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,4
-p_frattesi,Frattesi,LAZ,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,5
-p_belahyane,Belahyane,LAZ,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,6
-p_dele-bashiru,Dele-Bashiru,LAZ,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,7
-p_isaksen,Isaksen,LAZ,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,8
-p_noslin,Noslin,LAZ,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,9
-p_zaccagni,Zaccagni,LAZ,ballottaggio,70,gazzetta,2026-11-27 17:50 UTC,4-3-3,10
-p_doekhi,Doekhi,LAZ,ballottaggio,40,gazzetta,2026-11-27 17:50 UTC,4-3-3,2
-p_pinamonti,Pinamonti,LAZ,ballottaggio,30,gazzetta,2026-11-27 17:50 UTC,4-3-3,10
-p_provedel,Provedel,INT,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,0
-p_pavard,Pavard,INT,ballottaggio,60,gazzetta,2026-11-27 17:50 UTC,3-5-2,1
-p_akanji,Akanji,INT,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,2
-p_carlos_augusto,Carlos Augusto,INT,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,3
-p_diouf,Diouf,INT,ballottaggio,60,gazzetta,2026-11-27 17:50 UTC,3-5-2,4
-p_barella,Barella,INT,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,5
-p_sucic_p,Sucic P.,INT,ballottaggio,60,gazzetta,2026-11-27 17:50 UTC,3-5-2,6
-p_jones_c,Jones C.,INT,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,7
-p_dimarco,Dimarco,INT,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,8
-p_martinez_l,Martinez L.,INT,ballottaggio,60,gazzetta,2026-11-27 17:50 UTC,3-5-2,9
-p_esposito_fp,Esposito F.P.,INT,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,10
-p_bisseck,Bisseck,INT,ballottaggio,40,gazzetta,2026-11-27 17:50 UTC,3-5-2,1
-p_stankovic_a,Stankovic A.,INT,ballottaggio,40,gazzetta,2026-11-27 17:50 UTC,3-5-2,6
-p_spence,Spence,INT,ballottaggio,40,gazzetta,2026-11-27 17:50 UTC,3-5-2,4
-p_thuram,Thuram,INT,ballottaggio,40,gazzetta,2026-11-27 17:50 UTC,3-5-2,9
-p_bijlow,Bijlow,GEN,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,0
-p_marcandalli,Marcandalli,GEN,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,1
-p_otoa,Otoa,GEN,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,2
-p_vasquez,Vasquez,GEN,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,3
-p_ehizibue,Ehizibue,GEN,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,4
-p_traorè_hj,Traorè Hj.,GEN,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,5
-p_wiafe,Wiafe,GEN,ballottaggio,55,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,6
-p_ellertsson,Ellertsson,GEN,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,7
-p_messias,Messias,GEN,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,8
-p_el_shaarawy,El Shaarawy,GEN,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,9
-p_osmajic,Osmajic,GEN,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,10
-p_frendrup,Frendrup,GEN,ballottaggio,45,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,6
-p_okoye,Okoye,UDI,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,0
-p_palma,Palma,UDI,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,1
-p_kabasele,Kabasele,UDI,ballottaggio,60,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,2
-p_solet,Solet,UDI,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,3
-p_abankwah,Abankwah,UDI,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,4
-p_piotrowski,Piotrowski,UDI,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,5
-p_karlstrom,Karlstrom,UDI,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,6
-p_kamara_h,Kamara H.,UDI,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,7
-p_lovric,Lovric,UDI,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,8
-p_ekkelenkamp,Ekkelenkamp,UDI,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,9
-p_zaniolo,Zaniolo,UDI,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,10
-p_alaba,Alaba,UDI,ballottaggio,40,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,2
-p_de_gea,De Gea,FIO,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,0
-p_jimenez_a,Jimenez A.,FIO,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,1
-p_dragusin,Dragusin,FIO,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,2
-p_ranieri_l,Ranieri L.,FIO,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,3
-p_joao_mario,Joao Mario,FIO,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,4
-p_ndour,Ndour,FIO,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,5
-p_fagioli,Fagioli,FIO,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,6
-p_brescianini,Brescianini,FIO,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,7
-p_mastantuono,Mastantuono,FIO,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,8
-p_pellegrino_m,Pellegrino M.,FIO,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,9
-p_njie,Njie,FIO,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,10
-p_muric,Muric,SAS,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,0
-p_walukiewicz,Walukiewicz,SAS,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,1
-p_caleta-car,Caleta-Car,SAS,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,2
-p_idzes,Idzes,SAS,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,3
-p_van_der_brempt,Van Der Brempt,SAS,ballottaggio,60,gazzetta,2026-11-27 17:50 UTC,4-3-3,4
-p_thorstvedt,Thorstvedt,SAS,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,5
-p_matic,Matic,SAS,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,6
-p_doig,Doig,SAS,ballottaggio,55,gazzetta,2026-11-27 17:50 UTC,4-3-3,7
-p_berardi,Berardi,SAS,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,8
-p_esposito_se,Esposito Se.,SAS,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,9
-p_laurientè,Laurientè,SAS,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,10
-p_sulemana_i,Sulemana I.,SAS,ballottaggio,40,gazzetta,2026-11-27 17:50 UTC,4-3-3,4
-p_obrador,Obrador,SAS,ballottaggio,45,gazzetta,2026-11-27 17:50 UTC,4-3-3,7
-p_milinkovic-savic_v,Milinkovic-Savic V.,NAP,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,0
-p_beukema,Beukema,NAP,ballottaggio,70,gazzetta,2026-11-27 17:50 UTC,4-3-3,1
-p_rrahmani,Rrahmani,NAP,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,2
-p_marin_r,Marin R.,NAP,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,3
-p_olivera,Olivera,NAP,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,4
-p_zambo_anguissa,Zambo Anguissa,NAP,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,5
-p_gilmour,Gilmour,NAP,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,6
-p_mctominay,McTominay,NAP,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,7
-p_politano,Politano,NAP,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,8
-p_hojlund,Hojlund,NAP,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,9
-p_lang,Lang,NAP,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,10
-p_favasuli,Favasuli,NAP,ballottaggio,30,gazzetta,2026-11-27 17:50 UTC,4-3-3,1
-p_svilar,Svilar,ROM,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,0
-p_ghilardi,Ghilardi,ROM,ballottaggio,60,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,1
-p_ndicka,Ndicka,ROM,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,2
-p_hermoso,Hermoso,ROM,ballottaggio,60,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,3
-p_lulli,Lulli,ROM,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,4
-p_cristante,Cristante,ROM,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,5
-p_konè_m,Konè M.,ROM,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,6
-p_wesley,Wesley,ROM,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,7
-p_dybala,Dybala,ROM,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,8
-p_mora,Mora,ROM,ballottaggio,60,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,9
-p_malen,Malen,ROM,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,10
-p_soulè,Soulè,ROM,ballottaggio,40,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,9
-p_koulierakis,Koulierakis,ROM,ballottaggio,40,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,3
-p_mancini,Mancini,ROM,ballottaggio,40,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,1
-p_tornqvist,Tornqvist,MON,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,0
-p_kouadio,Kouadio,MON,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,1
-p_goglichidze,Goglichidze,MON,ballottaggio,60,gazzetta,2026-11-27 17:50 UTC,3-5-2,2
-p_lucchesi,Lucchesi,MON,ballottaggio,60,gazzetta,2026-11-27 17:50 UTC,3-5-2,3
-p_birindelli,Birindelli,MON,ballottaggio,60,gazzetta,2026-11-27 17:50 UTC,3-5-2,4
-p_colombo_l,Colombo L.,MON,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,5
-p_pessina,Pessina,MON,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,6
-p_akinsanmiro,Akinsanmiro,MON,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,7
-p_mangas,Mangas,MON,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,8
-p_varela_g,Varela G.,MON,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,9
-p_robinson_j,Robinson J.,MON,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-5-2,10
-p_ziolkowski,Ziolkowski,MON,ballottaggio,40,gazzetta,2026-11-27 17:50 UTC,3-5-2,2
-p_carboni_a,Carboni A.,MON,ballottaggio,40,gazzetta,2026-11-27 17:50 UTC,3-5-2,3
-p_tourè_i,Tourè I.,MON,ballottaggio,40,gazzetta,2026-11-27 17:50 UTC,3-5-2,4
-p_butez,Butez,COM,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,0
-p_couto,Couto,COM,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,1
-p_ramon,Ramon,COM,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,2
-p_chalobah_t,Chalobah T.,COM,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,3
-p_valle,Valle,COM,ballottaggio,70,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,4
-p_perrone,Perrone,COM,ballottaggio,60,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,5
-p_milla,Milla,COM,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,6
-p_da_cunha,Da Cunha,COM,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,7
-p_paz_n,Paz N.,COM,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,8
-p_baturina,Baturina,COM,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,9
-p_douvikas,Douvikas,COM,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,10
-p_ricci_s,Ricci S.,COM,ballottaggio,40,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,5
-p_kaiki,Kaiki,COM,ballottaggio,30,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,4
-p_vicario,Vicario,JUV,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,0
-p_celik,Celik,JUV,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,1
-p_bremer,Bremer,JUV,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,2
-p_lucumì,Lucumì,JUV,ballottaggio,60,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,3
-p_cabal,Cabal,JUV,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,4
-p_douglas_luiz,Douglas Luiz,JUV,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,5
-p_koopmeiners,Koopmeiners,JUV,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,6
-p_conceicao,Conceicao,JUV,ballottaggio,70,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,7
-p_mckennie,McKennie,JUV,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,8
-p_kolo_muani,Kolo Muani,JUV,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,9
-p_woltemade,Woltemade,JUV,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,10
-p_kelly_l,Kelly L.,JUV,ballottaggio,40,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,3
-p_alajbegovic,Alajbegovic,JUV,ballottaggio,30,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,7
-p_falcone,Falcone,LEC,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,0
-p_veiga_d,Veiga D.,LEC,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,1
-p_gaspar_k,Gaspar K.,LEC,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,2
-p_tiago_gabriel,Tiago Gabriel,LEC,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,3
-p_gallo,Gallo,LEC,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,4
-p_coulibaly_l,Coulibaly L.,LEC,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,5
-p_berisha_m,Berisha M.,LEC,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,6
-p_ngom,Ngom,LEC,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,7
-p_n'dri,N'Dri,LEC,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,8
-p_geubbels,Geubbels,LEC,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,9
-p_fatah,Fatah,LEC,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-3,10
-p_sportiello,Sportiello,ATA,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,0
-p_bellanova,Bellanova,ATA,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,1
-p_scalvini,Scalvini,ATA,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,2
-p_kolasinac,Kolasinac,ATA,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,3
-p_zappacosta,Zappacosta,ATA,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,4
-p_kessiè,Kessiè,ATA,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,5
-p_ederson_ds,Ederson D.S.,ATA,ballottaggio,70,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,6
-p_elmas,Elmas,ATA,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,7
-p_de_ketelaere,De Ketelaere,ATA,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,8
-p_zalewski,Zalewski,ATA,ballottaggio,70,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,9
-p_krstovic,Krstovic,ATA,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,10
-p_rowe,Rowe,ATA,ballottaggio,30,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,9
-p_gaetano,Gaetano,ATA,ballottaggio,30,gazzetta,2026-11-27 17:50 UTC,4-2-3-1,6
-p_caprile,Caprile,CAG,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-2-1,0
-p_zè_pedro,Zè Pedro,CAG,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-2-1,1
-p_kofler,Kofler,CAG,ballottaggio,70,gazzetta,2026-11-27 17:50 UTC,4-3-2-1,2
-p_rodriguez_ju,Rodriguez Ju.,CAG,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-2-1,3
-p_obert,Obert,CAG,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-2-1,4
-p_adopo,Adopo,CAG,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-2-1,5
-p_deiola,Deiola,CAG,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-2-1,6
-p_romano,Romano,CAG,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-2-1,7
-p_trepy,Trepy,CAG,ballottaggio,60,gazzetta,2026-11-27 17:50 UTC,4-3-2-1,8
-p_maldini,Maldini,CAG,titolare,90,gazzetta,2026-11-27 17:50 UTC,4-3-2-1,9
-p_nzola,Nzola,CAG,ballottaggio,60,gazzetta,2026-11-27 17:50 UTC,4-3-2-1,10
-p_mendy_p,Mendy P.,CAG,ballottaggio,40,gazzetta,2026-11-27 17:50 UTC,4-3-2-1,10
-p_fazzini,Fazzini,CAG,ballottaggio,40,gazzetta,2026-11-27 17:50 UTC,4-3-2-1,8
-p_mina,Mina,CAG,ballottaggio,30,gazzetta,2026-11-27 17:50 UTC,4-3-2-1,2
-p_maignan,Maignan,MIL,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,0
-p_gila,Gila,MIL,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,1
-p_de_winter,De Winter,MIL,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,2
-p_diawara_s,Diawara S.,MIL,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,3
-p_moreira,Moreira,MIL,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,4
-p_musah,Musah,MIL,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,5
-p_jashari,Jashari,MIL,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,6
-p_estupinan,Estupinan,MIL,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,7
-p_pulisic,Pulisic,MIL,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,8
-p_rabiot,Rabiot,MIL,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,9
-p_ramos_g,Ramos G.,MIL,titolare,90,gazzetta,2026-11-27 17:50 UTC,3-4-2-1,10
+p_palmisani,Palmisani,FRO,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,0
+p_oyono_a,Oyono A.,FRO,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,1
+p_calvani,Calvani,FRO,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,2
+p_monterisi,Monterisi,FRO,ballottaggio,55,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,3
+p_bracaglia,Bracaglia,FRO,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,4
+p_calò,Calò,FRO,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,5
+p_masini,Masini,FRO,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,6
+p_ghedjemis,Ghedjemis,FRO,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,7
+p_schmid,Schmid,FRO,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,8
+p_kvernadze,Kvernadze,FRO,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,9
+p_bobcek,Bobcek,FRO,ballottaggio,55,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,10
+p_cittadini,Cittadini,FRO,ballottaggio,45,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,3
+p_raimondo,Raimondo,FRO,ballottaggio,45,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,10
+p_daffara,Daffara,PAR,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,0
+p_delprato,Delprato,PAR,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,1
+p_troilo,Troilo,PAR,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,2
+p_ndiaye,Ndiaye,PAR,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,3
+p_britschgi,Britschgi,PAR,ballottaggio,55,gazzetta,2026-11-28 04:35 UTC,3-5-2,4
+p_fabbian,Fabbian,PAR,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,5
+p_nicolussi_caviglia,Nicolussi Caviglia,PAR,ballottaggio,55,gazzetta,2026-11-28 04:35 UTC,3-5-2,6
+p_keita_m,Keita M.,PAR,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,7
+p_valeri,Valeri,PAR,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,8
+p_elphege,Elphege,PAR,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,9
+p_lontani,Lontani,PAR,ballottaggio,55,gazzetta,2026-11-28 04:35 UTC,3-5-2,10
+p_cremaschi,Cremaschi,PAR,ballottaggio,45,gazzetta,2026-11-28 04:35 UTC,3-5-2,4
+p_tourè_e,Tourè E.,PAR,ballottaggio,45,gazzetta,2026-11-28 04:35 UTC,3-5-2,10
+p_sierro,Sierro,PAR,ballottaggio,45,gazzetta,2026-11-28 04:35 UTC,3-5-2,6
+p_perri,Perri,TOR,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-4-2,0
+p_patterson,Patterson,TOR,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-4-2,1
+p_coco,Coco,TOR,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-4-2,2
+p_comuzzo,Comuzzo,TOR,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-4-2,3
+p_fortini,Fortini,TOR,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-4-2,4
+p_vlasic,Vlasic,TOR,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-4-2,5
+p_fitz-jim,Fitz-Jim,TOR,ballottaggio,55,gazzetta,2026-11-28 04:35 UTC,4-4-2,6
+p_mandragora,Mandragora,TOR,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-4-2,7
+p_cacciamani,Cacciamani,TOR,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-4-2,8
+p_adams_c,Adams C.,TOR,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-4-2,9
+p_simeone,Simeone,TOR,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-4-2,10
+p_braganca,Braganca,TOR,ballottaggio,45,gazzetta,2026-11-28 04:35 UTC,4-4-2,6
+p_mandas,Mandas,LAZ,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,0
+p_floriani_mussolini,Floriani Mussolini,LAZ,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,1
+p_leite,Leite,LAZ,ballottaggio,60,gazzetta,2026-11-28 04:35 UTC,4-3-3,2
+p_provstgaard,Provstgaard,LAZ,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,3
+p_pedraza,Pedraza,LAZ,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,4
+p_frattesi,Frattesi,LAZ,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,5
+p_belahyane,Belahyane,LAZ,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,6
+p_dele-bashiru,Dele-Bashiru,LAZ,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,7
+p_isaksen,Isaksen,LAZ,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,8
+p_noslin,Noslin,LAZ,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,9
+p_zaccagni,Zaccagni,LAZ,ballottaggio,70,gazzetta,2026-11-28 04:35 UTC,4-3-3,10
+p_doekhi,Doekhi,LAZ,ballottaggio,40,gazzetta,2026-11-28 04:35 UTC,4-3-3,2
+p_pinamonti,Pinamonti,LAZ,ballottaggio,30,gazzetta,2026-11-28 04:35 UTC,4-3-3,10
+p_provedel,Provedel,INT,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,0
+p_bisseck,Bisseck,INT,ballottaggio,55,gazzetta,2026-11-28 04:35 UTC,3-5-2,1
+p_akanji,Akanji,INT,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,2
+p_carlos_augusto,Carlos Augusto,INT,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,3
+p_diouf,Diouf,INT,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,4
+p_barella,Barella,INT,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,5
+p_sucic_p,Sucic P.,INT,ballottaggio,60,gazzetta,2026-11-28 04:35 UTC,3-5-2,6
+p_jones_c,Jones C.,INT,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,7
+p_dimarco,Dimarco,INT,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,8
+p_martinez_l,Martinez L.,INT,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,9
+p_thuram,Thuram,INT,ballottaggio,55,gazzetta,2026-11-28 04:35 UTC,3-5-2,10
+p_pavard,Pavard,INT,ballottaggio,45,gazzetta,2026-11-28 04:35 UTC,3-5-2,1
+p_stankovic_a,Stankovic A.,INT,ballottaggio,40,gazzetta,2026-11-28 04:35 UTC,3-5-2,6
+p_esposito_fp,Esposito F.P.,INT,ballottaggio,45,gazzetta,2026-11-28 04:35 UTC,3-5-2,10
+p_bijlow,Bijlow,GEN,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,0
+p_marcandalli,Marcandalli,GEN,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,1
+p_otoa,Otoa,GEN,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,2
+p_vasquez,Vasquez,GEN,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,3
+p_ehizibue,Ehizibue,GEN,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,4
+p_traorè_hj,Traorè Hj.,GEN,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,5
+p_wiafe,Wiafe,GEN,ballottaggio,55,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,6
+p_ellertsson,Ellertsson,GEN,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,7
+p_messias,Messias,GEN,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,8
+p_el_shaarawy,El Shaarawy,GEN,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,9
+p_osmajic,Osmajic,GEN,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,10
+p_frendrup,Frendrup,GEN,ballottaggio,45,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,6
+p_okoye,Okoye,UDI,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,0
+p_palma,Palma,UDI,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,1
+p_kabasele,Kabasele,UDI,ballottaggio,60,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,2
+p_solet,Solet,UDI,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,3
+p_abankwah,Abankwah,UDI,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,4
+p_piotrowski,Piotrowski,UDI,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,5
+p_karlstrom,Karlstrom,UDI,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,6
+p_kamara_h,Kamara H.,UDI,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,7
+p_lovric,Lovric,UDI,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,8
+p_ekkelenkamp,Ekkelenkamp,UDI,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,9
+p_zaniolo,Zaniolo,UDI,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,10
+p_alaba,Alaba,UDI,ballottaggio,40,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,2
+p_de_gea,De Gea,FIO,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,0
+p_jimenez_a,Jimenez A.,FIO,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,1
+p_dragusin,Dragusin,FIO,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,2
+p_ranieri_l,Ranieri L.,FIO,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,3
+p_joao_mario,Joao Mario,FIO,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,4
+p_ndour,Ndour,FIO,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,5
+p_fagioli,Fagioli,FIO,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,6
+p_brescianini,Brescianini,FIO,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,7
+p_mastantuono,Mastantuono,FIO,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,8
+p_pellegrino_m,Pellegrino M.,FIO,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,9
+p_njie,Njie,FIO,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,10
+p_muric,Muric,SAS,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,0
+p_walukiewicz,Walukiewicz,SAS,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,1
+p_caleta-car,Caleta-Car,SAS,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,2
+p_idzes,Idzes,SAS,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,3
+p_van_der_brempt,Van Der Brempt,SAS,ballottaggio,60,gazzetta,2026-11-28 04:35 UTC,4-3-3,4
+p_thorstvedt,Thorstvedt,SAS,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,5
+p_matic,Matic,SAS,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,6
+p_doig,Doig,SAS,ballottaggio,55,gazzetta,2026-11-28 04:35 UTC,4-3-3,7
+p_berardi,Berardi,SAS,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,8
+p_esposito_se,Esposito Se.,SAS,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,9
+p_laurientè,Laurientè,SAS,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,10
+p_sulemana_i,Sulemana I.,SAS,ballottaggio,40,gazzetta,2026-11-28 04:35 UTC,4-3-3,4
+p_obrador,Obrador,SAS,ballottaggio,45,gazzetta,2026-11-28 04:35 UTC,4-3-3,7
+p_milinkovic-savic_v,Milinkovic-Savic V.,NAP,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,0
+p_beukema,Beukema,NAP,ballottaggio,70,gazzetta,2026-11-28 04:35 UTC,4-3-3,1
+p_rrahmani,Rrahmani,NAP,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,2
+p_marin_r,Marin R.,NAP,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,3
+p_olivera,Olivera,NAP,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,4
+p_zambo_anguissa,Zambo Anguissa,NAP,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,5
+p_gilmour,Gilmour,NAP,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,6
+p_mctominay,McTominay,NAP,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,7
+p_politano,Politano,NAP,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,8
+p_hojlund,Hojlund,NAP,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,9
+p_lang,Lang,NAP,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,10
+p_favasuli,Favasuli,NAP,ballottaggio,30,gazzetta,2026-11-28 04:35 UTC,4-3-3,1
+p_svilar,Svilar,ROM,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,0
+p_ghilardi,Ghilardi,ROM,ballottaggio,60,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,1
+p_ndicka,Ndicka,ROM,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,2
+p_hermoso,Hermoso,ROM,ballottaggio,60,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,3
+p_lulli,Lulli,ROM,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,4
+p_cristante,Cristante,ROM,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,5
+p_konè_m,Konè M.,ROM,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,6
+p_wesley,Wesley,ROM,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,7
+p_dybala,Dybala,ROM,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,8
+p_mora,Mora,ROM,ballottaggio,60,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,9
+p_malen,Malen,ROM,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,10
+p_soulè,Soulè,ROM,ballottaggio,40,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,9
+p_koulierakis,Koulierakis,ROM,ballottaggio,40,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,3
+p_mancini,Mancini,ROM,ballottaggio,40,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,1
+p_tornqvist,Tornqvist,MON,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,0
+p_kouadio,Kouadio,MON,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,1
+p_goglichidze,Goglichidze,MON,ballottaggio,60,gazzetta,2026-11-28 04:35 UTC,3-5-2,2
+p_lucchesi,Lucchesi,MON,ballottaggio,60,gazzetta,2026-11-28 04:35 UTC,3-5-2,3
+p_birindelli,Birindelli,MON,ballottaggio,60,gazzetta,2026-11-28 04:35 UTC,3-5-2,4
+p_colombo_l,Colombo L.,MON,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,5
+p_pessina,Pessina,MON,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,6
+p_akinsanmiro,Akinsanmiro,MON,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,7
+p_mangas,Mangas,MON,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,8
+p_varela_g,Varela G.,MON,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,9
+p_robinson_j,Robinson J.,MON,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-5-2,10
+p_ziolkowski,Ziolkowski,MON,ballottaggio,40,gazzetta,2026-11-28 04:35 UTC,3-5-2,2
+p_carboni_a,Carboni A.,MON,ballottaggio,40,gazzetta,2026-11-28 04:35 UTC,3-5-2,3
+p_tourè_i,Tourè I.,MON,ballottaggio,40,gazzetta,2026-11-28 04:35 UTC,3-5-2,4
+p_butez,Butez,COM,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,0
+p_couto,Couto,COM,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,1
+p_ramon,Ramon,COM,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,2
+p_chalobah_t,Chalobah T.,COM,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,3
+p_valle,Valle,COM,ballottaggio,70,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,4
+p_perrone,Perrone,COM,ballottaggio,60,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,5
+p_milla,Milla,COM,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,6
+p_da_cunha,Da Cunha,COM,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,7
+p_paz_n,Paz N.,COM,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,8
+p_baturina,Baturina,COM,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,9
+p_douvikas,Douvikas,COM,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,10
+p_ricci_s,Ricci S.,COM,ballottaggio,40,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,5
+p_kaiki,Kaiki,COM,ballottaggio,30,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,4
+p_vicario,Vicario,JUV,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,0
+p_celik,Celik,JUV,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,1
+p_bremer,Bremer,JUV,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,2
+p_lucumì,Lucumì,JUV,ballottaggio,60,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,3
+p_cabal,Cabal,JUV,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,4
+p_douglas_luiz,Douglas Luiz,JUV,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,5
+p_koopmeiners,Koopmeiners,JUV,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,6
+p_conceicao,Conceicao,JUV,ballottaggio,70,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,7
+p_mckennie,McKennie,JUV,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,8
+p_kolo_muani,Kolo Muani,JUV,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,9
+p_woltemade,Woltemade,JUV,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,10
+p_kelly_l,Kelly L.,JUV,ballottaggio,40,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,3
+p_alajbegovic,Alajbegovic,JUV,ballottaggio,30,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,7
+p_falcone,Falcone,LEC,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,0
+p_veiga_d,Veiga D.,LEC,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,1
+p_gaspar_k,Gaspar K.,LEC,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,2
+p_tiago_gabriel,Tiago Gabriel,LEC,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,3
+p_gallo,Gallo,LEC,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,4
+p_coulibaly_l,Coulibaly L.,LEC,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,5
+p_berisha_m,Berisha M.,LEC,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,6
+p_ngom,Ngom,LEC,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,7
+p_n'dri,N'Dri,LEC,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,8
+p_geubbels,Geubbels,LEC,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,9
+p_fatah,Fatah,LEC,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-3,10
+p_sportiello,Sportiello,ATA,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,0
+p_bellanova,Bellanova,ATA,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,1
+p_scalvini,Scalvini,ATA,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,2
+p_kolasinac,Kolasinac,ATA,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,3
+p_zappacosta,Zappacosta,ATA,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,4
+p_kessiè,Kessiè,ATA,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,5
+p_ederson_ds,Ederson D.S.,ATA,ballottaggio,70,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,6
+p_elmas,Elmas,ATA,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,7
+p_de_ketelaere,De Ketelaere,ATA,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,8
+p_zalewski,Zalewski,ATA,ballottaggio,70,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,9
+p_krstovic,Krstovic,ATA,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,10
+p_rowe,Rowe,ATA,ballottaggio,30,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,9
+p_gaetano,Gaetano,ATA,ballottaggio,30,gazzetta,2026-11-28 04:35 UTC,4-2-3-1,6
+p_caprile,Caprile,CAG,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-2-1,0
+p_zè_pedro,Zè Pedro,CAG,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-2-1,1
+p_kofler,Kofler,CAG,ballottaggio,70,gazzetta,2026-11-28 04:35 UTC,4-3-2-1,2
+p_rodriguez_ju,Rodriguez Ju.,CAG,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-2-1,3
+p_obert,Obert,CAG,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-2-1,4
+p_adopo,Adopo,CAG,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-2-1,5
+p_deiola,Deiola,CAG,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-2-1,6
+p_romano,Romano,CAG,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-2-1,7
+p_trepy,Trepy,CAG,ballottaggio,60,gazzetta,2026-11-28 04:35 UTC,4-3-2-1,8
+p_maldini,Maldini,CAG,titolare,90,gazzetta,2026-11-28 04:35 UTC,4-3-2-1,9
+p_nzola,Nzola,CAG,ballottaggio,60,gazzetta,2026-11-28 04:35 UTC,4-3-2-1,10
+p_mendy_p,Mendy P.,CAG,ballottaggio,40,gazzetta,2026-11-28 04:35 UTC,4-3-2-1,10
+p_fazzini,Fazzini,CAG,ballottaggio,40,gazzetta,2026-11-28 04:35 UTC,4-3-2-1,8
+p_mina,Mina,CAG,ballottaggio,30,gazzetta,2026-11-28 04:35 UTC,4-3-2-1,2
+p_maignan,Maignan,MIL,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,0
+p_gila,Gila,MIL,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,1
+p_de_winter,De Winter,MIL,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,2
+p_diawara_s,Diawara S.,MIL,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,3
+p_moreira,Moreira,MIL,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,4
+p_musah,Musah,MIL,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,5
+p_jashari,Jashari,MIL,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,6
+p_estupinan,Estupinan,MIL,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,7
+p_pulisic,Pulisic,MIL,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,8
+p_rabiot,Rabiot,MIL,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,9
+p_ramos_g,Ramos G.,MIL,titolare,90,gazzetta,2026-11-28 04:35 UTC,3-4-2-1,10
